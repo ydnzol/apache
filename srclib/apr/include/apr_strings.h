@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -236,7 +236,7 @@ APR_DECLARE(char *) apr_collapse_spaces(char *dest, const char *src);
 /**
  * Convert the arguments to a program from one string to an array of 
  * strings terminated by a NULL pointer
- * @param arg_str The arguments to convert
+ * @param str The arguments to convert
  * @param argv_out Output location.  This is a pointer to an array of strings.
  * @param token_context Pool to use.
  */

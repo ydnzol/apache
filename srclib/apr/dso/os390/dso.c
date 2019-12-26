@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@
 
 #include "apr_portable.h"
 #include "apr_strings.h"
-#include "apr_arch_dso.h"
+#include "dso.h"
 #include <errno.h>
 #include <string.h>
 

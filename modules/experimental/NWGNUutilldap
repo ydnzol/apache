@@ -21,6 +21,7 @@ XINCDIRS	+= \
 			$(AP_WORK)/srclib/apr/include \
 			$(AP_WORK)/srclib/apr-util/include \
 			$(AP_WORK)/srclib/apr \
+			$(LDAPSDK)/inc \
 			$(EOLIST)
 
 #
@@ -99,7 +100,7 @@ NLM_NAME		= utilldap
 # This is used by the link '-desc ' directive. 
 # If left blank, NLM_NAME will be used.
 #
-NLM_DESCRIPTION	= Apache $(VERSION_STR) LDAP Authentication Module
+NLM_DESCRIPTION	= LDAP Authentication Module
 
 #
 # This is used by the '-threadname' directive.  If left blank,
@@ -221,7 +222,6 @@ FILES_nlm_exports = \
 	ldap_module \
 	util_ldap_connection_find \
 	util_ldap_connection_close \
-	util_ldap_connection_destroy \
 	util_ldap_cache_checkuserid \
 	util_ldap_cache_compare \
 	util_ldap_cache_comparedn \

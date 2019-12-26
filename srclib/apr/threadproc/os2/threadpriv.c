@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,13 +52,13 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_threadproc.h"
+#include "threadproc.h"
 #include "apr_thread_proc.h"
 #include "apr_portable.h"
 #include "apr_general.h"
 #include "apr_errno.h"
 #include "apr_lib.h"
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 
 APR_DECLARE(apr_status_t) apr_threadkey_private_create(apr_threadkey_t **key,
                                                        void (*dest)(void *), 

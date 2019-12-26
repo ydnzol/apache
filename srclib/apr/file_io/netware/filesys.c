@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@
  */
 
 #include "apr.h"
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 #include "apr_strings.h"
 
 apr_status_t filepath_root_case(char **rootpath, char *root, apr_pool_t *p)
@@ -106,26 +106,16 @@ APR_DECLARE(apr_status_t) apr_filepath_get(char **rootpath, apr_int32_t flags,
                                            apr_pool_t *p)
 {
     char path[APR_PATH_MAX];
-    char *ptr;
-
-    /* use getcwdpath to make sure that we get the volume name*/
-    if (!getcwdpath(path, NULL, 0)) {
+    if (!getcwd(path, sizeof(path))) {
         if (errno == ERANGE)
             return APR_ENAMETOOLONG;
         else
             return errno;
     }
-    /* Strip off the server name if there is one*/
-    ptr = strpbrk(path, "\\/:");
-    if (!ptr) {
-        return APR_ENOENT;
-    }
-    if (*ptr == ':') {
-        ptr = path;
-    }
-    *rootpath = apr_pstrdup(p, ptr);
+    *rootpath = apr_pstrdup(p, path);
     return APR_SUCCESS;
 }
+
 
 APR_DECLARE(apr_status_t) apr_filepath_set(const char *rootpath,
                                            apr_pool_t *p)

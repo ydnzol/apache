@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -76,7 +76,7 @@ extern "C" {
  * @{
  */
 
-#if APR_HAVE_SIGACTION || defined(DOXYGEN)
+#if APR_HAVE_SIGACTION
 
 #if defined(DARWIN) && !defined(__cplusplus) && !defined(_ANSI_SOURCE)
 /* work around Darwin header file bugs
@@ -90,13 +90,13 @@ extern "C" {
 #define SIG_ERR (void (*)(int))-1
 #endif
 
-/** Function prototype for signal handlers */
 typedef void apr_sigfunc_t(int);
 
+/* ### how to doc this? */
 /**
  * Set the signal handler function for a given signal
  * @param signo The signal (eg... SIGWINCH)
- * @param func the function to get called
+ * @parm the function to get called
  */
 APR_DECLARE(apr_sigfunc_t *) apr_signal(int signo, apr_sigfunc_t * func);
 

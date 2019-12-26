@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@
 #if BEOS_BONE /* BONE uses the unix code - woohoo */
 #include "../unix/sendrecv.c"
 #else
-#include "apr_arch_networkio.h"
+#include "networkio.h"
 #include "apr_time.h"
 
 apr_status_t apr_wait_for_io_or_timeout(apr_socket_t *sock, int for_read)
@@ -95,8 +95,7 @@ apr_status_t apr_wait_for_io_or_timeout(apr_socket_t *sock, int for_read)
 
 #define SEND_WAIT APR_USEC_PER_SEC / 10
 
-APR_DECLARE(apr_status_t) apr_socket_send(apr_socket_t *sock, const char *buf,
-                                          apr_size_t *len)
+APR_DECLARE(apr_status_t) apr_send(apr_socket_t *sock, const char *buf, apr_size_t *len)
 {
     apr_ssize_t rv;
 	
@@ -129,8 +128,7 @@ APR_DECLARE(apr_status_t) apr_socket_send(apr_socket_t *sock, const char *buf,
     return APR_SUCCESS;
 }
 
-APR_DECLARE(apr_status_t) apr_socket_recv(apr_socket_t *sock, char *buf, 
-                                          apr_size_t *len)
+APR_DECLARE(apr_status_t) apr_recv(apr_socket_t *sock, char *buf, apr_size_t *len)
 {
     apr_ssize_t rv;
    
@@ -162,18 +160,15 @@ APR_DECLARE(apr_status_t) apr_socket_recv(apr_socket_t *sock, char *buf,
 
 /* BeOS doesn't have writev for sockets so we use the following instead...
  */
-APR_DECLARE(apr_status_t) apr_socket_sendv(apr_socket_t * sock, 
-                                           const struct iovec *vec,
-                                           apr_int32_t nvec, apr_size_t *len)
+APR_DECLARE(apr_status_t) apr_sendv(apr_socket_t * sock, const struct iovec *vec,
+                                    apr_int32_t nvec, apr_size_t *len)
 {
     *len = vec[0].iov_len;
-    return apr_socket_send(sock, vec[0].iov_base, len);
+    return apr_send(sock, vec[0].iov_base, len);
 }
 
-APR_DECLARE(apr_status_t) apr_socket_sendto(apr_socket_t *sock, 
-                                            apr_sockaddr_t *where,
-                                            apr_int32_t flags, const char *buf,
-                                            apr_size_t *len)
+APR_DECLARE(apr_status_t) apr_sendto(apr_socket_t *sock, apr_sockaddr_t *where,
+                                     apr_int32_t flags, const char *buf, apr_size_t *len)
 {
     apr_ssize_t rv;
 
@@ -205,10 +200,9 @@ APR_DECLARE(apr_status_t) apr_socket_sendto(apr_socket_t *sock,
     return APR_SUCCESS;
 }
 
-APR_DECLARE(apr_status_t) apr_socket_recvfrom(apr_sockaddr_t *from,
-                                              apr_socket_t *sock,
-                                              apr_int32_t flags, char *buf,
-                                              apr_size_t *len)
+APR_DECLARE(apr_status_t) apr_recvfrom(apr_sockaddr_t *from, apr_socket_t *sock,
+                                       apr_int32_t flags, char *buf,
+                                       apr_size_t *len)
 {
     apr_ssize_t rv;
 
@@ -247,44 +241,6 @@ APR_DECLARE(apr_status_t) apr_socket_recvfrom(apr_sockaddr_t *from,
         return APR_EOF;
 
     return APR_SUCCESS;
-}
-
-/* deprecated */
-APR_DECLARE(apr_status_t) apr_send(apr_socket_t *sock, const char *buf,
-                                   apr_size_t *len)
-{
-    return apr_socket_send(sock, buf, len);
-}
-
-/* deprecated */
-APR_DECLARE(apr_status_t) apr_sendv(apr_socket_t * sock, 
-                                    const struct iovec *vec,
-                                    apr_int32_t nvec, apr_size_t *len)
-{
-    return apr_socket_sendv(sock, vec, nvec, len);
-}
-
-/* deprecated */
-APR_DECLARE(apr_status_t) apr_sendto(apr_socket_t *sock, apr_sockaddr_t *where,
-                                     apr_int32_t flags, const char *buf,
-                                     apr_size_t *len)
-{
-    return apr_socket_sendto(sock, where, flags, buf, len);
-}
-
-/* deprecated */
-APR_DECLARE(apr_status_t) apr_recvfrom(apr_sockaddr_t *from, apr_socket_t *sock,
-                                       apr_int32_t flags, char *buf,
-                                       apr_size_t *len)
-{
-    return apr_socket_recvfrom(from, sock, flags, buf, len);
-}
-
-/* deprecated */
-APR_DECLARE(apr_status_t) apr_recv(apr_socket_t *sock, char *buf, 
-                                   apr_size_t *len)
-{
-    return apr_socket_recv(sock, buf, len);
 }
 
 #endif

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@
  */
 
 #include "apr_private.h"
-#include "win32/apr_arch_threadproc.h"
+#include "win32/threadproc.h"
 #include "apr_thread_proc.h"
 #include "apr_general.h"
 #include "apr_lib.h"
@@ -61,10 +61,7 @@
 #if APR_HAVE_PROCESS_H
 #include <process.h>
 #endif
-#include "apr_arch_misc.h"   
-
-/* Chosen for us by apr_initialize */
-DWORD tls_apr_thread = 0;
+#include "misc.h"   
 
 APR_DECLARE(apr_status_t) apr_threadattr_create(apr_threadattr_t **new,
                                                 apr_pool_t *pool)
@@ -84,7 +81,7 @@ APR_DECLARE(apr_status_t) apr_threadattr_detach_set(apr_threadattr_t *attr,
                                                    apr_int32_t on)
 {
     attr->detach = on;
-    return APR_SUCCESS;
+	return APR_SUCCESS;
 }
 
 APR_DECLARE(apr_status_t) apr_threadattr_detach_get(apr_threadattr_t *attr)
@@ -97,7 +94,6 @@ APR_DECLARE(apr_status_t) apr_threadattr_detach_get(apr_threadattr_t *attr)
 static void *dummy_worker(void *opaque)
 {
     apr_thread_t *thd = (apr_thread_t *)opaque;
-    TlsSetValue(tls_apr_thread, thd->td);
     return thd->func(thd, thd->data);
 }
 
@@ -216,25 +212,9 @@ APR_DECLARE(apr_status_t) apr_thread_data_set(void *data, const char *key,
     return apr_pool_userdata_set(data, key, cleanup, thread->pool);
 }
 
-
 APR_DECLARE(apr_os_thread_t) apr_os_thread_current(void)
 {
-    HANDLE hthread = (HANDLE)TlsGetValue(tls_apr_thread);
-    HANDLE hproc;
-
-    if (hthread) {
-        return hthread;
-    }
-    
-    hproc = GetCurrentProcess();
-    hthread = GetCurrentThread();
-    if (!DuplicateHandle(hproc, hthread, 
-                         hproc, &hthread, 0, FALSE, 
-                         DUPLICATE_SAME_ACCESS)) {
-        return NULL;
-    }
-    TlsSetValue(tls_apr_thread, hthread);
-    return hthread;
+    return GetCurrentThread();
 }
 
 APR_DECLARE(apr_status_t) apr_os_thread_get(apr_os_thread_t **thethd,
@@ -276,16 +256,6 @@ APR_DECLARE(apr_status_t) apr_thread_once(apr_thread_once_t *control,
         func();
     }
     return APR_SUCCESS;
-}
-
-APR_DECLARE(int) apr_os_thread_equal(apr_os_thread_t tid1,
-                                     apr_os_thread_t tid2)
-{
-    /* Since the only tid's we support our are own, and
-     * apr_os_thread_current returns the identical handle
-     * to the one we created initially, the test is simple.
-     */
-    return (tid1 == tid2);
 }
 
 APR_POOL_IMPLEMENT_ACCESSOR(thread)

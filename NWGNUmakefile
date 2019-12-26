@@ -119,7 +119,7 @@ NLM_NAME		= Apache2
 # This is used by the link '-desc ' directive. 
 # If left blank, NLM_NAME will be used.
 #
-NLM_DESCRIPTION		= Apache Web Server $(VERSION_STR)
+NLM_DESCRIPTION	= Apache Web Server 
 
 #
 # This is used by the '-threadname' directive.  If left blank,
@@ -219,7 +219,6 @@ FILES_nlm_objs = \
 	$(OBJDIR)/pcre.o \
 	$(OBJDIR)/pcreposix.o \
 	$(OBJDIR)/protocol.o \
-	$(OBJDIR)/provider.o \
 	$(OBJDIR)/request.o \
 	$(OBJDIR)/rfc1413.o \
 	$(OBJDIR)/scoreboard.o \

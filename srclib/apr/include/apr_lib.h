@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -78,14 +78,12 @@
 extern "C" {
 #endif /* __cplusplus */
 
-/** A constant representing a 'large' string. */
 #define HUGE_STRING_LEN 8192
 
 /*
  * Define the structures used by the APR general-purpose library.
  */
 
-/** @see apr_vformatter_buff_t */
 typedef struct apr_vformatter_buff_t apr_vformatter_buff_t;
 
 /**
@@ -113,9 +111,6 @@ struct apr_vformatter_buff_t {
  *                 "wi\\n32\\stuff" -> "stuff"
  * </PRE>
  */
-APR_DECLARE(const char *) apr_filepath_name_get(const char *pathname);
-
-/** @deprecated @see apr_filepath_name_get */
 APR_DECLARE(const char *) apr_filename_of_pathname(const char *pathname);
 
 /**

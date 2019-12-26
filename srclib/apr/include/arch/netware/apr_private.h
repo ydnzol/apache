@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -75,17 +75,19 @@
 #include <time.h>
 #include <library.h>
 
+//#include "memcheck.h"
+
 /* Use this section to define all of the HAVE_FOO_H
  * that are required to build properly.
  */
 #define HAVE_DLFCN_H    1
 #define HAVE_LIMITS_H   1
+//#define HAVE_MALLOC_H 1
 #define HAVE_SIGNAL_H   1
-#define HAVE_STDDEF_H   1
+/* #define HAVE_STDDEF_H 1 why not? */
 #define HAVE_STDLIB_H   1
 #define HAVE_SYS_STAT_H 1
 #define HAVE_FCNTL_H    1
-#define HAVE_ICONV_H    1
 
 #define HAVE_STRICMP    1
 #define HAVE_STRNICMP   1
@@ -94,7 +96,8 @@
 #define HAVE_MEMCHR     1
 #define HAVE_CALLOC     1
 
-/*#define DSO_USE_DLFCN */
+#define ALLOC_USE_MALLOC
+#define DSO_USE_DLFCN
 
 #ifdef NW_BUILD_IPV6
 #define HAVE_GETADDRINFO 1
@@ -160,10 +163,20 @@ typedef void (Sigfunc)(int);
 
 void netware_pool_proc_cleanup ();
 
+// library-private data...
+extern int  gLibId;
+extern void *gLibHandle;
+
 /* NLM registration routines for managing which NLMs
     are using the library. */
 int register_NLM(void *NLMHandle);
 int unregister_NLM(void *NLMHandle);
+
+/* Application global data management */
+int setGlobalPool(void *data, int proc);
+void* getGlobalPool(int proc);
+int setStatCache(void *data, int proc);
+void* getStatCache(int proc);
 
 /* Redefine malloc to use the library malloc call so 
     that all of the memory resources will be owned

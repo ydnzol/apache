@@ -24,9 +24,6 @@
 
 </summary>
 
-<seealso><a href="invoking.html">Starting Apache</a></seealso>
-<seealso><a href="stopping.html">Stopping and Restarting</a></seealso>
-
 <section id="overview"><title>Overview for the
     impatient</title>
 
@@ -144,22 +141,33 @@
 <section id="download"><title>Download</title>
 
     <p>Apache can be downloaded from the <a
-    href="http://httpd.apache.org/download.cgi">Apache HTTP Server
-    download site</a> which lists several mirrors. You'll find here
-    the latest stable release.</p>
+    href="http://www.apache.org/dist/httpd/">Apache Software
+    Foundation download site</a> or from a <a
+    href="http://www.apache.org/dyn/closer.cgi/httpd/">nearby
+    mirror</a>.</p>
+
+    <p>Version numbers that end in <code>alpha</code> indicate
+    early pre-test versions which may or may not work. Version
+    numbers ending in <code>beta</code> indicate more reliable
+    releases that still require further testing or bug fixing. If
+    you wish to download the best available production release of
+    the Apache HTTP Server, you should choose the latest version
+    with neither <code>alpha</code> nor <code>beta</code> in its
+    filename.</p>
 
     <p>After downloading, especially if a mirror site is used, it
     is important to verify that you have a complete and unmodified
     version of the Apache HTTP Server. This can be accomplished by
     testing the downloaded tarball against the PGP signature. This,
     in turn, is a two step procedure. First, you must obtain the
-    <a href="http://www.apache.org/dist/httpd/KEYS"><code>KEYS</code></a>
-    file from the Apache distribution site, too. (To assure that the
-    <code>KEYS</code> file itself has not been modified, it may be a good
-    idea to use a file from a previous distribution of Apache or import
-    the keys from a public key server.) The keys are imported into
-    your personal key ring using one of the following commands (depending
-    on your pgp version):</p>
+    <code>KEYS</code> file from the <a
+    href="http://www.apache.org/dist/httpd/">Apache distribution
+    site</a>. (To assure that the <code>KEYS</code> file itself has
+    not been modified, it may be a good idea to use a file from a
+    previous distribution of Apache or import the keys from a
+    public key server.) The keys are imported into your personal
+    key ring using one of the following commands (depending on your
+    pgp version):</p>
 
 <example>$ pgp &lt; KEYS</example>
 
@@ -169,14 +177,11 @@
 
     <p>The next step is to test the tarball against the PGP
     signature, which should always be obtained from the <a
-    href="http://httpd.apache.org/download.cgi">main Apache
-    website</a>. A link to the signature file is placed behind the
-    corresponding download link or may be found in the particular
-    directory at the <a href="http://www.apache.org/dist/httpd/">Apache
-    distribution site</a>. Its filename is identical to the source
-    tarball with the addition of <code>.asc</code>. Then you can check
-    the distribution with one of the following commands (again,
-    depending on your pgp version):</p>
+    href="http://www.apache.org/dist/httpd/">main Apache
+    website</a>. The signature file has a filename identical to the
+    source tarball with the addition of <code>.asc</code>. Then you
+    can check the distribution with one of the following commands
+    (again, depending on your pgp version):</p>
 
 <example>$ pgp httpd-2_0_<em>NN</em>.tar.gz.asc</example>
 
@@ -239,8 +244,7 @@
     <p>For a short impression of what possibilities you have, here
     is a typical example which compiles Apache for the installation
     tree <code>/sw/pkg/apache</code> with a particular compiler and flags
-    plus the two additional modules <module>mod_rewrite</module> and
-    <module>mod_speling</module> for
+    plus the two additional modules mod_rewrite and mod_speling for
     later loading through the DSO mechanism:</p>
 
 <example>
@@ -290,14 +294,14 @@
 
       <dt><code>LIBS=...</code></dt>
 
-      <dd>Library location information ("<code>-L</code>" and
-      "<code>-l</code>" options) to pass to the linker.</dd>
+      <dd>Library location information ("-L" and "-l" options) to
+      pass to the linker.</dd>
 
       <dt><code>INCLUDES=...</code></dt>
 
-      <dd>Header file search directories ("<code>-I<em>dir</em></code>").</dd>
+      <dd>Header file search directories ("-I<em>dir</em>").</dd>
 
-      <dt><code>TARGET=...</code> [Default: <code>apache</code>]</dt>
+      <dt><code>TARGET=...</code> [Default: apache]</dt>
 
       <dd>Name of the executable which will be built.</dd>
 
@@ -333,7 +337,7 @@
 
       <dt><code>--quiet</code></dt>
 
-      <dd>Prevents the printing of the usual "<code>checking...</code>"
+      <dd>Prevents the printing of the usual "checking..."
       messages.</dd>
 
       <dt><code>--verbose</code></dt>
@@ -352,7 +356,7 @@
 
     <dl>
       <dt><code>--prefix=<em>PREFIX</em></code> [Default:
-      <code>/usr/local/apache2</code>]</dt>
+      /usr/local/apache2]</dt>
 
       <dd>Specifies the directory under which the Apache files will
       be installed.</dd>
@@ -363,7 +367,7 @@
 
     <dl>
       <dt><code>--exec-prefix=<em>EPREFIX</em></code> [Default:
-      <code><em>PREFIX</em></code>]</dt>
+      <em>PREFIX</em>]</dt>
 
       <dd>Specifies the directory under which
       architecture-dependent files will be placed.</dd>
@@ -397,7 +401,7 @@
     are available in various modules. During the configuration
     process, you must select which modules to compile for use with
     your server. You can view a <a
-    href="mod/">list of modules</a> included in
+    href="mod/index.html">list of modules</a> included in
     the documentation. Those modules with a <a
     href="mod/module-dict.html#Status">status</a> of "Base" are
     included by default and must be specifically disabled if you do
@@ -452,8 +456,7 @@
     <code>--enable-modules</code> and
     <code>--enable-mods-shared</code> options is usually a
     space-separated list of module identifiers. For example, to
-    enable <module>mod_dav</module> and <module>mod_info</module>,
-    you can either use</p>
+    enable mod_dav and mod_info, you can either use</p>
 
 <example>./configure --enable-dav --enable-info</example>
 
@@ -466,7 +469,7 @@
     in one step. You can then remove any modules that you do not
     want with the <code>--disable-<em>MODULE</em></code> option.
     For example, to include all modules as DSOs with the exception
-    of <module>mod_info</module>, you can use</p>
+    of mod_info, you can use</p>
 
 <example>
       ./configure --enable-mods-shared=all
@@ -554,15 +557,14 @@ seperated by a colon.</dd>
 
     <p>Next, you can customize your Apache HTTP server by editing
     the <a href="configuring.html">configuration files</a> under
-    <code><em>PREFIX</em>/conf/</code>.</p>
+    <em>PREFIX</em>/conf/.</p>
 
 <example>$ vi <em>PREFIX</em>/conf/httpd.conf</example>
 
     <p>Have a look at the Apache manual under <a
-    href="./">docs/manual/</a> or consult <a
-    href="http://httpd.apache.org/docs-2.0/"
-    >http://httpd.apache.org/docs-2.0/</a> for the most recent version of
-    this manual and a complete reference of available <a
+    href="./">docs/manual/</a> or <a
+    href="http://httpd.apache.org/docs/">http://httpd.apache.org/docs-2.0/</a>
+    for a complete reference of available <a
     href="mod/directives.html">configuration directives</a>.</p>
 </section>
 

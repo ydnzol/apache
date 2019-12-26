@@ -1,232 +1,3 @@
-Changes with Apache 2.0.44
-
-  *) mod_autoindex: Bring forward the IndexOptions IgnoreCase option
-     from Apache 1.3.  PR 14276
-     [David Shane Holden <dpejesh@yahoo.com>, William Rowe]
-
-  *) mod_mime: Workaround to prevent a segfault if r->filename=NULL
-     [Brian Pane]
- 
-  *) Reorder the definitions for mod_ldap and mod_auth_ldap within
-     config.m4 to make sure the parent mod_ldap is defined first.
-     This ensures that mod_ldap comes before mod_auth_ldap in the
-     httpd.conf file, which is necessary for mod_auth_ldap to load.
-     PR 14256  [Graham Leggett]
-
-  *) Fix the building of cgi command lines when the query string
-     contains '='.  PR 13914  [Ville Skyttä <ville.skytta@iki.fi>,
-     Jeff Trawick]
-
-  *) Rename CacheMaxStreamingBuffer to MCacheMaxStreamingBuffer. Move
-     implementation of MCacheMaxStreamingBuffer from mod_cache to
-     mod_mem_cache. MCacheMaxStreamingBuffer now defaults to the
-     lesser of 100,000 bytes or MCacheMaxCacheObjectSize. This should 
-     eliminate the need for explicitly coding MCacheMaxStreamingBuffer
-     in most configurations. [Bill Stoddard]
-
-  *) Replace APU_HAS_LDAPSSL_CLIENT_INIT with APU_HAS_LDAP_NETSCAPE_SSL
-     as set by apr-util in util_ldap.c. This should allow mod_ldap
-     to work with the Netscape/Mozilla LDAP library. [Øyvin Sømme
-     <somme@oslo.westerngeco.slb.com>, Graham Leggett]
-
-  *) Fix critical bug in new --enable-v4-mapped configure option
-     implementation which broke IPv4 listening sockets on some
-     systems.  [hiroyuki hanai <hanai@imgsrc.co.jp>]
-
-  *) mod_setenvif: Fix BrowserMatchNoCase support for non-regex
-     patterns [André Malo <nd@perlig.de>]
-
-  *) Add version string to provider API.  [Justin Erenkrantz]
- 
-  *) mod_negotiation: Set the appropriate mime response headers
-     (Content-Type, charset, Content-Language and Content-Encoding)
-     for negotated type-map "Body:" responses (such as the error
-     pages.)  [André Malo <nd@perlig.de>]
-
-  *) mod_log_config: Allow '%%' escaping in CustomLog format
-     strings to insert a literal, single '%'.
-     [André Malo <nd@perlig.de>]
-
-  *) mod_autoindex: AddDescription directives for directories
-     now work as in Apache 1.3, where no trailing '/' is
-     specified on the directory name.  Previously, the trailing
-     '/' *had* to be specified, which was incompatible with
-     Apache 1.3.  PR 7990  [Jeff Trawick]
-
-  *) Fix for PR 14556. The expiry calculations in mod_cache were
-     trying to perform "now + ((date - lastmod) * factor)" where
-     date == lastmod resulting in "now + 0". The code now follows
-     the else path (using the default expiration) if date is
-     equal to lastmod. [rx@armstrike.com (Sergey), Paul J. Reder]
-
-  *) Use AP_DECLARE in the debug versions of ap_strXXX in case the
-     default calling convention is not the same as the one used by
-     AP_DECLARE.  [Juan Rivera <Juan.Rivera@citrix.com>]
-
-  *) mod_cache: Don't cache response header fields designated
-     as hop-by-hop headers in HTTP/1.1 (RFC 2616 Section 13.5.1).
-     [Estrade Matthieu <estrade-m@ifrance.com>, Brian Pane]
-
-  *) mod_cgid: Handle environment variables containing newlines.
-     PR 14550  [Piotr Czejkowski <apache@czarny.eu.org>, Jeff
-     Trawick]
-
-  *) Move mod_ext_filter out of experimental and into filters.
-     [Jeff Trawick]
-
-  *) Fixed a memory leak in mod_deflate with dynamic content.
-     PR 14321  [Ken Franken <kfranken@decisionmark.com>]
-
-  *) Add --[enable|disable]-v4-mapped configure option to control
-     whether or not Apache expects to handle IPv4 connections
-     on IPv6 listening sockets.  Either setting will work on 
-     systems with the IPV6_V6ONLY socket option.  --enable-v4-mapped
-     must be used on systems that always allow IPv4 connections on
-     IPv6 listening sockets.  PR 14037 (Bugzilla), PR 7492 (Gnats)
-     [Jeff Trawick]
-
-  *) This fixes a problem where the underlying cache code
-     indicated that there was one more element on the cache
-     than there actually was. This happened since element 0
-     exists but is not used. This code allocates the correct
-     number of useable elements and reports the number of
-     actually used elements. The previous code only allowed
-     MCacheMaxObjectCount-1 objects to be stored in the
-     cache. [Paul J. Reder]
-
-  *) mod_setenvif: Add SERVER_ADDR special keyword to allow
-     envariable setting according to the server IP address
-     which received the request.  [Ken Coar]
-
-  *) mod_cgid: Terminate CGI scripts when the client connection 
-     drops.  PR 8388  [Jeff Trawick]
-
-  *) Rearrange OpenSSL engine initialization to support RAND 
-     redirection on crypto accelerator. 
-     [Frederic DONNAT <frederic.donnat@zencod.com>]
-
-  *) Always emit Vary header if mod_deflate is involved in the
-     request.  [Andre Malo <nd@perlig.de>]
-
-  *) mod_isapi: Stop unsetting the 'empty' query string result with
-     a NULL argument in ecb->lpszQueryString, eliminating segfaults
-     for some ISAPI modules.  PR 14399
-     [Detlev Vendt <detlev.vendt@brillit.de>]
-
-  *) mod_isapi: Fix an issue where the HSE_REQ_DONE_WITH_SESSION
-     notification is received before the HttpExtensionProc() returns 
-     HSE_STATUS_PENDING.  This only affected isapi .dll's configured 
-     with the ISAPIFakeAsync on directive.  PR 11918
-     [John DeSetto <jdesetto@radiantsystems.com>, William Rowe]
-
-  *) mod_isapi: Fix the issue where all results from mod_isapi would
-     run through the core die handler resulting in invalid responses
-     or access log entries.  PR 10216 [William Rowe]
-
-  *) Improves the user friendliness of the CacheRoot processing
-     over my last pass. This version avoids the pool allocations
-     but doesn't avoid all of the runtime checks. It no longer
-     terminates during post-config processing. An error is logged
-     once per worker, indicating that the CacheRoot needs to be set.
-     [Paul J. Reder]
-
-  *) Fix a bug where we keep files open until the end of a 
-     keepalive connection, which can result in:
-     (24)Too many open files: file permissions deny server access
-     especially on threaded servers.  [Greg Ames, Jeff Trawick]
-
-  *) Fix a bug in which mod_proxy sent an invalid Content-Length
-     when a proxied URL was invoked as a server-side include within
-     a page generated in response to a form POST.  [Brian Pane]
-
-  *) Added code to process min and max file size directives and to
-     init the expirychk flag in mod_disk_cache. Added a clarifying
-     comment to cache_util.   [Paul J. Reder]
-
-  *) The value emitted by ServerSignature now mimics the Server HTTP
-     header as controlled by ServerTokens.  [Francis Daly <deva@daoine.org>]
-
-  *) Gracefully handly retry situations in the SSL input filter,
-     by following the SSL libraries' retry semantics.
-     [William Rowe]
-
-  *) Terminate CGI scripts when the client connection drops.  This
-     fix only applies to some normal paths in mod_cgi.  mod_cgid
-     is still busted.  PR 8388  [Jeff Trawick]
-
-  *) Fix a bug where 416 "Range not satisfiable" was being
-     returned for content that should have been redirected.
-     [Greg Ames]
-
-  *) Fix memory leak in mod_ssl from internal SSL library allocations
-     within SSL_get_peer_certificate and X509_get_pubkey.
-     [Zvi Har'El <rl@math.technion.ac.il>
-      Madhusudan Mathihalli <madhusudan_mathihalli@hp.com>].
-
-  *) mod_ssl uses free() inappropriately in several places, to free
-     memory which has been previously allocated inside OpenSSL.
-     Such memory should be freed with OPENSSL_free(), not with free().
-     [Nadav Har'El <nyh@math.technion.ac.il>,
-      Madhusudan Mathihalli <madhusudan_mathihalli@hp.com>].
-
-  *) Emit a message to the error log when we return 404 because
-     the URI contained '%2f'.  (This was previously nastily silent
-     and difficult to debug.)  [Ken Coar]
-
-  *) Fix streaming output from an nph- CGI script.  CGI:IRC now
-     works.  PR 8482  [Jeff Trawick]
-
-  *) More accurate logging of bytes sent in mod_logio when
-     the client terminates the connection before the response
-     is completely sent  [Bojan Smojver <bojan@rexursive.com>]
-
-  *) Fix some problems in the perchild MPM.  
-     [Jonas Eriksson <jonas@webkonsulterna.com>]
-
-  *) Change the CacheRoot processing to check for a required
-     value at config time. This saves a lot of wasted processing
-     if the mod_disk_cache module is loaded but no CacheRoot
-     was provided. This fix also adds code to log an error
-     and avoid useless pallocs and procesing when the computed
-     cache file name cannot be opened. This also updates the
-     docs accordingly.  [Paul J. Reder]
-
-  *) Introduce the EnableSendfile directive, allowing users of NFS 
-     shares to disable sendfile mechanics when they either fail
-     outright or provide intermitantly corrupted data.  PR 
-     [William Rowe]
-
-  *) Resolve the error "An operation was attempted on something 
-     that is not a socket.  : winnt_accept: AcceptEx failed. 
-     Attempting to recover." for users of various firewall and
-     anti-virus software on Windows.  PR 8325  [William Rowe]
-
-  *) Add the ProxyBadHeader directive, which gives the admin some
-     control on how mod_proxy should handle bogus HTTP headers from
-     proxied servers. This allows 2.0 to "emulate" 1.3's behavior if
-     desired. [Jim Jagielski]
-
-  *) Change the LDAP modules to export their symbols correctly
-     during a Windows build. Add dsp files for Windows. Update
-     README.ldap file for Windows build instructions.
-     [Andre Schild <A.Schild@aarboard.ch>]
-
-  *) Performance improvements for the code that generates HTTP
-     response headers  [Brian Pane]
-
-  *) Add -S as a synonym for -t -DDUMP_VHOSTS.
-     [Thom May <thom@planetarytramp.net>]
-
-  *) Fix a bug with dbm rewrite maps which caused the wrong value to
-     be used when the key was not found in the dbm.  PR 13204
-     [Jeff Trawick]
-
-  *) Fix a problem with streaming script output and mod_cgid.
-     [Jeff Trawick]
-
-  *) Add ap_register_provider/ap_lookup_provider API.
-     [John K. Sterling <john@sterls.com>, Justin Erenkrantz]
-
 Changes with Apache 2.0.43
 
   *) SECURITY: [CAN-2002-0840] HTML-escape the address produced by 
@@ -252,9 +23,8 @@ Changes with Apache 2.0.43
      could lead to an infinite loop.  PR 12705  
      [amund.elstad@ergo.no (Amund Elstad), Jeff Trawick]
 
-  *) SECURITY: CAN-2002-1156 (cve.mitre.org)
-      Fix the exposure of CGI source when a POST request is sent to 
-      a location where both DAV and CGI are enabled. [Ryan Bloom]
+  *) SECURITY: Allow POST requests and CGI scripts to work when DAV 
+     is enabled on the location.  [Ryan Bloom]
 
   *) Allow the UserDir directive to accept a list of directories.
      This matches what Apache 1.3 does.  Also add documentation for
@@ -420,13 +190,6 @@ Changes with Apache 2.0.41
      aside a small file for potential concatenation with the next
      response on the connection, set aside the file descriptor rather
      than copying the file into the heap.  [Brian Pane]
-
-  *) Modified version check on openssl so that it finds the executable
-     first and then performs a check of the version, only warning the
-     user if they chose, or we selected, an old version of OpenSSL.
-     This change also allows the code to work for non-openssl libraries
-     selected via the --with-ssl=dir option, which can override the
-     automated library check in any case.  [Roy Fielding]
 
 Changes with Apache 2.0.40
 
@@ -756,8 +519,7 @@ Changes with Apache 2.0.37
      the pipes and spawning functionality working.
      [Brad Nicholes]
 
-  *) SECURITY: CAN-2002-0392 (cve.mitre.org) [CERT VU#944335]
-     Detect overflow when reading the hex bytes forming a chunk line.
+  *) Detect overflow when reading the hex bytes forming a chunk line.
      [Aaron Bannert]
 
   *) Allow RewriteMap prg:'s to take command-line arguments.  PR 8464.

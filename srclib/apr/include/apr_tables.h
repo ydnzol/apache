@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -86,10 +86,9 @@ extern "C" {
 /** the table abstract data type */
 typedef struct apr_table_t apr_table_t;
 
-/** @see apr_array_header_t */
+/** An opaque array type */
 typedef struct apr_array_header_t apr_array_header_t;
 
-/** An opaque array type */
 struct apr_array_header_t {
     /** The pool the array is allocated out of */
     apr_pool_t *pool;
@@ -205,7 +204,7 @@ APR_DECLARE(apr_array_header_t *) apr_array_copy_hdr(apr_pool_t *p,
  * @param p The pool to allocate the new array out of
  * @param first The array to put first in the new array.
  * @param second The array to put second in the new array.
- * @return A new array containing the data from the two arrays passed in.
+ * @param return A new array containing the data from the two arrays passed in.
 */
 APR_DECLARE(apr_array_header_t *) apr_array_append(apr_pool_t *p,
                                       const apr_array_header_t *first,
@@ -354,7 +353,7 @@ APR_DECLARE(apr_table_t *) apr_table_overlay(apr_pool_t *p,
  * and apr_table_vdo().
  * @param rec The data passed as the first argument to apr_table_[v]do()
  * @param key The key from this iteration of the table
- * @param value The value from this iteration of the table
+ * @param key The value from this iteration of the table
  * @remark Iteration continues while this callback function returns non-zero.
  * To export the callback function for apr_table_[v]do() it must be declared 
  * in the _NONSTD convention.

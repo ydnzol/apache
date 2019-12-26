@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -160,7 +160,6 @@ typedef void*                 apr_os_shm_t;
  * denominator typedefs for  all UNIX-like systems.  :)
  */
 
-/** Basic OS process mutex structure. */
 struct apr_os_proc_mutex_t {
 #if APR_HAS_SYSVSEM_SERIALIZE || APR_HAS_FCNTL_SERIALIZE || APR_HAS_FLOCK_SERIALIZE
     int crossproc;
@@ -176,23 +175,18 @@ struct apr_os_proc_mutex_t {
 #endif
 };
 
-typedef int                   apr_os_file_t;        /**< native file */
-typedef DIR                   apr_os_dir_t;         /**< native dir */
-typedef int                   apr_os_sock_t;        /**< native dir */
-typedef struct apr_os_proc_mutex_t  apr_os_proc_mutex_t; /**< native proces
-                                                          *   mutex
-                                                          */
+typedef int                   apr_os_file_t;
+typedef DIR                   apr_os_dir_t;
+typedef int                   apr_os_sock_t;
+typedef struct apr_os_proc_mutex_t  apr_os_proc_mutex_t;
 #if APR_HAS_THREADS && APR_HAVE_PTHREAD_H 
-typedef pthread_t             apr_os_thread_t;      /**< native thread */
-typedef pthread_key_t         apr_os_threadkey_t;   /**< native thread address
-                                                     *   space */
+typedef pthread_t             apr_os_thread_t;
+typedef pthread_key_t         apr_os_threadkey_t;
 #endif
-typedef pid_t                 apr_os_proc_t;        /**< native pid */
-typedef struct timeval        apr_os_imp_time_t;    /**< native timeval */
-typedef struct tm             apr_os_exp_time_t;    /**< native tm */
-/** @var apr_os_dso_handle_t
- * native dso types
- */
+typedef pid_t                 apr_os_proc_t;
+typedef struct timeval        apr_os_imp_time_t;
+typedef struct tm             apr_os_exp_time_t;
+/* dso types... */
 #if defined(HPUX) || defined(HPUX10) || defined(HPUX11)
 #include <dl.h>
 typedef shl_t                 apr_os_dso_handle_t;
@@ -202,12 +196,12 @@ typedef NSModule              apr_os_dso_handle_t;
 #else
 typedef void *                apr_os_dso_handle_t;
 #endif
-typedef void*                 apr_os_shm_t;         /**< native SHM */
+typedef void*                 apr_os_shm_t;
 
 #endif
 
 /**
- * @typedef apr_os_sock_info_t
+ * @typedef apr_os_sock_t
  * @brief alias for local OS socket
  */
 /**
@@ -218,24 +212,16 @@ struct apr_os_sock_info_t {
     apr_os_sock_t *os_sock; /**< always required */
     struct sockaddr *local; /**< NULL if not yet bound */
     struct sockaddr *remote; /**< NULL if not connected */
-    int family;             /**< always required (APR_INET, APR_INET6, etc.) */
-    int type;               /**< always required (SOCK_STREAM, SOCK_DGRAM, etc.) */
-#ifdef APR_ENABLE_FOR_1_0   /**< enable with APR 1.0 */
-    int protocol;           /**< 0 or actual protocol (APR_PROTO_SCTP, APR_PROTO_TCP, etc.) */
-#endif
+    int family;             /**< always required (APR_INET, APR_INET6, etc. */
+    int type;               /**< always required (SOCK_STREAM, SOCK_DGRAM, etc. */
 };
 
 typedef struct apr_os_sock_info_t apr_os_sock_info_t;
 
-#if APR_PROC_MUTEX_IS_GLOBAL || defined(DOXYGEN)
-/** Opaque global mutex type */
+#if APR_PROC_MUTEX_IS_GLOBAL
 #define apr_os_global_mutex_t apr_os_proc_mutex_t
-/** @return apr_os_global_mutex */
 #define apr_os_global_mutex_get apr_os_proc_mutex_get
 #else
-    /** Thread and process mutex for those platforms where process mutexes
-     *  are not held in threads.
-     */
     struct apr_os_global_mutex_t {
         apr_pool_t *pool;
         apr_proc_mutex_t *proc_mutex;
@@ -294,8 +280,8 @@ APR_DECLARE(apr_status_t) apr_os_exp_time_get(apr_os_exp_time_t **ostime,
 
 /**
  * Get the imploded time in the platforms native format.
- * @param ostime  the native time format
- * @param aprtime the time to convert
+ * @param ostime the native time format
+ * @param aprtimethe time to convert
  */
 APR_DECLARE(apr_status_t) apr_os_imp_time_get(apr_os_imp_time_t **ostime, 
                                               apr_time_t *aprtime);
@@ -378,18 +364,6 @@ APR_DECLARE(apr_status_t) apr_os_file_put(apr_file_t **file,
                                           apr_int32_t flags, apr_pool_t *cont); 
 
 /**
- * convert the file from os specific type to apr type.
- * @param file The apr file we are converting to.
- * @param thefile The os specific pipe to convert
- * @param cont The pool to use if it is needed.
- * @remark On Unix, it is only possible to put a file descriptor into
- *         an apr file type.
- */
-APR_DECLARE(apr_status_t) apr_os_pipe_put(apr_file_t **file,
-                                          apr_os_file_t *thefile,
-                                          apr_pool_t *cont);
-
-/**
  * convert the dir from os specific type to apr type.
  * @param dir The apr dir we are converting to.
  * @param thedir The os specific dir to convert
@@ -404,8 +378,6 @@ APR_DECLARE(apr_status_t) apr_os_dir_put(apr_dir_t **dir,
  * @param sock The pool to use.
  * @param thesock The socket to convert to.
  * @param cont The socket we are converting to an apr type.
- * @remark If it is a true socket, it is best to call apr_os_sock_make()
- *         and provide APR with more information about the socket.
  */
 APR_DECLARE(apr_status_t) apr_os_sock_put(apr_socket_t **sock, 
                                           apr_os_sock_t *thesock, 
@@ -501,22 +473,6 @@ APR_DECLARE(apr_status_t) apr_os_uuid_get(unsigned char *uuid_data);
 
 /** @} */
 #endif /* APR_HAS_DSO */
-
-
-/**
- * Get the name of the system default characer set.
- * @param pool the pool to allocate the name from, if needed
- */
-APR_DECLARE(const char*) apr_os_default_encoding(apr_pool_t *pool);
-
-
-/**
- * Get the name of the current locale character set.
- * @param pool the pool to allocate the name from, if needed
- * @remark Defers to apr_os_default_encoding if the current locale's
- * data can't be retreved on this system.
- */
-APR_DECLARE(const char*) apr_os_locale_encoding(apr_pool_t *pool);
 
 
 #ifdef __cplusplus

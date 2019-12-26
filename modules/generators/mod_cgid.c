@@ -151,9 +151,8 @@ static int is_scriptaliased(request_rec *r)
 #define DEFAULT_BUFBYTES 1024 
 #define DEFAULT_SOCKET  DEFAULT_REL_RUNTIMEDIR "/cgisock"
 
-#define CGI_REQ    1
-#define SSI_REQ    2
-#define GETPID_REQ 3 /* get the pid of script created for prior request */
+#define CGI_REQ 1
+#define SSI_REQ 2
 
 /* DEFAULT_CGID_LISTENBACKLOG controls the max depth on the unix socket's
  * pending connection queue.  If a bunch of cgi requests arrive at about
@@ -186,31 +185,13 @@ typedef struct {
     int bufbytes; 
 } cgid_server_conf; 
 
-typedef struct {
-    int req_type; /* request type (CGI_REQ, SSI_REQ, etc.) */
-    unsigned long conn_id; /* connection id; daemon uses this as a hash value
-                            * to find the script pid when it is time for that
-                            * process to be cleaned up
-                            */
-    int core_module_index;
-    int have_suexec;
-    int suexec_module_index;
-    suexec_config_t suexec_cfg;
-    int env_count;
-    apr_size_t filename_len;
-    apr_size_t argv0_len;
-    apr_size_t uri_len;
-    apr_size_t args_len;
-    apr_size_t mod_userdir_user_len;
-} cgid_req_t;
-
-/* This routine is called to create the argument list to be passed
+/* If a request includes query info in the URL (stuff after "?"), and
+ * the query info does not contain "=" (indicative of a FORM submission),
+ * then this routine is called to create the argument list to be passed
  * to the CGI script.  When suexec is enabled, the suexec path, user, and
  * group are the first three arguments to be passed; if not, all three
  * must be NULL.  The query info is split into separate arguments, where
  * "+" is the separator between keyword arguments.
- *
- * Do not process the args if they containing an '=' assignment.
  */
 static char **create_argv(apr_pool_t *p, char *path, char *user, char *group,
                           char *av0, const char *args)
@@ -220,16 +201,11 @@ static char **create_argv(apr_pool_t *p, char *path, char *user, char *group,
     char *w;
     int idx = 0;
 
-    if (ap_strchr_c(args, '=')) {
-        numwords = 0;
-    }
-    else {
-        /* count the number of keywords */
-        
-        for (x = 0, numwords = 1; args[x]; x++) {
-            if (args[x] == '+') {
-                ++numwords;
-            }
+    /* count the number of keywords */
+
+    for (x = 0, numwords = 1; args[x]; x++) {
+        if (args[x] == '+') {
+            ++numwords;
         }
     }
 
@@ -290,133 +266,83 @@ static void cgid_maint(int reason, void *data, apr_wait_t status)
 }
 #endif
 
-/* deal with incomplete reads and signals
- * assume you really have to read buf_size bytes
- */
-static apr_status_t sock_read(int fd, void *vbuf, size_t buf_size)
-{
-    char *buf = vbuf;
-    int rc;
-    size_t bytes_read = 0;
-
-    do {
-        do {
-            rc = read(fd, buf + bytes_read, buf_size - bytes_read);
-        } while (rc < 0 && errno == EINTR);
-        switch(rc) {
-        case -1:
-            return errno;
-        case 0: /* unexpected */
-            return ECONNRESET;
-        default:
-            bytes_read += rc;
-        }
-    } while (bytes_read < buf_size);
-
-    return APR_SUCCESS;
-}
-
-/* deal with signals
- */
-static apr_status_t sock_write(int fd, const void *buf, size_t buf_size)
-{
-    int rc;
-
-    do {
-        rc = write(fd, buf, buf_size);
-    } while (rc < 0 && errno == EINTR);
-    if (rc < 0) {
-        return errno;
-    }
-
-    return APR_SUCCESS;
-}
-
-static apr_status_t get_req(int fd, request_rec *r, char **argv0, char ***env, 
-                            cgid_req_t *req)
+static int get_req(int fd, request_rec *r, char **argv0, char ***env, int *req_type) 
 { 
-    int i; 
-    char *user;
+    int i, len, j, rc; 
+    unsigned char *data; 
     char **environ; 
     core_dir_config *temp_core; 
-    void **dconf;
-    apr_status_t stat;
+    void **dconf; 
+    module *suexec_mod = ap_find_linked_module("mod_suexec.c");
 
     r->server = apr_pcalloc(r->pool, sizeof(server_rec)); 
 
-    /* read the request header */
-    stat = sock_read(fd, req, sizeof(*req));
-    if (stat != APR_SUCCESS) {
-        return stat;
+    rc = read(fd, req_type, sizeof(int));
+    if (rc != sizeof(int)) {
+        return 1;
     }
-    if (req->req_type == GETPID_REQ) {
-        /* no more data sent for this request */
-        return APR_SUCCESS;
+    rc = read(fd, &j, sizeof(int));
+    if (rc != sizeof(int)) {
+        return 1;
+    }
+    rc = read(fd, &len, sizeof(int));
+    if (rc != sizeof(int)) {
+        return 1;
     }
 
-    /* handle module indexes and such */
+    data = apr_pcalloc(r->pool, len + 1); /* get a cleared byte for final '\0' */
+    rc = read(fd, data, len); 
+    if (rc != len) {
+        return 1;
+    }
+
+    r->filename = ap_getword(r->pool, (const char **)&data, '\n'); 
+    *argv0 = ap_getword(r->pool, (const char **)&data, '\n'); 
+
+    r->uri = ap_getword(r->pool, (const char **)&data, '\n'); 
+    
+    environ = apr_pcalloc(r->pool, (j + 2) *sizeof(char *)); 
+    i = 0; 
+    for (i = 0; i < j; i++) { 
+        environ[i] = ap_getword(r->pool, (const char **)&data, '\n'); 
+    } 
+    *env = environ; 
+    r->args = ap_getword(r->pool, (const char **)&data, '\n'); 
+  
+    rc = read(fd, &i, sizeof(int)); 
+    if (rc != sizeof(int)) {
+        return 1;
+    }
+     
+    /* add 1, so that if i == 0, we still malloc something. */ 
+
     dconf = (void **) apr_pcalloc(r->pool, sizeof(void *) * (total_modules + DYNAMIC_MODULE_LIMIT));
 
     temp_core = (core_dir_config *)apr_palloc(r->pool, sizeof(core_module)); 
-    dconf[req->core_module_index] = (void *)temp_core;
 
-    if (req->have_suexec) {
-        dconf[req->suexec_module_index] = &req->suexec_cfg;
+    dconf[i] = (void *)temp_core; 
+
+    if (suexec_mod) {
+        suexec_config_t *suexec_cfg = apr_pcalloc(r->pool, sizeof(*suexec_cfg));
+
+        rc = read(fd, &i, sizeof(int));
+        if (rc != sizeof(int)) {
+            return 1;
+        }
+        rc = read(fd, suexec_cfg, sizeof(*suexec_cfg));
+        if (rc != sizeof(*suexec_cfg)) {
+            return 1;
+        }
+        dconf[i] = (void *)suexec_cfg;
     }
 
     r->per_dir_config = (ap_conf_vector_t *)dconf; 
-
-    /* Read the filename, argv0, uri, and args */
-    r->filename = apr_pcalloc(r->pool, req->filename_len + 1);
-    *argv0 = apr_pcalloc(r->pool, req->argv0_len + 1);
-    r->uri = apr_pcalloc(r->pool, req->uri_len + 1);
-    if ((stat = sock_read(fd, r->filename, req->filename_len)) != APR_SUCCESS ||
-        (stat = sock_read(fd, *argv0, req->argv0_len)) != APR_SUCCESS ||
-        (stat = sock_read(fd, r->uri, req->uri_len)) != APR_SUCCESS) {
-        return stat;
-    }
-
-    r->args = apr_pcalloc(r->pool, req->args_len + 1); /* empty string if no args */
-    if (req->args_len) {
-        if ((stat = sock_read(fd, r->args, req->args_len)) != APR_SUCCESS) {
-            return stat;
-        }
-    }
-
-    /* read the environment variables */
-    environ = apr_pcalloc(r->pool, (req->env_count + 2) *sizeof(char *));
-    for (i = 0; i < req->env_count; i++) {
-        apr_size_t curlen;
-
-        if ((stat = sock_read(fd, &curlen, sizeof(curlen))) != APR_SUCCESS) {
-            return stat;
-        }
-        environ[i] = apr_pcalloc(r->pool, curlen + 1);
-        if ((stat = sock_read(fd, environ[i], curlen)) != APR_SUCCESS) {
-            return stat;
-        }
-    }
-    *env = environ;
-
-    /* basic notes table to avoid segfaults */
-    r->notes = apr_table_make(r->pool, 1);
-
-    /* mod_userdir requires the mod_userdir_user note */
-    if (req->mod_userdir_user_len) {
-        user = apr_pcalloc(r->pool, req->mod_userdir_user_len + 1); /* last byte is '\0' */
-        stat = sock_read(fd, user, req->mod_userdir_user_len);
-        if (stat != APR_SUCCESS) {
-            return stat;
-        }
-        apr_table_set(r->notes, "mod_userdir_user", (const char *)user);
-    }
-
 #if 0
 #ifdef RLIMIT_CPU 
-    sock_read(fd, &j, sizeof(int)); 
+    read(fd, &j, sizeof(int)); 
     if (j) { 
         temp_core->limit_cpu = (struct rlimit *)apr_palloc (sizeof(struct rlimit)); 
-        sock_read(fd, temp_core->limit_cpu, sizeof(struct rlimit)); 
+        read(fd, temp_core->limit_cpu, sizeof(struct rlimit)); 
     } 
     else { 
         temp_core->limit_cpu = NULL; 
@@ -424,10 +350,10 @@ static apr_status_t get_req(int fd, request_rec *r, char **argv0, char ***env,
 #endif 
 
 #if defined (RLIMIT_DATA) || defined(RLIMIT_VMEM) || defined(RLIMIT_AS) 
-    sock_read(fd, &j, sizeof(int)); 
+    read(fd, &j, sizeof(int)); 
     if (j) { 
         temp_core->limit_mem = (struct rlimit *)apr_palloc(r->pool, sizeof(struct rlimit)); 
-        sock_read(fd, temp_core->limit_mem, sizeof(struct rlimit)); 
+        read(fd, temp_core->limit_mem, sizeof(struct rlimit)); 
     } 
     else { 
         temp_core->limit_mem = NULL; 
@@ -435,10 +361,10 @@ static apr_status_t get_req(int fd, request_rec *r, char **argv0, char ***env,
 #endif 
 
 #ifdef RLIMIT_NPROC 
-    sock_read(fd, &j, sizeof(int)); 
+    read(fd, &j, sizeof(int)); 
     if (j) { 
         temp_core->limit_nproc = (struct rlimit *)apr_palloc(r->pool, sizeof(struct rlimit)); 
-        sock_read(fd, temp_core->limit_nproc, sizeof(struct rlimit)); 
+        read(fd, temp_core->limit_nproc, sizeof(struct rlimit)); 
     } 
     else { 
         temp_core->limit_nproc = NULL; 
@@ -446,116 +372,126 @@ static apr_status_t get_req(int fd, request_rec *r, char **argv0, char ***env,
 #endif 
 #endif
 
-    return APR_SUCCESS;
+    /* basic notes table to avoid segfaults */
+    r->notes = apr_table_make(r->pool, 1);
+
+    /* mod_userdir requires the mod_userdir_user note */
+    rc = read(fd, &len, sizeof(len));
+    if ((rc == sizeof(len)) && len) {
+        data = apr_pcalloc(r->pool, len + 1); /* last byte is '\0' */
+        rc = read(fd, data, len);
+        if (rc != len) {
+            return 1;
+        }
+        apr_table_set(r->notes,"mod_userdir_user", (const char *)data);
+    }
+    return 0;
 } 
 
-static apr_status_t send_req(int fd, request_rec *r, char *argv0, char **env, 
-                             int req_type) 
+
+
+static void send_req(int fd, request_rec *r, char *argv0, char **env, int req_type) 
 { 
-    int i;
-    const char *user;
+    int len, r_type = req_type; 
+    int i = 0; 
+    char *data; 
     module *suexec_mod = ap_find_linked_module("mod_suexec.c");
-    cgid_req_t req = {0};
-    suexec_config_t *suexec_cfg;
-    apr_status_t stat;
 
-    req.req_type = req_type;
-    req.conn_id = r->connection->id;
-    req.core_module_index = core_module.module_index;
-    if (suexec_mod) {
-        req.have_suexec = 1;
-        req.suexec_module_index = suexec_mod->module_index;
-        suexec_cfg = ap_get_module_config(r->per_dir_config,
-                                          suexec_mod);
-        req.suexec_cfg = *suexec_cfg;
-    }
-    for (req.env_count = 0; env[req.env_count]; req.env_count++) {
+    data = apr_pstrcat(r->pool, r->filename, "\n", argv0, "\n", r->uri, "\n", 
+                     NULL); 
+
+    for (i =0; env[i]; i++) { 
         continue; 
-    }
-    req.filename_len = strlen(r->filename);
-    req.argv0_len = strlen(argv0);
-    req.uri_len = strlen(r->uri);
-    req.args_len = r->args ? strlen(r->args) : 0;
-    user = (const char *)apr_table_get(r->notes, "mod_userdir_user");
-    if (user != NULL) {
-        req.mod_userdir_user_len = strlen(user);
+    } 
+
+    /* Write the request type (SSI "exec cmd" or cgi). */
+    if (write(fd, &r_type, sizeof(int)) < 0) {
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, errno, r,
+                     "write to cgi daemon process");
     }
 
-    /* Write the request header */
-    if ((stat = sock_write(fd, &req, sizeof(req))) != APR_SUCCESS) {
-        return stat;
-    }
+    /* Write the number of entries in the environment. */
+    if (write(fd, &i, sizeof(int)) < 0) {
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, errno, r, 
+                     "write to cgi daemon process"); 
+        }     
 
-    /* Write filename, argv0, uri, and args */
-    if ((stat = sock_write(fd, r->filename, req.filename_len)) != APR_SUCCESS ||
-        (stat = sock_write(fd, argv0, req.argv0_len)) != APR_SUCCESS ||
-        (stat = sock_write(fd, r->uri, req.uri_len)) != APR_SUCCESS) {
-        return stat;
+    for (i = 0; env[i]; i++) { 
+        data = apr_pstrcat(r->pool, data, env[i], "\n", NULL); 
+    } 
+    data = apr_pstrcat(r->pool, data, r->args, NULL); 
+    len = strlen(data); 
+    /* Write the length of the concatenated env string. */
+    if (write(fd, &len, sizeof(int)) < 0) { 
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, errno, r, 
+                     "write to cgi daemon process"); 
     }
-    if (req.args_len) {
-        if ((stat = sock_write(fd, r->args, req.args_len)) != APR_SUCCESS) {
-            return stat;
-        }
+    /* Write the concatted env string. */     
+    if (write(fd, data, len) < 0) {
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, errno, r, 
+                     "write to cgi daemon process"); 
     }
+    /* Write module_index id value. */     
+    if (write(fd, &core_module.module_index, sizeof(int)) < 0) { 
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, errno, r, 
+                     "write to cgi daemon process"); 
+    }     
+    if (suexec_mod) {
+        suexec_config_t *suexec_cfg = ap_get_module_config(r->per_dir_config,
+                                                           suexec_mod);
 
-    /* write the environment variables */
-    for (i = 0; i < req.env_count; i++) {
-        apr_size_t curlen = strlen(env[i]);
-
-        if ((stat = sock_write(fd, &curlen, sizeof(curlen))) != APR_SUCCESS) {
-            return stat;
-        }
-            
-        if ((stat = sock_write(fd, env[i], curlen)) != APR_SUCCESS) {
-            return stat;
-        }
-    }
-
-    /* send a minimal notes table */
-    if (user) {
-        if ((stat = sock_write(fd, user, req.mod_userdir_user_len)) != APR_SUCCESS) {
-            return stat;
-        }
+        write(fd, &suexec_mod->module_index, sizeof(int));
+        write(fd, suexec_cfg, sizeof(*suexec_cfg));
     }
 
 #if 0
 #ifdef RLIMIT_CPU 
     if (conf->limit_cpu) { 
         len = 1; 
-        stat = sock_write(fd, &len, sizeof(int)); 
-        stat = sock_write(fd, conf->limit_cpu, sizeof(struct rlimit)); 
+        write(fd, &len, sizeof(int)); 
+        write(fd, conf->limit_cpu, sizeof(struct rlimit)); 
     } 
     else { 
         len = 0; 
-        stat = sock_write(fd, &len, sizeof(int)); 
+        write(fd, &len, sizeof(int)); 
     } 
 #endif 
 
 #if defined(RLIMIT_DATA) || defined(RLIMIT_VMEM) || defined(RLIMIT_AS) 
     if (conf->limit_mem) { 
         len = 1; 
-        stat = sock_write(fd, &len, sizeof(int)); 
-        stat = sock_write(fd, conf->limit_mem, sizeof(struct rlimit)); 
+        write(fd, &len, sizeof(int)); 
+        write(fd, conf->limit_mem, sizeof(struct rlimit)); 
     } 
     else { 
         len = 0; 
-        stat = sock_write(fd, &len, sizeof(int)); 
+        write(fd, &len, sizeof(int)); 
     } 
 #endif 
   
 #ifdef RLIMIT_NPROC 
     if (conf->limit_nproc) { 
         len = 1; 
-        stat = sock_write(fd, &len, sizeof(int)); 
-        stat = sock_write(fd, conf->limit_nproc, sizeof(struct rlimit)); 
+        write(fd, &len, sizeof(int)); 
+        write(fd, conf->limit_nproc, sizeof(struct rlimit)); 
     } 
     else { 
         len = 0; 
-        stat = sock_write(fd, &len, sizeof(int)); 
+        write(fd, &len, sizeof(int)); 
     } 
 #endif
-#endif
-    return APR_SUCCESS;
+#endif 
+   /* send a minimal notes table */
+   data  = (char *) apr_table_get(r->notes, "mod_userdir_user");
+   if (data != NULL) {
+       len = strlen(data);
+       write(fd, &len, sizeof(len));
+       write(fd, data, len);
+   }
+   else {
+       len = 0;
+       write(fd, &len, sizeof(len));
+   }
 } 
 
 static void daemon_signal_handler(int sig)
@@ -568,14 +504,13 @@ static void daemon_signal_handler(int sig)
 static int cgid_server(void *data) 
 { 
     struct sockaddr_un unix_addr;
-    int sd, sd2, rc;
+    int sd, sd2, rc, req_type;
     mode_t omask;
     apr_socklen_t len;
     apr_pool_t *ptrans;
     server_rec *main_server = data;
     cgid_server_conf *sconf = ap_get_module_config(main_server->module_config,
                                                    &cgid_module); 
-    apr_hash_t *script_hash = apr_hash_make(pcgi);
 
     apr_pool_create(&ptrans, pcgi); 
 
@@ -639,8 +574,6 @@ static int cgid_server(void *data)
         apr_procattr_t *procattr = NULL;
         apr_proc_t *procnew = NULL;
         apr_file_t *inout;
-        cgid_req_t cgid_req;
-        apr_status_t stat;
 
         apr_pool_clear(ptrans);
 
@@ -658,32 +591,18 @@ static int cgid_server(void *data)
         r = apr_pcalloc(ptrans, sizeof(request_rec)); 
         procnew = apr_pcalloc(ptrans, sizeof(*procnew));
         r->pool = ptrans; 
-        stat = get_req(sd2, r, &argv0, &env, &cgid_req); 
-        if (stat != APR_SUCCESS) {
-            ap_log_error(APLOG_MARK, APLOG_ERR, stat,
+        rc = get_req(sd2, r, &argv0, &env, &req_type); 
+        if (rc) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0,
                          main_server,
                          "Error reading request on cgid socket");
             close(sd2);
             continue;
         }
-
-        if (cgid_req.req_type == GETPID_REQ) {
-            pid_t pid;
-
-            pid = (pid_t)apr_hash_get(script_hash, &cgid_req.conn_id, sizeof(cgid_req.conn_id));
-            if (write(sd2, &pid, sizeof(pid)) != sizeof(pid)) {
-                ap_log_error(APLOG_MARK, APLOG_ERR, 0,
-                             main_server,
-                             "Error writing pid %" APR_PID_T_FMT " to handler", pid);
-            }
-            close(sd2);
-            continue;
-        }
-
         apr_os_file_put(&r->server->error_log, &errfileno, 0, r->pool);
         apr_os_file_put(&inout, &sd2, 0, r->pool);
 
-        if (cgid_req.req_type == SSI_REQ) {
+        if (req_type == SSI_REQ) {
             in_pipe  = APR_NO_PIPE;
             out_pipe = APR_FULL_BLOCK;
             err_pipe = APR_NO_PIPE;
@@ -697,7 +616,7 @@ static int cgid_server(void *data)
         }
 
         if (((rc = apr_procattr_create(&procattr, ptrans)) != APR_SUCCESS) ||
-            ((cgid_req.req_type == CGI_REQ) && 
+            ((req_type == CGI_REQ) && 
              (((rc = apr_procattr_io_set(procattr,
                                         in_pipe,
                                         out_pipe,
@@ -737,10 +656,6 @@ static int cgid_server(void *data)
                 ap_log_rerror(APLOG_MARK, APLOG_ERR|APLOG_TOCLIENT, rc, r,
                               "couldn't create child process: %d: %s", rc, 
                               apr_filename_of_pathname(r->filename));
-            }
-            else {
-                apr_hash_set(script_hash, &cgid_req.conn_id, sizeof(cgid_req.conn_id), 
-                             (void *)procnew->pid);
             }
         }
     } 
@@ -1099,92 +1014,6 @@ static void discard_script_output(apr_bucket_brigade *bb)
  * 
  * Actual cgid handling... 
  */ 
-
-struct cleanup_script_info {
-    request_rec *r;
-    unsigned long conn_id;
-    cgid_server_conf *conf;
-};
-
-static apr_status_t dead_yet(pid_t pid, apr_interval_time_t max_wait)
-{
-    apr_interval_time_t interval = 10000; /* 10 ms */
-    apr_interval_time_t total = 0;
-
-    do {
-        if (kill(pid, 0) < 0) {
-            return APR_SUCCESS;
-        }
-        apr_sleep(interval);
-        total = total + interval;
-        if (interval < 500000) {
-            interval *= 2;
-        }
-    } while (total < max_wait);
-    return APR_EGENERAL;
-}
-
-static apr_status_t cleanup_nonchild_process(request_rec *r, pid_t pid)
-{
-    kill(pid, SIGTERM); /* in case it isn't dead yet */
-    if (dead_yet(pid, apr_time_from_sec(3)) == APR_SUCCESS) {
-        return APR_SUCCESS;
-    }
-    ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-                  "CGI process %" APR_PID_T_FMT " didn't exit, sending SIGKILL",
-                  pid);
-    kill(pid, SIGKILL);
-    if (dead_yet(pid, apr_time_from_sec(3)) == APR_SUCCESS) {
-        return APR_SUCCESS;
-    }
-    ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-                  "CGI process %" APR_PID_T_FMT " didn't exit, sending SIGKILL again",
-                  pid);
-    kill(pid, SIGKILL);
-
-    return APR_EGENERAL;
-}
-
-static apr_status_t cleanup_script(void *vptr)
-{
-    struct cleanup_script_info *info = vptr;
-    int sd;
-    int rc;
-    cgid_req_t req = {0};
-    pid_t pid;
-    apr_status_t stat;
-
-    rc = connect_to_daemon(&sd, info->r, info->conf);
-    if (rc != OK) {
-        return APR_EGENERAL;
-    }
-
-    req.req_type = GETPID_REQ;
-    req.conn_id = info->r->connection->id;
-
-    stat = sock_write(sd, &req, sizeof(req));
-    if (stat != APR_SUCCESS) {
-        close(sd);
-        return stat;
-    }
-
-    /* wait for pid of script */
-    stat = sock_read(sd, &pid, sizeof(pid));
-    if (stat != APR_SUCCESS) {
-        close(sd);
-        return stat;
-    }
-    close(sd);
-
-    if (pid == 0) {
-        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, info->r,
-                      "daemon couldn't find CGI process for connection %lu",
-                      info->conn_id);
-        return APR_EGENERAL;
-    }
-    return cleanup_nonchild_process(info->r, pid);
-}
-
 static int cgid_handler(request_rec *r) 
 { 
     conn_rec *c = r->connection;
@@ -1198,8 +1027,6 @@ static int cgid_handler(request_rec *r)
     int sd;
     char **env; 
     apr_file_t *tempsock;
-    struct cleanup_script_info *info;
-    apr_status_t rv;
 
     if (strcmp(r->handler,CGI_MAGIC_TYPE) && strcmp(r->handler,"cgi-script"))
         return DECLINED;
@@ -1267,25 +1094,14 @@ static int cgid_handler(request_rec *r)
         return retval;
     }
 
-    rv = send_req(sd, r, argv0, env, CGI_REQ); 
-    if (rv != APR_SUCCESS) {
-        ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
-                     "write to cgi daemon process");
-    }
+    send_req(sd, r, argv0, env, CGI_REQ); 
 
-    info = apr_palloc(r->pool, sizeof(struct cleanup_script_info));
-    info->r = r;
-    info->conn_id = r->connection->id;
-    info->conf = conf;
-    apr_pool_cleanup_register(r->pool, info,
-                              cleanup_script,
-                              apr_pool_cleanup_null);
     /* We are putting the socket discriptor into an apr_file_t so that we can
      * use a pipe bucket to send the data to the client.
      * Note that this does not register a cleanup for the socket.  We did
      * that explicitly right after we created the socket.
      */
-    apr_os_pipe_put(&tempsock, &sd, r->pool);
+    apr_os_file_put(&tempsock, &sd, 0, r->pool);
 
     if ((argv0 = strrchr(r->filename, '/')) != NULL) 
         argv0++; 
@@ -1304,6 +1120,7 @@ static int cgid_handler(request_rec *r)
     }
     do {
         apr_bucket *bucket;
+        apr_status_t rv;
 
         rv = ap_get_brigade(r->input_filters, bb, AP_MODE_READBYTES,
                             APR_BLOCK_READ, HUGE_STRING_LEN);
@@ -1585,7 +1402,6 @@ static int include_cmd(include_ctx_t *ctx, apr_bucket_brigade **bb, char *comman
     apr_file_t *tempsock = NULL;
     cgid_server_conf *conf = ap_get_module_config(r->server->module_config,
                                                   &cgid_module); 
-    struct cleanup_script_info *info;
 
     add_ssi_vars(r, f->next);
     env = ap_create_environment(r->pool, r->subprocess_env);
@@ -1601,23 +1417,12 @@ static int include_cmd(include_ctx_t *ctx, apr_bucket_brigade **bb, char *comman
 
     send_req(sd, r, command, env, SSI_REQ); 
 
-    info = apr_palloc(r->pool, sizeof(struct cleanup_script_info));
-    info->r = r;
-    info->conn_id = r->connection->id;
-    info->conf = conf;
-    /* for this type of request, the script is invoked through an
-     * intermediate shell process...  cleanup_script is only able 
-     * to knock out the shell process, not the actual script
-     */
-    apr_pool_cleanup_register(r->pool, info,
-                              cleanup_script,
-                              apr_pool_cleanup_null);
     /* We are putting the socket discriptor into an apr_file_t so that we can
      * use a pipe bucket to send the data to the client.
      * Note that this does not register a cleanup for the socket.  We did
      * that explicitly right after we created the socket.
      */
-    apr_os_pipe_put(&tempsock, &sd, r->pool);
+    apr_os_file_put(&tempsock, &sd, 0, r->pool);
 
     if ((retval = ap_setup_client_block(r, REQUEST_CHUNKED_ERROR))) 
         return retval; 

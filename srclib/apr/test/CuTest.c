@@ -41,15 +41,11 @@ static int verbose = 0;
 
 void CuInit(int argc, char *argv[])
 {
-	int i;
+	int c;
 	
-	/* Windows doesn't have getopt, so we have to fake it.  We can't use
-	 * apr_getopt, because CuTest is meant to be a stand-alone test suite
-	 */
-	for (i = 0; i < argc; i++) {
-		if (!strcmp(argv[i], "-v")) {
-			verbose = 1;
-		}
+	c = getopt(argc, argv, "v");
+	if (c == 'v') {
+		verbose = 1;
 	}
 }
 
@@ -63,7 +59,7 @@ char* CuStrAlloc(int size)
 	return new;
 }
 
-char* CuStrCopy(const char* old)
+char* CuStrCopy(char* old)
 {
 	int len = strlen(old);
 	char* new = CuStrAlloc(len + 1);
@@ -99,7 +95,7 @@ void CuStringResize(CuString* str, int newSize)
 	str->size = newSize;
 }
 
-void CuStringAppend(CuString* str, const char* text)
+void CuStringAppend(CuString* str, char* text)
 {
 	int length = strlen(text);
 	if (str->length + length + 1 >= str->size)
@@ -116,7 +112,7 @@ void CuStringAppendChar(CuString* str, char ch)
 	CuStringAppend(str, text);
 }
 
-void CuStringAppendFormat(CuString* str, const char* format, ...)
+void CuStringAppendFormat(CuString* str, char* format, ...)
 {
 	va_list argp;
 	char buf[HUGE_STRING_LEN];
@@ -153,7 +149,7 @@ CuTest* CuTestNew(char* name, TestFunction function)
 	return tc;
 }
 
-void CuNotImpl(CuTest* tc, const char* message)
+void CuNotImpl(CuTest* tc, char* message)
 {
 	CuString* newstr = CuStringNew();
         CuStringAppend(newstr, message);
@@ -163,14 +159,14 @@ void CuNotImpl(CuTest* tc, const char* message)
 	if (tc->jumpBuf != 0) longjmp(*(tc->jumpBuf), 0);
 }
 
-void CuFail(CuTest* tc, const char* message)
+void CuFail(CuTest* tc, char* message)
 {
 	tc->failed = 1;
 	tc->message = CuStrCopy(message);
 	if (tc->jumpBuf != 0) longjmp(*(tc->jumpBuf), 0);
 }
 
-void CuAssert(CuTest* tc, const char* message, int condition)
+void CuAssert(CuTest* tc, char* message, int condition)
 {
 	if (condition) return;
 	CuFail(tc, message);
@@ -182,21 +178,7 @@ void CuAssertTrue(CuTest* tc, int condition)
 	CuFail(tc, "assert failed");
 }
 
-void CuAssertStrNEquals(CuTest* tc, const char* expected, const char* actual,
-                        int n)
-{
-	CuString* message;
-	if (strncmp(expected, actual, n) == 0) return;
-	message = CuStringNew();
-	CuStringAppend(message, "expected\n---->\n");
-	CuStringAppend(message, expected);
-	CuStringAppend(message, "\n<----\nbut saw\n---->\n");
-	CuStringAppend(message, actual);
-	CuStringAppend(message, "\n<----");
-	CuFail(tc, message->buffer);
-}
-
-void CuAssertStrEquals(CuTest* tc, const char* expected, const char* actual)
+void CuAssertStrEquals(CuTest* tc, char* expected, char* actual)
 {
 	CuString* message;
 	if (strcmp(expected, actual) == 0) return;
@@ -205,7 +187,7 @@ void CuAssertStrEquals(CuTest* tc, const char* expected, const char* actual)
 	CuStringAppend(message, expected);
 	CuStringAppend(message, "\n<----\nbut saw\n---->\n");
 	CuStringAppend(message, actual);
-	CuStringAppend(message, "\n<----");
+	CuStringAppend(message, "\n<----\n");
 	CuFail(tc, message->buffer);
 }
 
@@ -217,19 +199,19 @@ void CuAssertIntEquals(CuTest* tc, int expected, int actual)
 	CuFail(tc, buf);
 }
 
-void CuAssertPtrEquals(CuTest* tc, const void* expected, const void* actual)
+void CuAssertPtrEquals(CuTest* tc, void* expected, void* actual)
 {
 	char buf[STRING_MAX];
 	if (expected == actual) return;
-	sprintf(buf, "expected pointer <%p> but was <%p>", expected, actual);
+	sprintf(buf, "expected pointer <0x%X> but was <0x%X>", expected, actual);
 	CuFail(tc, buf);
 }
 
-void CuAssertPtrNotNull(CuTest* tc, const void* pointer)
+void CuAssertPtrNotNull(CuTest* tc, void* pointer)
 {
 	char buf[STRING_MAX];
 	if (pointer != NULL ) return;
-	sprintf(buf, "null pointer unexpected, but was <%p>", pointer);
+	sprintf(buf, "null pointer unexpected", pointer);
 	CuFail(tc, buf);
 }
 
@@ -296,6 +278,7 @@ void CuSuiteRun(CuSuite* testSuite)
 void CuSuiteSummary(CuSuite* testSuite, CuString* summary)
 {
 	int i;
+	CuStringAppendFormat(summary, "%s:\t", testSuite->name);
 	for (i = 0 ; i < testSuite->count ; ++i)
 	{
 		CuTest* testCase = testSuite->list[i];
@@ -307,6 +290,11 @@ void CuSuiteSummary(CuSuite* testSuite, CuString* summary)
 
 void CuSuiteOverView(CuSuite* testSuite, CuString* details)
 {
+	int i;
+	int failCount = 0;
+	int notImpleCount = 0;
+	int passCount = testSuite->count - testSuite->failCount;
+
 	CuStringAppendFormat(details, "%d %s run:  %d passed, %d failed, "
 			     "%d not implemented.\n",
 			     testSuite->count, 
@@ -320,10 +308,13 @@ void CuSuiteDetails(CuSuite* testSuite, CuString* details)
 {
 	int i;
 	int failCount = 0;
+	int notImpleCount = 0;
+	int passCount = testSuite->count - testSuite->failCount;
+	char* testWord = passCount == 1 ? "test" : "tests";
 
 	if (testSuite->failCount != 0 && verbose)
 	{
-		CuStringAppendFormat(details, "\nFailed tests in %s:\n", testSuite->name);
+		CuStringAppendFormat(details, "Failed tests:\n");
 		for (i = 0 ; i < testSuite->count ; ++i)
 		{
 			CuTest* testCase = testSuite->list[i];
@@ -337,7 +328,7 @@ void CuSuiteDetails(CuSuite* testSuite, CuString* details)
 	}
 	if (testSuite->notimplCount != 0 && verbose)
 	{
-		CuStringAppendFormat(details, "\nNot Implemented tests in %s:\n", testSuite->name);
+		CuStringAppendFormat(details, "\nNot Implemented tests:\n");
 		for (i = 0 ; i < testSuite->count ; ++i)
 		{
 			CuTest* testCase = testSuite->list[i];
@@ -380,35 +371,6 @@ void CuSuiteListRun(CuSuiteList* testSuite)
 	}
 }
 
-static const char *genspaces(int i)
-{
-    char *str = malloc((i + 1) * sizeof(char));
-    memset(str, ' ', i);
-    str[i] = '\0';
-    return str;
-}
-
-void CuSuiteListRunWithSummary(CuSuiteList* testSuite)
-{
-	int i;
-
-	printf("%s:\n", testSuite->name);
-	for (i = 0 ; i < testSuite->count ; ++i)
-	{
-		CuSuite* testCase = testSuite->list[i];
-		CuString *str = CuStringNew();
-
-	        printf("    %s:%s", testCase->name, 
-                                  genspaces(21 - strlen(testCase->name)));
-		fflush(stdout);
-		CuSuiteRun(testCase);
-		CuSuiteSummary(testCase, str);
-		printf("    %s", str->buffer);
-
-	}
-	printf("\n");
-}
-
 void CuSuiteListSummary(CuSuiteList* testSuite, CuString* summary)
 {
 	int i;
@@ -424,12 +386,14 @@ void CuSuiteListSummary(CuSuiteList* testSuite, CuString* summary)
 	CuStringAppend(summary, "\n");
 }
 
-int CuSuiteListDetails(CuSuiteList* testSuite, CuString* details)
+void CuSuiteListDetails(CuSuiteList* testSuite, CuString* details)
 {
 	int i;
 	int failCount = 0;
 	int notImplCount = 0;
+	int passCount = 0;
 	int count = 0;
+	char *testWord = passCount == 1 ? "test" : "tests";
 
 	for (i = 0 ; i < testSuite->count ; ++i)
 	{
@@ -459,6 +423,7 @@ int CuSuiteListDetails(CuSuiteList* testSuite, CuString* details)
 	}
 	if (notImplCount != 0 && verbose)
 	{
+		CuStringAppendFormat(details, "\nNot Implemented tests:\n");
 		for (i = 0 ; i < testSuite->count ; ++i)
 		{
 			CuString *str = CuStringNew();
@@ -470,6 +435,5 @@ int CuSuiteListDetails(CuSuiteList* testSuite, CuString* details)
 			}
 		}
 	} 
-	return failCount;
 }
 

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -212,7 +212,7 @@ APR_DECLARE(void) apr_pool_terminate(void);
  *        pool.  If it is non-NULL, the new pool will inherit all
  *        of its parent pool's attributes, except the apr_pool_t will
  *        be a sub-pool.
- * @param abort_fn A function to use if the pool cannot allocate more memory.
+ * @param apr_abort A function to use if the pool cannot allocate more memory.
  * @param allocator The allocator to use with the new pool.  If NULL the
  *        allocator of the parent pool will be used.
  */

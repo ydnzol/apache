@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -253,11 +253,7 @@ static char *getpass(const char *prompt)
 
 APR_DECLARE(apr_status_t) apr_password_get(const char *prompt, char *pwbuf, apr_size_t *bufsiz)
 {
-#ifdef HAVE_GETPASSPHRASE
-    char *pw_got = getpassphrase(prompt);
-#else
     char *pw_got = getpass(prompt);
-#endif
     if (!pw_got)
         return APR_EINVAL;
     apr_cpystrn(pwbuf, pw_got, *bufsiz);

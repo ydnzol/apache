@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,12 +52,12 @@
  * <http://www.apache.org/>.
  */
 
-#include "win32/apr_arch_file_io.h"
+#include "win32/fileio.h"
 #include "apr_file_io.h"
 #include "apr_general.h"
 #include "apr_strings.h"
 #include <string.h>
-#include "apr_arch_inherit.h"
+#include "inherit.h"
 
 APR_DECLARE(apr_status_t) apr_file_dup(apr_file_t **new_file,
                                        apr_file_t *old_file, apr_pool_t *p)
@@ -89,9 +89,6 @@ APR_DECLARE(apr_status_t) apr_file_dup(apr_file_t **new_file,
 #endif /* !defined(_WIN32_WCE) */
 }
 
-#define stdin_handle 0x01
-#define stdout_handle 0x02
-#define stderr_handle 0x04
 
 APR_DECLARE(apr_status_t) apr_file_dup2(apr_file_t *new_file,
                                         apr_file_t *old_file, apr_pool_t *p)
@@ -99,7 +96,7 @@ APR_DECLARE(apr_status_t) apr_file_dup2(apr_file_t *new_file,
 #ifdef _WIN32_WCE
     return APR_ENOTIMPL;
 #else
-    DWORD stdhandle = 0;
+    DWORD stdhandle = -1;
     HANDLE hproc = GetCurrentProcess();
     HANDLE newhand = NULL;
     apr_int32_t newflags;
@@ -110,24 +107,22 @@ APR_DECLARE(apr_status_t) apr_file_dup2(apr_file_t *new_file,
      * The os_handle will change, however.
      */
     if (new_file->filehand == GetStdHandle(STD_ERROR_HANDLE)) {
-        stdhandle |= stderr_handle;
+        stdhandle = STD_ERROR_HANDLE;
     }
-    if (new_file->filehand == GetStdHandle(STD_OUTPUT_HANDLE)) {
-        stdhandle |= stdout_handle;
+    else if (new_file->filehand == GetStdHandle(STD_OUTPUT_HANDLE)) {
+        stdhandle = STD_OUTPUT_HANDLE;
     }
-    if (new_file->filehand == GetStdHandle(STD_INPUT_HANDLE)) {
-        stdhandle |= stdin_handle;
+    else if (new_file->filehand == GetStdHandle(STD_INPUT_HANDLE)) {
+        stdhandle = STD_INPUT_HANDLE;
     }
 
-    if (stdhandle) {
+    if (stdhandle != -1) {
         if (!DuplicateHandle(hproc, old_file->filehand, 
                              hproc, &newhand, 0,
                              TRUE, DUPLICATE_SAME_ACCESS)) {
             return apr_get_os_error();
         }
-        if (((stdhandle & stderr_handle) && !SetStdHandle(STD_ERROR_HANDLE, newhand)) ||
-            ((stdhandle & stdout_handle) && !SetStdHandle(STD_OUTPUT_HANDLE, newhand)) ||
-            ((stdhandle & stdin_handle) && !SetStdHandle(STD_INPUT_HANDLE, newhand))) {
+        if (!SetStdHandle(stdhandle, newhand)) {
             return apr_get_os_error();
         }
         newflags = old_file->flags | APR_INHERIT;
@@ -170,11 +165,11 @@ APR_DECLARE(apr_status_t) apr_file_setaside(apr_file_t **new_file,
         else {
             memcpy((*new_file)->buffer, old_file->buffer, old_file->dataRead);
         }
-    }
-    if (old_file->mutex) {
-        apr_thread_mutex_create(&((*new_file)->mutex),
-                                APR_THREAD_MUTEX_DEFAULT, p);
-        apr_thread_mutex_destroy(old_file->mutex);
+        if (old_file->mutex) {
+            apr_thread_mutex_create(&((*new_file)->mutex),
+                                    APR_THREAD_MUTEX_DEFAULT, p);
+            apr_thread_mutex_destroy(old_file->mutex);
+        }
     }
     if (old_file->fname) {
         (*new_file)->fname = apr_pstrdup(p, old_file->fname);

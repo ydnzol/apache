@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,9 +62,9 @@ static apr_status_t mmap_bucket_read(apr_bucket *b, const char **str,
     apr_bucket_mmap *m = b->data;
     apr_status_t ok;
     void *addr;
-   
+    
     if (!m->mmap) {
-        /* the apr_mmap_t was already cleaned up out from under us */
+        /* due to cleanup issues we have no choice but to check this */
         return APR_EINVAL;
     }
 
@@ -79,11 +79,10 @@ static apr_status_t mmap_bucket_read(apr_bucket *b, const char **str,
 
 static apr_status_t mmap_bucket_cleanup(void *data)
 {
-    /* the apr_mmap_t is about to disappear out from under us, so we
-     * have no choice but to pretend it doesn't exist anymore.  the
-     * refcount is now useless because there's nothing to refer to
-     * anymore.  so the only valid action on any remaining referrer
-     * is to delete it.  no more reads, no more anything. */
+    /* the mmap has disappeared out from under us.  we have no choice
+     * but to invalidate this bucket.  from now on, all you can do to this
+     * bucket is destroy it, not read from it.
+     */
     apr_bucket_mmap *m = data;
 
     m->mmap = NULL;
@@ -95,7 +94,7 @@ static void mmap_bucket_destroy(void *data)
     apr_bucket_mmap *m = data;
 
     if (apr_bucket_shared_destroy(m)) {
-        if (m->mmap) {
+        if (m->mmap && m->mmap->is_owner) {
             apr_pool_cleanup_kill(m->mmap->cntxt, m, mmap_bucket_cleanup);
             apr_mmap_delete(m->mmap);
         }
@@ -115,8 +114,10 @@ APU_DECLARE(apr_bucket *) apr_bucket_mmap_make(apr_bucket *b, apr_mmap_t *mm,
     m = apr_bucket_alloc(sizeof(*m), b->list);
     m->mmap = mm;
 
-    apr_pool_cleanup_register(mm->cntxt, m, mmap_bucket_cleanup,
-                              apr_pool_cleanup_null);
+    if (mm->is_owner) {
+        apr_pool_cleanup_register(mm->cntxt, m, mmap_bucket_cleanup,
+                                  apr_pool_cleanup_null);
+    }
 
     b = apr_bucket_shared_make(b, m, start, length);
     b->type = &apr_bucket_type_mmap;
@@ -138,36 +139,33 @@ APU_DECLARE(apr_bucket *) apr_bucket_mmap_create(apr_mmap_t *mm,
     return apr_bucket_mmap_make(b, mm, start, length);
 }
 
-static apr_status_t mmap_bucket_setaside(apr_bucket *b, apr_pool_t *p)
+static apr_status_t mmap_bucket_setaside(apr_bucket *data, apr_pool_t *p)
 {
-    apr_bucket_mmap *m = b->data;
+    apr_bucket_mmap *m = data->data;
     apr_mmap_t *mm = m->mmap;
     apr_mmap_t *new_mm;
     apr_status_t ok;
 
     if (!mm) {
-        /* the apr_mmap_t was already cleaned up out from under us */
+        /* due to cleanup issues we have no choice but to check this */
         return APR_EINVAL;
     }
 
-    /* shortcut if possible */
     if (apr_pool_is_ancestor(mm->cntxt, p)) {
         return APR_SUCCESS;
     }
 
-    /* duplicate apr_mmap_t into new pool */
-    /* XXX: the transfer_ownership flag on this call
-     * will go away soon.. it's ignored right now. */
     ok = apr_mmap_dup(&new_mm, mm, p, 1);
     if (ok != APR_SUCCESS) {
         return ok;
     }
-
-    /* decrement refcount on old apr_bucket_mmap */
-    mmap_bucket_destroy(mm);
-
-    /* create new apr_bucket_mmap pointing to new apr_mmap_t */
-    apr_bucket_mmap_make(b, new_mm, b->start, b->length);
+    
+    m->mmap = new_mm;
+    if (new_mm->is_owner) {
+        apr_pool_cleanup_kill(mm->cntxt, m, mmap_bucket_cleanup);
+        apr_pool_cleanup_register(new_mm->cntxt, m, mmap_bucket_cleanup,
+                                  apr_pool_cleanup_null);
+    }
 
     return APR_SUCCESS;
 }

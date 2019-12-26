@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,14 +54,8 @@
 
 #include "apr.h"
 #include "apr_strings.h"
-#include "apr_arch_proc_mutex.h"
-#include "apr_arch_file_io.h" /* for apr_mkstemp() */
-
-APR_DECLARE(apr_status_t) apr_proc_mutex_destroy(apr_proc_mutex_t *mutex)
-{
-    return apr_pool_cleanup_run(mutex->pool, mutex, apr_proc_mutex_cleanup);
-}
-
+#include "proc_mutex.h"
+#include "fileio.h" /* for apr_mkstemp() */
 
 #if APR_HAS_POSIXSEM_SERIALIZE
 
@@ -128,7 +122,7 @@ static apr_status_t proc_mutex_posix_create(apr_proc_mutex_t *new_mutex,
     sem_unlink((const char *) semname);
     new_mutex->interproc->filedes = (int)psem;	/* Ugg */
     apr_pool_cleanup_register(new_mutex->pool, (void *)new_mutex,
-                              apr_proc_mutex_cleanup, 
+                              proc_mutex_posix_cleanup, 
                               apr_pool_cleanup_null);
     return APR_SUCCESS;
 }
@@ -155,6 +149,17 @@ static apr_status_t proc_mutex_posix_release(apr_proc_mutex_t *mutex)
     return APR_SUCCESS;
 }
 
+static apr_status_t proc_mutex_posix_destroy(apr_proc_mutex_t *mutex)
+{
+    apr_status_t stat;
+
+    if ((stat = proc_mutex_posix_cleanup(mutex)) == APR_SUCCESS) {
+        apr_pool_cleanup_kill(mutex->pool, mutex, proc_mutex_posix_cleanup);
+        return APR_SUCCESS;
+    }
+    return stat;
+}
+
 static apr_status_t proc_mutex_posix_child_init(apr_proc_mutex_t **mutex,
                                                 apr_pool_t *cont,
                                                 const char *fname)
@@ -173,7 +178,7 @@ const apr_proc_mutex_unix_lock_methods_t apr_proc_mutex_unix_posix_methods =
     proc_mutex_posix_acquire,
     NULL, /* no tryacquire */
     proc_mutex_posix_release,
-    proc_mutex_posix_cleanup,
+    proc_mutex_posix_destroy,
     proc_mutex_posix_child_init,
     "posixsem"
 };
@@ -229,7 +234,7 @@ static apr_status_t proc_mutex_sysv_create(apr_proc_mutex_t *new_mutex,
     }
     new_mutex->curr_locked = 0;
     apr_pool_cleanup_register(new_mutex->pool,
-                              (void *)new_mutex, apr_proc_mutex_cleanup, 
+                              (void *)new_mutex, proc_mutex_sysv_cleanup, 
                               apr_pool_cleanup_null);
     return APR_SUCCESS;
 }
@@ -262,6 +267,17 @@ static apr_status_t proc_mutex_sysv_release(apr_proc_mutex_t *mutex)
     return APR_SUCCESS;
 }
 
+static apr_status_t proc_mutex_sysv_destroy(apr_proc_mutex_t *mutex)
+{
+    apr_status_t rv;
+
+    if ((rv = proc_mutex_sysv_cleanup(mutex)) == APR_SUCCESS) {
+        apr_pool_cleanup_kill(mutex->pool, mutex, proc_mutex_sysv_cleanup);
+        return APR_SUCCESS;
+    }
+    return rv;
+}
+
 static apr_status_t proc_mutex_sysv_child_init(apr_proc_mutex_t **mutex, apr_pool_t *cont, const char *fname)
 {
     return APR_SUCCESS;
@@ -278,7 +294,7 @@ const apr_proc_mutex_unix_lock_methods_t apr_proc_mutex_unix_sysv_methods =
     proc_mutex_sysv_acquire,
     NULL, /* no tryacquire */
     proc_mutex_sysv_release,
-    proc_mutex_sysv_cleanup,
+    proc_mutex_sysv_destroy,
     proc_mutex_sysv_child_init,
     "sysvsem"
 };
@@ -383,7 +399,7 @@ static apr_status_t proc_mutex_proc_pthread_create(apr_proc_mutex_t *new_mutex,
     new_mutex->curr_locked = 0;
     apr_pool_cleanup_register(new_mutex->pool,
                               (void *)new_mutex,
-                              apr_proc_mutex_cleanup, 
+                              proc_mutex_proc_pthread_cleanup, 
                               apr_pool_cleanup_null);
     return APR_SUCCESS;
 }
@@ -427,6 +443,18 @@ static apr_status_t proc_mutex_proc_pthread_release(apr_proc_mutex_t *mutex)
     return APR_SUCCESS;
 }
 
+static apr_status_t proc_mutex_proc_pthread_destroy(apr_proc_mutex_t *mutex)
+{
+    apr_status_t rv;
+    if ((rv = proc_mutex_proc_pthread_cleanup(mutex)) == APR_SUCCESS) {
+        apr_pool_cleanup_kill(mutex->pool,
+                              mutex,
+                              proc_mutex_proc_pthread_cleanup);
+        return APR_SUCCESS;
+    }
+    return rv;
+}
+
 static apr_status_t proc_mutex_proc_pthread_child_init(apr_proc_mutex_t **mutex,
                                             apr_pool_t *cont, 
                                             const char *fname)
@@ -441,7 +469,7 @@ const apr_proc_mutex_unix_lock_methods_t apr_proc_mutex_unix_proc_pthread_method
     proc_mutex_proc_pthread_acquire,
     NULL, /* no tryacquire */
     proc_mutex_proc_pthread_release,
-    proc_mutex_proc_pthread_cleanup,
+    proc_mutex_proc_pthread_destroy,
     proc_mutex_proc_pthread_child_init,
     "pthread"
 };
@@ -516,7 +544,7 @@ static apr_status_t proc_mutex_fcntl_create(apr_proc_mutex_t *new_mutex,
     unlink(new_mutex->fname);
     apr_pool_cleanup_register(new_mutex->pool,
                               (void*)new_mutex,
-                              apr_proc_mutex_cleanup, 
+                              proc_mutex_fcntl_cleanup, 
                               apr_pool_cleanup_null);
     return APR_SUCCESS; 
 }
@@ -549,6 +577,16 @@ static apr_status_t proc_mutex_fcntl_release(apr_proc_mutex_t *mutex)
     return APR_SUCCESS;
 }
 
+static apr_status_t proc_mutex_fcntl_destroy(apr_proc_mutex_t *mutex)
+{
+    apr_status_t rv;
+    if ((rv = proc_mutex_fcntl_cleanup(mutex)) == APR_SUCCESS) {
+        apr_pool_cleanup_kill(mutex->pool, mutex, proc_mutex_fcntl_cleanup);
+        return APR_SUCCESS;
+    }
+    return rv;
+}
+
 static apr_status_t proc_mutex_fcntl_child_init(apr_proc_mutex_t **mutex,
                                                 apr_pool_t *pool, 
                                                 const char *fname)
@@ -567,7 +605,7 @@ const apr_proc_mutex_unix_lock_methods_t apr_proc_mutex_unix_fcntl_methods =
     proc_mutex_fcntl_acquire,
     NULL, /* no tryacquire */
     proc_mutex_fcntl_release,
-    proc_mutex_fcntl_cleanup,
+    proc_mutex_fcntl_destroy,
     proc_mutex_fcntl_child_init,
     "fcntl"
 };
@@ -621,7 +659,7 @@ static apr_status_t proc_mutex_flock_create(apr_proc_mutex_t *new_mutex,
     }
     new_mutex->curr_locked = 0;
     apr_pool_cleanup_register(new_mutex->pool, (void *)new_mutex,
-                              apr_proc_mutex_cleanup,
+                              proc_mutex_flock_cleanup,
                               apr_pool_cleanup_null);
     return APR_SUCCESS;
 }
@@ -654,6 +692,16 @@ static apr_status_t proc_mutex_flock_release(apr_proc_mutex_t *mutex)
     return APR_SUCCESS;
 }
 
+static apr_status_t proc_mutex_flock_destroy(apr_proc_mutex_t *mutex)
+{
+    apr_status_t rv;
+    if ((rv = proc_mutex_flock_cleanup(mutex)) == APR_SUCCESS) {
+        apr_pool_cleanup_kill(mutex->pool, mutex, proc_mutex_flock_cleanup);
+        return APR_SUCCESS;
+    }
+    return rv;
+}
+
 static apr_status_t proc_mutex_flock_child_init(apr_proc_mutex_t **mutex,
                                                 apr_pool_t *pool, 
                                                 const char *fname)
@@ -669,7 +717,7 @@ static apr_status_t proc_mutex_flock_child_init(apr_proc_mutex_t **mutex,
     rv = apr_file_open(&new_mutex->interproc, new_mutex->fname,
                        APR_WRITE, 0, new_mutex->pool);
     if (rv != APR_SUCCESS) {
-        proc_mutex_flock_cleanup(new_mutex);
+        proc_mutex_flock_destroy(new_mutex);
         return rv;
     }
     *mutex = new_mutex;
@@ -687,7 +735,7 @@ const apr_proc_mutex_unix_lock_methods_t apr_proc_mutex_unix_flock_methods =
     proc_mutex_flock_acquire,
     NULL, /* no tryacquire */
     proc_mutex_flock_release,
-    proc_mutex_flock_cleanup,
+    proc_mutex_flock_destroy,
     proc_mutex_flock_child_init,
     "flock"
 };
@@ -834,22 +882,77 @@ APR_DECLARE(apr_status_t) apr_proc_mutex_child_init(apr_proc_mutex_t **mutex,
 
 APR_DECLARE(apr_status_t) apr_proc_mutex_lock(apr_proc_mutex_t *mutex)
 {
-    return mutex->meth->acquire(mutex);
+    apr_status_t rv;
+
+#if APR_HAS_THREADS
+    if (apr_os_thread_equal(mutex->owner, apr_os_thread_current())) {
+        mutex->owner_ref++;
+        return APR_SUCCESS;
+    }
+#endif
+
+    if ((rv = mutex->meth->acquire(mutex)) != APR_SUCCESS) {
+        return rv;
+    }
+
+#if APR_HAS_THREADS
+    mutex->owner = apr_os_thread_current();
+    mutex->owner_ref = 1;
+#endif
+
+    return APR_SUCCESS;
 }
 
 APR_DECLARE(apr_status_t) apr_proc_mutex_trylock(apr_proc_mutex_t *mutex)
 {
-    return mutex->meth->tryacquire(mutex);
+    apr_status_t rv;
+
+#if APR_HAS_THREADS
+    if (apr_os_thread_equal(mutex->owner, apr_os_thread_current())) {
+        mutex->owner_ref++;
+        return APR_SUCCESS;
+    }
+#endif
+
+    if ((rv = mutex->meth->tryacquire(mutex)) != APR_SUCCESS) {
+        return rv;
+    }
+
+#if APR_HAS_THREADS
+    mutex->owner = apr_os_thread_current();
+    mutex->owner_ref = 1;
+#endif
+
+    return APR_SUCCESS;
 }
 
 APR_DECLARE(apr_status_t) apr_proc_mutex_unlock(apr_proc_mutex_t *mutex)
 {
-    return mutex->meth->release(mutex);
+    apr_status_t rv;
+
+#if APR_HAS_THREADS
+    if (apr_os_thread_equal(mutex->owner, apr_os_thread_current())) {
+        mutex->owner_ref--;
+        if (mutex->owner_ref > 0)
+            return APR_SUCCESS;
+    }
+#endif
+
+    if ((rv = mutex->meth->release(mutex)) != APR_SUCCESS) {
+        return rv;
+    }
+
+#if APR_HAS_THREADS
+    memset(&mutex->owner, 0, sizeof mutex->owner);
+    mutex->owner_ref = 0;
+#endif
+    
+    return APR_SUCCESS;
 }
 
-APR_DECLARE(apr_status_t) apr_proc_mutex_cleanup(void *mutex)
+APR_DECLARE(apr_status_t) apr_proc_mutex_destroy(apr_proc_mutex_t *mutex)
 {
-    return ((apr_proc_mutex_t *)mutex)->meth->cleanup(mutex);
+    return mutex->meth->destroy(mutex);
 }
 
 APR_DECLARE(const char *) apr_proc_mutex_name(apr_proc_mutex_t *mutex)

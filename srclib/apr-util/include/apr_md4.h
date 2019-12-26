@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2001-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2001-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -95,10 +95,8 @@ extern "C" {
  * @{
  */
 
-/** The digestsize for MD4 */
 #define APR_MD4_DIGESTSIZE 16
 
-/** @see apr_md4_ctx_t */
 typedef struct apr_md4_ctx_t apr_md4_ctx_t;
 
 /** MD4 context. */

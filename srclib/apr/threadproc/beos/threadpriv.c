@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_threadproc.h"
+#include "threadproc.h"
 
 static struct beos_key key_table[BEOS_MAX_DATAKEYS];
 static struct beos_private_data *beos_data[BEOS_MAX_DATAKEYS];

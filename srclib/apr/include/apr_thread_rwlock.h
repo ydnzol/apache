@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -76,7 +76,6 @@ extern "C" {
  * @{
  */
 
-/** Opaque read-write thread-safe lock. */
 typedef struct apr_thread_rwlock_t apr_thread_rwlock_t;
 
 /**

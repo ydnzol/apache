@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -75,12 +75,11 @@ extern "C" {
  * @{
  */
 
-/** Opaque thread-local mutex structure */
 typedef struct apr_thread_mutex_t apr_thread_mutex_t;
 
-#define APR_THREAD_MUTEX_DEFAULT  0x0   /**< platform-optimal lock behavior */
-#define APR_THREAD_MUTEX_NESTED   0x1   /**< enable nested (recursive) locks */
-#define APR_THREAD_MUTEX_UNNESTED 0x2   /**< disable nested locks */
+#define APR_THREAD_MUTEX_DEFAULT  0x0
+#define APR_THREAD_MUTEX_NESTED   0x1
+#define APR_THREAD_MUTEX_UNNESTED 0x2
 
 /* Delayed the include to avoid a circular reference */
 #include "apr_pools.h"

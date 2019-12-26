@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,29 +63,25 @@
 #include "apr_thread_mutex.h"
 #include "apr_thread_rwlock.h"
 
-/** Structure that may contain any APR lock type */
 typedef struct apr_anylock_t {
-    /** Indicates what type of lock is in lock */
     enum tm_lock {
-        apr_anylock_none,           /**< None */
-        apr_anylock_procmutex,      /**< Process-based */
-        apr_anylock_threadmutex,    /**< Thread-based */
-        apr_anylock_readlock,       /**< Read lock */
-        apr_anylock_writelock       /**< Write lock */
+        apr_anylock_none,
+        apr_anylock_procmutex,
+        apr_anylock_threadmutex,
+        apr_anylock_readlock,
+        apr_anylock_writelock
     } type;
-    /** Union of all possible APR locks */
     union apr_anylock_u_t {
-        apr_proc_mutex_t *pm;       /**< Process mutex */
+        apr_proc_mutex_t *pm;
 #if APR_HAS_THREADS
-        apr_thread_mutex_t *tm;     /**< Thread mutex */
-        apr_thread_rwlock_t *rw;    /**< Read-write lock */
+        apr_thread_mutex_t *tm;
+        apr_thread_rwlock_t *rw;
 #endif
     } lock;
 } apr_anylock_t;
 
 #if APR_HAS_THREADS
 
-/** Lock an apr_anylock_t structure */
 #define APR_ANYLOCK_LOCK(lck)                \
     (((lck)->type == apr_anylock_none)         \
       ? APR_SUCCESS                              \
@@ -112,7 +108,6 @@ typedef struct apr_anylock_t {
 
 #if APR_HAS_THREADS
 
-/** Try to lock an apr_anylock_t structure */
 #define APR_ANYLOCK_TRYLOCK(lck)                \
     (((lck)->type == apr_anylock_none)            \
       ? APR_SUCCESS                                 \
@@ -139,7 +134,6 @@ typedef struct apr_anylock_t {
 
 #if APR_HAS_THREADS
 
-/** Unlock an apr_anylock_t structure */
 #define APR_ANYLOCK_UNLOCK(lck)              \
     (((lck)->type == apr_anylock_none)         \
       ? APR_SUCCESS                              \

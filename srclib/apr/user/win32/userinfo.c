@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@
 #include "apr_strings.h"
 #include "apr_portable.h"
 #include "apr_user.h"
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 #if APR_HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -102,9 +102,7 @@ void get_sid_string(char *buf, int blen, apr_uid_t id)
 /* Query the ProfileImagePath from the version-specific branch, where the
  * regkey uses the user's name on 9x, and user's sid string on NT.
  */
-APR_DECLARE(apr_status_t) apr_uid_homepath_get(char **dirname, 
-                                               const char *username, 
-                                               apr_pool_t *p)
+APR_DECLARE(apr_status_t) apr_get_home_directory(char **dirname, const char *username, apr_pool_t *p)
 {
 #ifdef _WIN32_WCE
     *dirname = apr_pstrdup(p, "/My Documents");
@@ -121,7 +119,7 @@ APR_DECLARE(apr_status_t) apr_uid_homepath_get(char **dirname,
         apr_uid_t uid;
         apr_gid_t gid;
     
-        if ((rv = apr_uid_get(&uid, &gid, username, p)) != APR_SUCCESS)
+        if ((rv = apr_get_userid(&uid, &gid, username, p)) != APR_SUCCESS)
             return rv;
 
         strcpy(regkey, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\"
@@ -199,9 +197,9 @@ APR_DECLARE(apr_status_t) apr_uid_homepath_get(char **dirname,
 #endif /* _WIN32_WCE */
 }
 
-APR_DECLARE(apr_status_t) apr_uid_current(apr_uid_t *uid,
-                                          apr_gid_t *gid,
-                                          apr_pool_t *p)
+APR_DECLARE(apr_status_t) apr_current_userid(apr_uid_t *uid,
+                                             apr_gid_t *gid,
+                                             apr_pool_t *p)
 {
 #ifdef _WIN32_WCE
     return APR_ENOTIMPL;
@@ -236,8 +234,8 @@ APR_DECLARE(apr_status_t) apr_uid_current(apr_uid_t *uid,
 #endif 
 }
 
-APR_DECLARE(apr_status_t) apr_uid_get(apr_uid_t *uid, apr_gid_t *gid,
-                                      const char *username, apr_pool_t *p)
+APR_DECLARE(apr_status_t) apr_get_userid(apr_uid_t *uid, apr_gid_t *gid,
+                                         const char *username, apr_pool_t *p)
 {
 #ifdef _WIN32_WCE
     return APR_ENOTIMPL;
@@ -283,8 +281,7 @@ APR_DECLARE(apr_status_t) apr_uid_get(apr_uid_t *uid, apr_gid_t *gid,
 #endif
 }
 
-APR_DECLARE(apr_status_t) apr_uid_name_get(char **username, apr_uid_t userid,
-                                           apr_pool_t *p)
+APR_DECLARE(apr_status_t) apr_get_username(char **username, apr_uid_t userid, apr_pool_t *p)
 {
 #ifdef _WIN32_WCE
     *username = apr_pstrdup(p, "Administrator");
@@ -304,7 +301,7 @@ APR_DECLARE(apr_status_t) apr_uid_name_get(char **username, apr_uid_t userid,
 #endif
 }
   
-APR_DECLARE(apr_status_t) apr_uid_compare(apr_uid_t left, apr_uid_t right)
+APR_DECLARE(apr_status_t) apr_compare_users(apr_uid_t left, apr_uid_t right)
 {
     if (!left || !right)
         return APR_EINVAL;
@@ -315,40 +312,4 @@ APR_DECLARE(apr_status_t) apr_uid_compare(apr_uid_t left, apr_uid_t right)
         return APR_EMISMATCH;
 #endif
     return APR_SUCCESS;
-}
-
-/* deprecated */
-APR_DECLARE(apr_status_t) apr_get_home_directory(char **dirname, 
-                                                 const char *username, 
-                                                 apr_pool_t *p)
-{
-    return apr_uid_homepath_get(dirname, username, p);
-}
-
-/* deprecated */
-APR_DECLARE(apr_status_t) apr_get_userid(apr_uid_t *uid, apr_gid_t *gid,
-                                         const char *username, apr_pool_t *p)
-{
-    return apr_uid_get(uid, gid, username, p);
-}
-
-/* deprecated */
-APR_DECLARE(apr_status_t) apr_current_userid(apr_uid_t *uid,
-                                             apr_gid_t *gid,
-                                             apr_pool_t *p)
-{
-    return apr_uid_current(uid, gid, p);
-}
-
-/* deprecated */
-APR_DECLARE(apr_status_t) apr_compare_users(apr_uid_t left, apr_uid_t right)
-{
-    return apr_uid_compare(left, right);
-}
-
-/* deprecated */
-APR_DECLARE(apr_status_t) apr_get_username(char **username, apr_uid_t userid,
-                                           apr_pool_t *p)
-{
-    return apr_uid_name_get(username, userid, p);
 }

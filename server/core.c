@@ -181,7 +181,6 @@ static void *create_core_dir_config(apr_pool_t *a, char *dir)
     conf->etag_remove = ETAG_UNSET;
 
     conf->enable_mmap = ENABLE_MMAP_UNSET;
-    conf->enable_sendfile = ENABLE_SENDFILE_UNSET;
 
     return (void *)conf;
 }
@@ -446,10 +445,6 @@ static void *merge_core_dir_configs(apr_pool_t *a, void *basev, void *newv)
 
     if (new->enable_mmap != ENABLE_MMAP_UNSET) {
         conf->enable_mmap = new->enable_mmap;
-    }
-
-    if (new->enable_sendfile != ENABLE_SENDFILE_UNSET) {
-        conf->enable_sendfile = new->enable_sendfile;
     }
 
     return (void*)conf;
@@ -1463,29 +1458,6 @@ static const char *set_enable_mmap(cmd_parms *cmd, void *d_,
     return NULL;
 }
 
-static const char *set_enable_sendfile(cmd_parms *cmd, void *d_,
-                                   const char *arg)
-{
-    core_dir_config *d = d_;
-    const char *err = ap_check_cmd_context(cmd, NOT_IN_LIMIT);
-
-    if (err != NULL) {
-        return err;
-    }
-
-    if (strcasecmp(arg, "on") == 0) {
-        d->enable_sendfile = ENABLE_SENDFILE_ON;
-    }
-    else if (strcasecmp(arg, "off") == 0) {
-        d->enable_sendfile = ENABLE_SENDFILE_OFF;
-    }
-    else {
-        return "parameter must be 'on' or 'off'";
-    }
-
-    return NULL;
-}
-
 static const char *satisfy(cmd_parms *cmd, void *c_, const char *arg)
 {
     core_dir_config *c = c_;
@@ -1635,9 +1607,8 @@ static const char *dirsection(cmd_parms *cmd, void *mconfig, const char *arg)
         /*
          * Ensure that the pathname is canonical, and append the trailing /
          */
-        apr_status_t rv = apr_filepath_merge(&newpath, NULL, cmd->path,
-                                             APR_FILEPATH_TRUENAME, cmd->pool);
-        if (rv != APR_SUCCESS && rv != APR_EPATHWILD) {
+        if (apr_filepath_merge(&newpath, NULL, cmd->path,
+                               APR_FILEPATH_TRUENAME, cmd->pool) != APR_SUCCESS) {
             return apr_pstrcat(cmd->pool, "<Directory \"", cmd->path,
                                "\"> path is invalid.", NULL);
         }
@@ -2192,7 +2163,7 @@ static const char *include_config (cmd_parms *cmd, void *dummy,
 {
     ap_directive_t *conftree = NULL;
     const char* conffile = ap_server_root_relative(cmd->pool, name);
-
+    
     if (!conffile) {
         return apr_pstrcat(cmd->pool, "Invalid Include path ", 
                            name, NULL);
@@ -2266,8 +2237,7 @@ AP_DECLARE(const char *) ap_psignature(const char *prefix, request_rec *r)
     apr_snprintf(sport, sizeof sport, "%u", (unsigned) ap_get_server_port(r));
 
     if (conf->server_signature == srv_sig_withmail) {
-        return apr_pstrcat(r->pool, prefix, "<address>", 
-                           ap_get_server_version(),
+        return apr_pstrcat(r->pool, prefix, "<address>" AP_SERVER_BASEVERSION
                            " Server at <a href=\"mailto:",
                            r->server->server_admin, "\">",
                            ap_escape_html(r->pool, ap_get_server_name(r)),
@@ -2275,7 +2245,7 @@ AP_DECLARE(const char *) ap_psignature(const char *prefix, request_rec *r)
                            "</address>\n", NULL);
     }
 
-    return apr_pstrcat(r->pool, prefix, "<address>", ap_get_server_version(),
+    return apr_pstrcat(r->pool, prefix, "<address>" AP_SERVER_BASEVERSION
                        " Server at ",
                        ap_escape_html(r->pool, ap_get_server_name(r)),
                        " Port ", sport,
@@ -2739,7 +2709,6 @@ static apr_status_t sendfile_it_all(core_net_rec *c,
                                     apr_off_t   file_offset,
                                     apr_size_t  file_bytes_left,
                                     apr_size_t  total_bytes_left,
-                                    apr_size_t  *bytes_sent,
                                     apr_int32_t flags)
 {
     apr_status_t rv;
@@ -2751,15 +2720,11 @@ static apr_status_t sendfile_it_all(core_net_rec *c,
                          == APR_SUCCESS)
                     && timeout > 0);  /* socket must be in timeout mode */
 
-    /* Reset the bytes_sent field */
-    *bytes_sent = 0;
-
     do {
         apr_size_t tmplen = file_bytes_left;
 
         rv = apr_sendfile(c->client_socket, fd, hdtr, &file_offset, &tmplen,
                           flags);
-        *bytes_sent += tmplen;
         total_bytes_left -= tmplen;
         if (!total_bytes_left || rv != APR_SUCCESS) {
             return rv;        /* normal case & error exit */
@@ -2971,8 +2936,6 @@ AP_INIT_RAW_ARGS("FileETag", set_etag_bits, NULL, OR_FILEINFO,
   "Specify components used to construct a file's ETag"),
 AP_INIT_TAKE1("EnableMMAP", set_enable_mmap, NULL, OR_FILEINFO,
   "Controls whether memory-mapping may be used to read files"),
-AP_INIT_TAKE1("EnableSendfile", set_enable_sendfile, NULL, OR_FILEINFO,
-  "Controls whether sendfile may be used to transmit files"),
 
 /* Old server config file commands */
 
@@ -3084,31 +3047,31 @@ AP_INIT_ITERATE2("AddOutputFilterByType", add_ct_output_filters,
  * #defined them in mpm.h.
  */
 #ifdef AP_MPM_WANT_SET_PIDFILE
-AP_INIT_TAKE1("PidFile",  ap_mpm_set_pidfile, NULL, RSRC_CONF,
+AP_INIT_TAKE1("PidFile",  ap_mpm_set_pidfile, NULL, RSRC_CONF, \
               "A file for logging the server process ID"),
 #endif
 #ifdef AP_MPM_WANT_SET_SCOREBOARD
-AP_INIT_TAKE1("ScoreBoardFile", ap_mpm_set_scoreboard, NULL, RSRC_CONF,
+AP_INIT_TAKE1("ScoreBoardFile", ap_mpm_set_scoreboard, NULL, RSRC_CONF, \
               "A file for Apache to maintain runtime process management information"),
 #endif
 #ifdef AP_MPM_WANT_SET_LOCKFILE
-AP_INIT_TAKE1("LockFile",  ap_mpm_set_lockfile, NULL, RSRC_CONF,
+AP_INIT_TAKE1("LockFile",  ap_mpm_set_lockfile, NULL, RSRC_CONF, \
               "The lockfile used when Apache needs to lock the accept() call"),
 #endif
 #ifdef AP_MPM_WANT_SET_MAX_REQUESTS
-AP_INIT_TAKE1("MaxRequestsPerChild", ap_mpm_set_max_requests, NULL, RSRC_CONF,
+AP_INIT_TAKE1("MaxRequestsPerChild", ap_mpm_set_max_requests, NULL, RSRC_CONF,\
               "Maximum number of requests a particular child serves before dying."),
 #endif
 #ifdef AP_MPM_WANT_SET_COREDUMPDIR
-AP_INIT_TAKE1("CoreDumpDirectory", ap_mpm_set_coredumpdir, NULL, RSRC_CONF,
+AP_INIT_TAKE1("CoreDumpDirectory", ap_mpm_set_coredumpdir, NULL, RSRC_CONF, \
               "The location of the directory Apache changes to before dumping core"),
 #endif
 #ifdef AP_MPM_WANT_SET_ACCEPT_LOCK_MECH
-AP_INIT_TAKE1("AcceptMutex", ap_mpm_set_accept_lock_mech, NULL, RSRC_CONF,
+AP_INIT_TAKE1("AcceptMutex", ap_mpm_set_accept_lock_mech, NULL, RSRC_CONF, \
               ap_valid_accept_mutex_string),
 #endif
 #ifdef AP_MPM_WANT_SET_MAX_MEM_FREE
-AP_INIT_TAKE1("MaxMemFree", ap_mpm_set_max_mem_free, NULL, RSRC_CONF,
+AP_INIT_TAKE1("MaxMemFree", ap_mpm_set_max_mem_free, NULL, RSRC_CONF,\
               "Maximum number of 1k blocks a particular childs allocator may hold."),
 #endif
 { NULL }
@@ -3299,34 +3262,8 @@ static int default_handler(request_rec *r)
             return HTTP_NOT_FOUND;
         }
 
-        /* We understood the (non-GET) method, but it might not be legal for
-           this particular resource. Check to see if the 'deliver_script'
-           flag is set. If so, then we go ahead and deliver the file since
-           it isn't really content (only GET normally returns content).
-
-           Note: based on logic further above, the only possible non-GET
-           method at this point is POST. In the future, we should enable
-           script delivery for all methods.  */
-        if (r->method_number != M_GET) {
-            core_request_config *req_cfg;
-
-            req_cfg = ap_get_module_config(r->request_config, &core_module);
-            if (!req_cfg->deliver_script) {
-                /* The flag hasn't been set for this request. Punt. */
-                ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-                              "This resource does not accept the %s method.",
-                              r->method);
-                return HTTP_METHOD_NOT_ALLOWED;
-            }
-        }
-
-
-        if ((status = apr_file_open(&fd, r->filename, APR_READ | APR_BINARY
-#if APR_HAS_SENDFILE
-                            | ((d->enable_sendfile == ENABLE_SENDFILE_OFF) 
-                                                ? 0 : APR_SENDFILE_ENABLED)
-#endif
-                                    , 0, r->pool)) != APR_SUCCESS) {
+        if ((status = apr_file_open(&fd, r->filename, APR_READ | APR_BINARY, 0,
+                                    r->pool)) != APR_SUCCESS) {
             ap_log_rerror(APLOG_MARK, APLOG_ERR, status, r,
                           "file permissions deny server access: %s", r->filename);
             return HTTP_FORBIDDEN;
@@ -3348,9 +3285,8 @@ static int default_handler(request_rec *r)
         }
 
         bb = apr_brigade_create(r->pool, c->bucket_alloc);
-#if APR_HAS_SENDFILE && APR_HAS_LARGE_FILES
-        if ((d->enable_sendfile != ENABLE_SENDFILE_OFF) &&
-            (r->finfo.size > AP_MAX_SENDFILE)) {
+#if APR_HAS_LARGE_FILES
+        if (r->finfo.size > AP_MAX_SENDFILE) {
             /* APR_HAS_LARGE_FILES issue; must split into mutiple buckets,
              * no greater than MAX(apr_size_t), and more granular than that
              * in case the brigade code/filters attempt to read it directly.
@@ -3397,34 +3333,30 @@ static int default_handler(request_rec *r)
     }
 }
 
-typedef struct net_time_filter_ctx {
-    apr_socket_t *csd;
-    int           first_line;
-} net_time_filter_ctx_t;
 static int net_time_filter(ap_filter_t *f, apr_bucket_brigade *b,
                            ap_input_mode_t mode, apr_read_type_e block,
                            apr_off_t readbytes)
 {
-    net_time_filter_ctx_t *ctx = f->ctx;
     int keptalive = f->c->keepalive == AP_CONN_KEEPALIVE;
+    apr_socket_t *csd = ap_get_module_config(f->c->conn_config, &core_module);
+    int *first_line = f->ctx;
 
-    if (!ctx) {
-        f->ctx = ctx = apr_palloc(f->r->pool, sizeof(*ctx));
-        ctx->first_line = 1;
-        ctx->csd = ap_get_module_config(f->c->conn_config, &core_module);        
+    if (!f->ctx) {
+        f->ctx = first_line = apr_palloc(f->r->pool, sizeof(*first_line));
+        *first_line = 1;
     }
 
     if (mode != AP_MODE_INIT && mode != AP_MODE_EATCRLF) {
-        if (ctx->first_line) {
-            apr_socket_timeout_set(ctx->csd, 
+        if (*first_line) {
+            apr_socket_timeout_set(csd, 
                                    keptalive
                                       ? f->c->base_server->keep_alive_timeout
                                       : f->c->base_server->timeout);
-            ctx->first_line = 0;
+            *first_line = 0;
         }
         else {
             if (keptalive) {
-                apr_socket_timeout_set(ctx->csd, f->c->base_server->timeout);
+                apr_socket_timeout_set(csd, f->c->base_server->timeout);
             }
         }
     }
@@ -3500,19 +3432,6 @@ static int core_input_filter(ap_filter_t *f, apr_bucket_brigade *b,
         return APR_EOF;
     }
 
-    if (mode == AP_MODE_GETLINE) {
-        /* we are reading a single LF line, e.g. the HTTP headers */
-        rv = apr_brigade_split_line(b, ctx->b, block, HUGE_STRING_LEN);
-        /* We should treat EAGAIN here the same as we do for EOF (brigade is
-         * empty).  We do this by returning whatever we have read.  This may
-         * or may not be bogus, but is consistent (for now) with EOF logic.
-         */
-        if (APR_STATUS_IS_EAGAIN(rv)) {
-            rv = APR_SUCCESS;
-        }
-        return rv;
-    }
-
     /* ### AP_MODE_PEEK is a horrific name for this mode because we also
      * eat any CRLFs that we see.  That's not the obvious intention of
      * this mode.  Determine whether anyone actually uses this or not. */
@@ -3555,7 +3474,6 @@ static int core_input_filter(ap_filter_t *f, apr_bucket_brigade *b,
             /* FIXME: Is this the right thing to do in the core? */
             apr_bucket_delete(e);
         }
-        return APR_SUCCESS;
     }
 
     /* If mode is EXHAUSTIVE, we want to just read everything until the end
@@ -3648,8 +3566,22 @@ static int core_input_filter(ap_filter_t *f, apr_bucket_brigade *b,
 
         /* Take what was originally there and place it back on ctx->b */
         APR_BRIGADE_CONCAT(ctx->b, newbb);
+
+        return APR_SUCCESS;
     }
-    return APR_SUCCESS;
+
+    /* we are reading a single LF line, e.g. the HTTP headers */
+    rv = apr_brigade_split_line(b, ctx->b, block, HUGE_STRING_LEN);
+
+    /* We should treat EAGAIN here the same as we do for EOF (brigade is
+     * empty).  We do this by returning whatever we have read.  This may
+     * or may not be bogus, but is consistent (for now) with EOF logic.
+     */
+    if (APR_STATUS_IS_EAGAIN(rv)) {
+        rv = APR_SUCCESS;
+    }
+
+    return rv;
 }
 
 /* Default filter.  This filter should almost always be used.  Its only job
@@ -3658,20 +3590,12 @@ static int core_input_filter(ap_filter_t *f, apr_bucket_brigade *b,
  */
 #define MAX_IOVEC_TO_WRITE 16
 
-/* Optional function coming from mod_logio, used for logging of output
- * traffic
- */
-static APR_OPTIONAL_FN_TYPE(ap_logio_add_bytes_out) *logio_add_bytes_out;
-
 static apr_status_t core_output_filter(ap_filter_t *f, apr_bucket_brigade *b)
 {
     apr_status_t rv;
-    apr_bucket_brigade *more;
     conn_rec *c = f->c;
     core_net_rec *net = f->ctx;
     core_output_filter_ctx_t *ctx = net->out_ctx;
-    apr_read_type_e eblock = APR_NONBLOCK_READ;
-    apr_pool_t *input_pool = b->p;
 
     if (ctx == NULL) {
         ctx = apr_pcalloc(c->pool, sizeof(*ctx));
@@ -3692,6 +3616,9 @@ static apr_status_t core_output_filter(ap_filter_t *f, apr_bucket_brigade *b)
         apr_bucket *last_e = NULL; /* initialized for debugging */
         apr_bucket *e;
 
+        /* tail of brigade if we need another pass */
+        apr_bucket_brigade *more = NULL;
+
         /* one group of iovecs per pass over the brigade */
         apr_size_t nvec = 0;
         apr_size_t nvec_trailers = 0;
@@ -3707,9 +3634,6 @@ static apr_status_t core_output_filter(ap_filter_t *f, apr_bucket_brigade *b)
          * to avoid small writes
          */
         apr_bucket *last_merged_bucket = NULL;
-
-        /* tail of brigade if we need another pass */
-        more = NULL;
 
         /* Iterate over the brigade: collect iovecs and/or a file */
         APR_BRIGADE_FOREACH(e, b) {
@@ -3747,16 +3671,7 @@ static apr_status_t core_output_filter(ap_filter_t *f, apr_bucket_brigade *b)
                 const char *str;
                 apr_size_t n;
 
-                rv = apr_bucket_read(e, &str, &n, eblock);
-                if (APR_STATUS_IS_EAGAIN(rv)) {
-                    /* send what we have so far since we shouldn't expect more
-                     * output for a while...  next time we read, block
-                     */
-                    more = apr_brigade_split(b, e);
-                    eblock = APR_BLOCK_READ;
-                    break;
-                }
-                eblock = APR_NONBLOCK_READ;
+                rv = apr_bucket_read(e, &str, &n, APR_BLOCK_READ);
                 if (n) {
                     if (!fd) {
                         if (nvec == MAX_IOVEC_TO_WRITE) {
@@ -3871,20 +3786,23 @@ static apr_status_t core_output_filter(ap_filter_t *f, apr_bucket_brigade *b)
         /* Completed iterating over the brigades, now determine if we want
          * to buffer the brigade or send the brigade out on the network.
          *
-         * Save if we haven't accumulated enough bytes to send, and:
+         * Save if:
          *
          *   1) we didn't see a file, we don't have more passes over the
-         *      brigade to perform,  AND we didn't stop at a FLUSH bucket.
-         *      (IOW, we will save plain old bytes such as HTTP headers)
+         *      brigade to perform, we haven't accumulated enough bytes to
+         *      send, AND we didn't stop at a FLUSH bucket.
+         *      (IOW, we will save away plain old bytes)
          * or
          *   2) we hit the EOS and have a keep-alive connection
          *      (IOW, this response is a bit more complex, but we save it
          *       with the hope of concatenating with another response)
          */
-        if (nbytes + flen < AP_MIN_BYTES_TO_WRITE
-            && ((!fd && !more && !APR_BUCKET_IS_FLUSH(last_e))
-                || (APR_BUCKET_IS_EOS(last_e)
-                    && c->keepalive == AP_CONN_KEEPALIVE))) {
+        if ((!fd && !more
+             && (nbytes + flen < AP_MIN_BYTES_TO_WRITE)
+             && !APR_BUCKET_IS_FLUSH(last_e))
+            || (nbytes + flen < AP_MIN_BYTES_TO_WRITE 
+                && APR_BUCKET_IS_EOS(last_e)
+                && c->keepalive == AP_CONN_KEEPALIVE)) {
 
             /* NEVER save an EOS in here.  If we are saving a brigade with
              * an EOS bucket, then we are doing keepalive connections, and
@@ -3926,18 +3844,13 @@ static apr_status_t core_output_filter(ap_filter_t *f, apr_bucket_brigade *b)
                     }
                 }
             }
-            if (!ctx->deferred_write_pool) {
-                apr_pool_create(&ctx->deferred_write_pool, c->pool);
-            }
-            ap_save_brigade(f, &ctx->b, &b, ctx->deferred_write_pool);
+            ap_save_brigade(f, &ctx->b, &b, c->pool);
 
             return APR_SUCCESS;
         }
 
         if (fd) {
             apr_hdtr_t hdtr;
-            apr_size_t bytes_sent;
-
 #if APR_HAS_SENDFILE
             apr_int32_t flags = 0;
 #endif
@@ -3954,77 +3867,45 @@ static apr_status_t core_output_filter(ap_filter_t *f, apr_bucket_brigade *b)
             }
 
 #if APR_HAS_SENDFILE
-            if (apr_file_flags_get(fd) & APR_SENDFILE_ENABLED) {
-
-                if (c->keepalive == AP_CONN_CLOSE && APR_BUCKET_IS_EOS(last_e)) {
-                    /* Prepare the socket to be reused */
-                    flags |= APR_SENDFILE_DISCONNECT_SOCKET;
-                }
-
-                rv = sendfile_it_all(net,      /* the network information   */
-                                     fd,       /* the file to send          */
-                                     &hdtr,    /* header and trailer iovecs */
-                                     foffset,  /* offset in the file to begin
-                                                  sending from              */
-                                     flen,     /* length of file            */
-                                     nbytes + flen, /* total length including
-                                                       headers              */
-                                     &bytes_sent,   /* how many bytes were
-                                                       sent                 */
-                                     flags);   /* apr_sendfile flags        */
-
-                if (logio_add_bytes_out && bytes_sent > 0)
-                    logio_add_bytes_out(c, bytes_sent);
+            if (c->keepalive == AP_CONN_CLOSE && APR_BUCKET_IS_EOS(last_e)) {
+                /* Prepare the socket to be reused */
+                flags |= APR_SENDFILE_DISCONNECT_SOCKET;
             }
-            else
+
+            rv = sendfile_it_all(net,      /* the network information   */
+                                 fd,       /* the file to send          */
+                                 &hdtr,    /* header and trailer iovecs */
+                                 foffset,  /* offset in the file to begin
+                                              sending from              */
+                                 flen,     /* length of file            */
+                                 nbytes + flen, /* total length including
+                                                   headers                */
+                                 flags);   /* apr_sendfile flags        */
+
+            /* If apr_sendfile() returns APR_ENOTIMPL, call emulate_sendfile().
+             * emulate_sendfile() is useful to enable the same Apache binary
+             * distribution to support Windows NT/2000 (supports TransmitFile)
+             * and Win95/98 (do not support TransmitFile)
+             */
+            if (rv == APR_ENOTIMPL)
 #endif
             {
+                apr_size_t unused_bytes_sent;
                 rv = emulate_sendfile(net, fd, &hdtr, foffset, flen,
-                                      &bytes_sent);
-
-                if (logio_add_bytes_out && bytes_sent > 0)
-                    logio_add_bytes_out(c, bytes_sent);
+                                      &unused_bytes_sent);
             }
 
             fd = NULL;
         }
         else {
-            apr_size_t bytes_sent;
+            apr_size_t unused_bytes_sent;
 
             rv = writev_it_all(net->client_socket,
                                vec, nvec,
-                               nbytes, &bytes_sent);
-
-            if (logio_add_bytes_out && bytes_sent > 0)
-                logio_add_bytes_out(c, bytes_sent);
+                               nbytes, &unused_bytes_sent);
         }
 
         apr_brigade_destroy(b);
-        
-        /* drive cleanups for resources which were set aside 
-         * this may occur before or after termination of the request which
-         * created the resource
-         */
-        if (ctx->deferred_write_pool) {
-            if (more && more->p == ctx->deferred_write_pool) {
-                /* "more" belongs to the deferred_write_pool,
-                 * which is about to be cleared.
-                 */
-                if (APR_BRIGADE_EMPTY(more)) {
-                    more = NULL;
-                }
-                else {
-                    /* uh oh... change more's lifetime 
-                     * to the input brigade's lifetime 
-                     */
-                    apr_bucket_brigade *tmp_more = more;
-                    more = NULL;
-                    ap_save_brigade(f, &more, &tmp_more, input_pool);
-                }
-            }
-            apr_pool_clear(ctx->deferred_write_pool);  
-        }
-
         if (rv != APR_SUCCESS) {
             ap_log_error(APLOG_MARK, APLOG_INFO, rv, c->base_server,
                          "core_output_filter: writing data to the network");
@@ -4053,8 +3934,6 @@ static apr_status_t core_output_filter(ap_filter_t *f, apr_bucket_brigade *b)
 
 static int core_post_config(apr_pool_t *pconf, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s)
 {
-    logio_add_bytes_out = APR_RETRIEVE_OPTIONAL_FN(ap_logio_add_bytes_out);
-
     ap_set_version(pconf);
     ap_setup_make_content_type(pconf);
     return OK;
@@ -4124,10 +4003,6 @@ static int core_create_req(request_rec *r)
     req_cfg = apr_pcalloc(r->pool, sizeof(core_request_config) +
                           sizeof(void *) * num_request_notes);
     req_cfg->notes = (void **)((char *)req_cfg + sizeof(core_request_config));
-
-    /* ### temporarily enable script delivery as the default */
-    req_cfg->deliver_script = 1;
-
     if (r->main) {
         core_request_config *main_req_cfg = (core_request_config *)
             ap_get_module_config(r->main->request_config, &core_module);

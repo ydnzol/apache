@@ -58,14 +58,19 @@ for HTTP Basic authentication.</description>
 
         <ul>
           <li><a href="#reqvaliduser">require valid-user</a></li>
+
           <li><a href="#requser">require user</a></li>
+
           <li><a href="#reqgroup">require group</a></li>
+
           <li><a href="#reqdn">require dn</a></li>
         </ul>
       </li>
 
       <li><a href="#examples">Examples</a></li>
+
       <li><a href="#usingtls">Using TLS</a></li>
+
       <li><a href="#usingssl">Using SSL</a></li>
 
       <li>
@@ -74,6 +79,7 @@ for HTTP Basic authentication.</description>
 
         <ul>
           <li><a href="#howitworks">How It Works</a></li>
+
           <li><a href="#fpcaveats">Caveats</a></li>
         </ul>
       </li>
@@ -490,8 +496,8 @@ AuthLDAPFrontPageHack  on
     <ul>
       <li>When choosing the LDAP URL, the attribute to use for
       authentication should be something that will also be valid
-      for putting into a <module>mod_auth</module> user file.
-      The user ID is ideal for this.</li>
+      for putting into a <module>mod_auth</module> user file. The user ID is
+      ideal for this.</li>
 
       <li>When adding users via FrontPage, FrontPage administrators
       should choose usernames that already exist in the LDAP
@@ -501,7 +507,6 @@ AuthLDAPFrontPageHack  on
       LDAP database, and not against the password in the local user
       file. This could cause confusion for web administrators.</li>
 
-      <!-- XXX is that true? was mod_auth before the aaa change -->
       <li>Apache must be compiled with <module>mod_auth</module> in order to
       use FrontPage support. This is because Apache will still use
       the <module>mod_auth</module> group file for determine the extent of a
@@ -710,7 +715,7 @@ environment variable</description>
 </directivesynopsis>
 
 <directivesynopsis>
-<name>AuthLDAPStartTLS</name>
+<name>AuthLDAPStartTLS directive</name>
 <description>Use a secure TLS connection to the LDAP server</description>
 <syntax>AuthLDAPStartTLS on|off</syntax>
 <default>AuthLDAPStartTLS off</default>

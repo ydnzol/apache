@@ -8,9 +8,6 @@
 /* SuExec root directory */
 #undef AP_DOC_ROOT
 
-/* Allow IPv4 connections on IPv6 listening sockets */
-#undef AP_ENABLE_V4_MAPPED
-
 /* Minimum allowed GID */
 #undef AP_GID_MIN
 

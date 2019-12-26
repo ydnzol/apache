@@ -3,7 +3,7 @@ VPATH = @srcdir@
 INCLUDES = @APRUTIL_PRIV_INCLUDES@ @APR_INCLUDES@ @APRUTIL_INCLUDES@
 
 PROGRAMS = testdbm testdate testmd4 testmd5 testxml testrmm teststrmatch \
-	testuuid testreslist testqueue testuri
+	testuuid testreslist testqueue
 TARGETS = $(PROGRAMS)
 
 APRUTIL_DOTTED_VERSION=@APRUTIL_DOTTED_VERSION@
@@ -18,11 +18,11 @@ all: $(PROGRAMS)
 
 check: $(PROGRAMS)
 	for prog in $(PROGRAMS); do \
-		./$$prog ;\
-		if test $$? = 255; then \
+		./$$prog \
+		if test $$i = 255; then \
 			echo "$$prog failed"; \
 			break; \
-		fi; \
+		fi \
 	done
 
 testdbm_OBJECTS = testdbm.lo
@@ -75,8 +75,4 @@ testqueue_LDADD =  $(TARGET_LIB_PATH)
 testqueue: $(testqueue_OBJECTS) $(testqueue_LDADD)
 	$(LINK) $(testqueue_OBJECTS) $(testqueue_LDADD) $(PROGRAM_DEPENDENCIES)
 
-testuri_OBJECTS = testuri.lo
-testuri_LDADD =  $(TARGET_LIB_PATH)
-testuri: $(testuri_OBJECTS) $(testuri_LDADD)
-	$(LINK) $(testuri_OBJECTS) $(testuri_LDADD) $(PROGRAM_DEPENDENCIES)
 

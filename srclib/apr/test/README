@@ -59,33 +59,43 @@ To run it, run:
 
     ./testall
 
-Caveats
--------
+Individual Program
+------------------
 
-Currently, some tests are known to fail in certain circumstances:
+The second way to run a test program is as an individual program.  This is
+done with another function, getsuite.  This function should always look like:
 
- * 'testpoll' opens 64 sockets concurrently; ensure that resource
-limits are high enough to allow this (using ulimit or limit); for
-instance, Solaris <=2.7 and HP-UX 11.00 both set the limit to <=64 by
-default
+#ifdef SINGLE_PROG
+CuSuite *getsuite(void)
+{
+    return testtime();
+}
+#endif
 
- * 'testipsub' will tickle the Solaris 8 getaddrinfo() IPv6
-bug, causing the test to hang.  Configure with --disable-ipv6 if using
-an unpatched Solaris 8 installation.
+Notice that all this function does is return the suite that is generated
+in the function used by the full driver.  This is very important.
 
- * The 'testdso' tests will not work if configured with
---disable-shared since the loadable modules cannot be built.
+Also, notice that this function is protected by "#ifdef SINGLE_PROG".  All
+test programs should include this function.  The individual program will
+call this function to get the suite, and then it will run the suite and
+print the output.
 
-Running individual tests
+The reason that this function must be protected, is that all test programs
+have this function, and when they are linked into the full driver, they
+conflict with each other.  I hope to fix this problem soon.
+
+Building individual test programs
 ---------------------------------
 
-It is not possible to build individual tests, however it is possible to
-run individual tests.  When running the test suite, specify the name of the
-tests that you want to run on the command line.  For example:
+To build individual test programs, you must do the following (for example):
 
-	./testall teststr testrand
+    MY_CFLAGS=-DSINGLE_PROGRAM make testtime
 
-Will run the Strings and Random generator tests.
+To run the test, run:
+
+    ./testtime
+
+Most people should just build the full test driver.
 
 Reading the test suite output
 -----------------------------
@@ -155,8 +165,9 @@ Adding New test Suites to the full driver
 To add a new Suite to the full driver, you must make a couple of modifications.
 
 1)  Edit test_apr.h, and add the prototype for the function.
-2)  Edit testall.c, and add the function and name to the tests array.
-3)  Edit Makefile.in, and add the .lo file to the testall target.
+2)  Edit testall.c, and add the function to the tests array.
+3)  Increase the NUM_TESTS macro in testall.c
+4)  Edit Makefile.in, and add the .lo file to the testall target.
 
 Once those four things are done, your tests will automatically be added
 to the suite.

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,8 +56,8 @@
 #include "apr_lib.h"
 #include "apr_strings.h"
 #include "apr_portable.h"
-#include "apr_arch_proc_mutex.h"
-#include "apr_arch_file_io.h"
+#include "proc_mutex.h"
+#include "fileio.h"
 #include <string.h>
 #include <stddef.h>
 
@@ -87,7 +87,7 @@ static char *fixed_name(const char *fname, apr_pool_t *pool)
 
 
 
-APR_DECLARE(apr_status_t) apr_proc_mutex_cleanup(void *vmutex)
+static apr_status_t proc_mutex_cleanup(void *vmutex)
 {
     apr_proc_mutex_t *mutex = vmutex;
     return apr_proc_mutex_destroy(mutex);
@@ -127,7 +127,7 @@ APR_DECLARE(apr_status_t) apr_proc_mutex_create(apr_proc_mutex_t **mutex,
     rc = DosCreateMutexSem(semname, &(new->hMutex), DC_SEM_SHARED, FALSE);
 
     if (!rc) {
-        apr_pool_cleanup_register(pool, new, apr_proc_mutex_cleanup, apr_pool_cleanup_null);
+        apr_pool_cleanup_register(pool, new, proc_mutex_cleanup, apr_pool_cleanup_null);
     }
 
     return APR_FROM_OS_ERROR(rc);
@@ -153,7 +153,7 @@ APR_DECLARE(apr_status_t) apr_proc_mutex_child_init(apr_proc_mutex_t **mutex,
     *mutex = new;
 
     if (!rc) {
-        apr_pool_cleanup_register(pool, new, apr_proc_mutex_cleanup, apr_pool_cleanup_null);
+        apr_pool_cleanup_register(pool, new, proc_mutex_cleanup, apr_pool_cleanup_null);
     }
 
     return APR_FROM_OS_ERROR(rc);

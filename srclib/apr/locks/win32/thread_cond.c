@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,8 +56,8 @@
 #include "apr_private.h"
 #include "apr_general.h"
 #include "apr_strings.h"
-#include "win32/apr_arch_thread_mutex.h"
-#include "win32/apr_arch_thread_cond.h"
+#include "win32/thread_mutex.h"
+#include "win32/thread_cond.h"
 #include "apr_portable.h"
 
 static apr_status_t thread_cond_cleanup(void *data)
@@ -83,23 +83,18 @@ APR_DECLARE(apr_status_t) apr_thread_cond_create(apr_thread_cond_t **cond,
 APR_DECLARE(apr_status_t) apr_thread_cond_wait(apr_thread_cond_t *cond,
                                                apr_thread_mutex_t *mutex)
 {
-    DWORD res;
+    DWORD rv;
 
     while (1) {
-        res = WaitForSingleObject(cond->mutex, INFINITE);
-        if (res != WAIT_OBJECT_0) {
-            return apr_get_os_error();
-        }
+        WaitForSingleObject(cond->mutex, INFINITE);
         cond->num_waiting++;
         ReleaseMutex(cond->mutex);
 
         apr_thread_mutex_unlock(mutex);
-        res = WaitForSingleObject(cond->event, INFINITE);
+        rv = WaitForSingleObject(cond->event, INFINITE);
         cond->num_waiting--;
-        if (res != WAIT_OBJECT_0) {
-            apr_status_t rv = apr_get_os_error();
-            ReleaseMutex(cond->mutex);
-            return rv;
+        if (rv == WAIT_FAILED) {
+            return apr_get_os_error();
         }
         if (cond->signal_all) {
             if (cond->num_waiting == 0) {
@@ -122,83 +117,39 @@ APR_DECLARE(apr_status_t) apr_thread_cond_timedwait(apr_thread_cond_t *cond,
                                                     apr_thread_mutex_t *mutex,
                                                     apr_interval_time_t timeout)
 {
-    DWORD res;
-    DWORD timeout_ms = (DWORD) apr_time_as_msec(timeout);
-
-    while (1) {
-        res = WaitForSingleObject(cond->mutex, timeout_ms);
-        if (res != WAIT_OBJECT_0) {
-            if (res == WAIT_TIMEOUT) {
-                return APR_TIMEUP;
-            }
-            return apr_get_os_error();
-        }
-        cond->num_waiting++;
-        ReleaseMutex(cond->mutex);
-
-        apr_thread_mutex_unlock(mutex);
-        res = WaitForSingleObject(cond->event, timeout_ms);
-        cond->num_waiting--;
-        if (res != WAIT_OBJECT_0) {
-            apr_status_t rv = apr_get_os_error();
-            ReleaseMutex(cond->mutex);
-            if (res == WAIT_TIMEOUT) {
-                rv = APR_TIMEUP;
-            }
-            return rv;
-        }
-        if (cond->signal_all) {
-            if (cond->num_waiting == 0) {
-                ResetEvent(cond->event);
-            }
-            break;
-        }
-        if (cond->signalled) {
-            cond->signalled = 0;
-            ResetEvent(cond->event);
-            break;
-        }
-        ReleaseMutex(cond->mutex);
-    }
-    apr_thread_mutex_lock(mutex);
-    return APR_SUCCESS;
+    /* Remember when implementing, timeout is usec, 
+     * Win32 Wait functions take msec
+     */
+    return APR_ENOTIMPL;
 }
 
 APR_DECLARE(apr_status_t) apr_thread_cond_signal(apr_thread_cond_t *cond)
 {
-    apr_status_t rv = APR_SUCCESS;
-    DWORD res;
+    DWORD rv;
 
-    res = WaitForSingleObject(cond->mutex, INFINITE);
-    if (res != WAIT_OBJECT_0) {
+    WaitForSingleObject(cond->mutex, INFINITE);
+    cond->signalled = 1;
+    rv = SetEvent(cond->event);
+    ReleaseMutex(cond->mutex);
+    if (rv == 0) {
         return apr_get_os_error();
     }
-    cond->signalled = 1;
-    res = SetEvent(cond->event);
-    if (res == 0) {
-        rv = apr_get_os_error();
-    }
-    ReleaseMutex(cond->mutex);
-    return rv;
+    return APR_SUCCESS;
 }
 
 APR_DECLARE(apr_status_t) apr_thread_cond_broadcast(apr_thread_cond_t *cond)
 {
-    apr_status_t rv = APR_SUCCESS;
-    DWORD res;
+    DWORD rv;
 
-    res = WaitForSingleObject(cond->mutex, INFINITE);
-    if (res != WAIT_OBJECT_0) {
-        return apr_get_os_error();
-    }
+    WaitForSingleObject(cond->mutex, INFINITE);
     cond->signalled = 1;
     cond->signal_all = 1;
-    res = SetEvent(cond->event);
-    if (res == 0) {
-        rv = apr_get_os_error();
-    }
+    rv = SetEvent(cond->event);
     ReleaseMutex(cond->mutex);
-    return rv;
+    if (rv == 0) {
+        return apr_get_os_error();
+    }
+    return APR_SUCCESS;
 }
 
 APR_DECLARE(apr_status_t) apr_thread_cond_destroy(apr_thread_cond_t *cond)

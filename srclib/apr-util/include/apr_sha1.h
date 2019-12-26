@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -85,12 +85,11 @@ extern "C" {
 /** length of the SHA Password */
 #define APR_SHA1PW_IDLEN 5
 
-/** @see apr_sha1_ctx_t */
-typedef struct apr_sha1_ctx_t apr_sha1_ctx_t;
-
-/** 
+/**
  * SHA1 context structure
  */
+typedef struct apr_sha1_ctx_t apr_sha1_ctx_t;
+
 struct apr_sha1_ctx_t {
     /** message digest */
     apr_uint32_t digest[5];

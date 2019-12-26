@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,8 +58,8 @@
 #include "apr_signal.h"
 #include "apr_atomic.h"
 
-#include "apr_arch_proc_mutex.h" /* for apr_proc_mutex_unix_setup_lock() */
-#include "apr_arch_internal_time.h"
+#include "proc_mutex.h" /* for apr_proc_mutex_unix_setup_lock() */
+#include "internal_time.h"
 
 
 APR_DECLARE(apr_status_t) apr_app_initialize(int *argc, 

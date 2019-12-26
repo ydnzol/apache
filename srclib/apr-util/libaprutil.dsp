@@ -52,8 +52,8 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
-# ADD BASE LINK32 kernel32.lib advapi32.lib ws2_32.lib mswsock.lib ole32.lib /nologo /base:"0x6EE60000" /subsystem:windows /dll /map /machine:I386
-# ADD LINK32 kernel32.lib advapi32.lib ws2_32.lib mswsock.lib ole32.lib /nologo /base:"0x6EE60000" /subsystem:windows /dll /map /machine:I386
+# ADD BASE LINK32 kernel32.lib advapi32.lib ws2_32.lib mswsock.lib ole32.lib /nologo /base:"0x6ED0000" /subsystem:windows /dll /map /machine:I386
+# ADD LINK32 kernel32.lib advapi32.lib ws2_32.lib mswsock.lib ole32.lib /nologo /base:"0x6ED0000" /subsystem:windows /dll /map /machine:I386
 
 !ELSEIF  "$(CFG)" == "libaprutil - Win32 Debug"
 
@@ -78,8 +78,8 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
-# ADD BASE LINK32 kernel32.lib advapi32.lib ws2_32.lib mswsock.lib ole32.lib /nologo /base:"0x6EE60000" /subsystem:windows /dll /incremental:no /map /debug /machine:I386
-# ADD LINK32 kernel32.lib advapi32.lib ws2_32.lib mswsock.lib ole32.lib /nologo /base:"0x6EE60000" /subsystem:windows /dll /incremental:no /map /debug /machine:I386
+# ADD BASE LINK32 kernel32.lib advapi32.lib ws2_32.lib mswsock.lib ole32.lib /nologo /base:"0x6ED0000" /subsystem:windows /dll /incremental:no /map /debug /machine:I386
+# ADD LINK32 kernel32.lib advapi32.lib ws2_32.lib mswsock.lib ole32.lib /nologo /base:"0x6ED00000" /subsystem:windows /dll /incremental:no /map /debug /machine:I386
 
 !ENDIF 
 
@@ -212,10 +212,7 @@ SOURCE=.\hooks\apr_hooks.c
 # Begin Source File
 
 SOURCE=.\ldap\apr_ldap_compat.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\ldap\apr_ldap_url.c
+# PROP Exclude_From_Build 1
 # End Source File
 # End Group
 # Begin Group "misc"
@@ -224,10 +221,6 @@ SOURCE=.\ldap\apr_ldap_url.c
 # Begin Source File
 
 SOURCE=.\misc\apr_date.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\misc\apr_queue.c
 # End Source File
 # Begin Source File
 
@@ -336,6 +329,7 @@ InputPath=.\include\apr_ldap.hw
 
 !ENDIF 
 
+# PROP Exclude_From_Build 1
 # End Source File
 # Begin Source File
 
@@ -491,10 +485,6 @@ SOURCE=.\include\apr_hooks.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\include\apr_ldap_url.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\include\apr_md4.h
 # End Source File
 # Begin Source File
@@ -508,10 +498,6 @@ SOURCE=.\include\apr_optional.h
 # Begin Source File
 
 SOURCE=.\include\apr_optional_hooks.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\include\apr_queue.h
 # End Source File
 # Begin Source File
 

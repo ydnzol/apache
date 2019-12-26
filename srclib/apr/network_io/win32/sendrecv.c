@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,12 +52,12 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_networkio.h"
+#include "networkio.h"
 #include "apr_errno.h"
 #include "apr_general.h"
 #include "apr_network_io.h"
 #include "apr_lib.h"
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 #if APR_HAVE_TIME_H
 #include <time.h>
 #endif
@@ -65,17 +65,16 @@
 /* MAX_SEGMENT_SIZE is the maximum amount of data that will be sent to a client
  * in one call of TransmitFile. This number must be small enough to give the 
  * slowest client time to receive the data before the socket timeout triggers.
- * The same problem can exist with apr_socket_send(). In that case, we rely on
- * the application to adjust socket timeouts and max send segment 
- * sizes appropriately.
- * For example, Apache will in most cases call apr_socket_send() with less
- * than 8193 bytes.
+ * The same problem can exist with apr_send(). In that case, we rely on the
+ * application to adjust socket timeouts and max send segment sizes appropriately.
+ * For example, Apache will in most cases call apr_send() with less than 8193 
+ * bytes.
  */
 #define MAX_SEGMENT_SIZE 65536
 #define WSABUF_ON_STACK 50
 
-APR_DECLARE(apr_status_t) apr_socket_send(apr_socket_t *sock, const char *buf,
-                                          apr_size_t *len)
+APR_DECLARE(apr_status_t) apr_send(apr_socket_t *sock, const char *buf,
+                                   apr_size_t *len)
 {
     apr_ssize_t rv;
     WSABUF wsaData;
@@ -102,8 +101,8 @@ APR_DECLARE(apr_status_t) apr_socket_send(apr_socket_t *sock, const char *buf,
 }
 
 
-APR_DECLARE(apr_status_t) apr_socket_recv(apr_socket_t *sock, char *buf,
-                                          apr_size_t *len) 
+APR_DECLARE(apr_status_t) apr_recv(apr_socket_t *sock, char *buf,
+                                   apr_size_t *len) 
 {
     apr_ssize_t rv;
     WSABUF wsaData;
@@ -131,20 +130,22 @@ APR_DECLARE(apr_status_t) apr_socket_recv(apr_socket_t *sock, char *buf,
 }
 
 
-APR_DECLARE(apr_status_t) apr_socket_sendv(apr_socket_t *sock,
-                                           const struct iovec *vec,
-                                           apr_int32_t nvec, apr_size_t *nbytes)
+APR_DECLARE(apr_status_t) apr_sendv(apr_socket_t *sock,
+                                    const struct iovec *vec,
+                                    apr_int32_t nvec, apr_size_t *nbytes)
 {
     apr_status_t rc = APR_SUCCESS;
     apr_ssize_t rv;
     int i;
     DWORD dwBytes = 0;
-    WSABUF *pWsaBuf = (nvec <= WSABUF_ON_STACK) ? _alloca(sizeof(WSABUF) * (nvec))
-                                                : malloc(sizeof(WSABUF) * (nvec));
+    WSABUF wsabuf[WSABUF_ON_STACK];
+    LPWSABUF pWsaBuf = wsabuf;
 
-    if (!pWsaBuf)
-        return APR_ENOMEM;
-
+    if (nvec > WSABUF_ON_STACK) {
+        pWsaBuf = (LPWSABUF) malloc(sizeof(WSABUF) * nvec);
+        if (!pWsaBuf)
+            return APR_ENOMEM;
+    }
     for (i = 0; i < nvec; i++) {
         pWsaBuf[i].buf = vec[i].iov_base;
         pWsaBuf[i].len = vec[i].iov_len;
@@ -172,10 +173,9 @@ APR_DECLARE(apr_status_t) apr_socket_sendv(apr_socket_t *sock,
 }
 
 
-APR_DECLARE(apr_status_t) apr_socket_sendto(apr_socket_t *sock,
-                                            apr_sockaddr_t *where,
-                                            apr_int32_t flags, const char *buf, 
-                                            apr_size_t *len)
+APR_DECLARE(apr_status_t) apr_sendto(apr_socket_t *sock, apr_sockaddr_t *where,
+                                     apr_int32_t flags, const char *buf, 
+                                     apr_size_t *len)
 {
     apr_ssize_t rv;
 
@@ -192,10 +192,10 @@ APR_DECLARE(apr_status_t) apr_socket_sendto(apr_socket_t *sock,
 }
 
 
-APR_DECLARE(apr_status_t) apr_socket_recvfrom(apr_sockaddr_t *from, 
-                                              apr_socket_t *sock,
-                                              apr_int32_t flags, 
-                                              char *buf, apr_size_t *len)
+APR_DECLARE(apr_status_t) apr_recvfrom(apr_sockaddr_t *from, 
+                                       apr_socket_t *sock,
+                                       apr_int32_t flags, 
+                                       char *buf, apr_size_t *len)
 {
     apr_ssize_t rv;
 
@@ -213,12 +213,12 @@ APR_DECLARE(apr_status_t) apr_socket_recvfrom(apr_sockaddr_t *from,
 }
 
 
-static apr_status_t collapse_iovec(char **off, apr_size_t *len, 
-                                   struct iovec *iovec, int numvec, 
-                                   char *buf, apr_size_t buflen)
+static void collapse_iovec(char **buf, int *len, struct iovec *iovec, int numvec, apr_pool_t *p)
 {
+    int ptr = 0;
+
     if (numvec == 1) {
-        *off = iovec[0].iov_base;
+        *buf = iovec[0].iov_base;
         *len = iovec[0].iov_len;
     }
     else {
@@ -227,19 +227,13 @@ static apr_status_t collapse_iovec(char **off, apr_size_t *len,
             *len += iovec[i].iov_len;
         }
 
-        if (*len > buflen) {
-            *len = 0;
-            return APR_INCOMPLETE;
-        }
-
-        *off = buf;
+        *buf = apr_palloc(p, *len); /* Should this be a malloc? */
 
         for (i = 0; i < numvec; i++) {
-            memcpy(buf, iovec[i].iov_base, iovec[i].iov_len);
-            buf += iovec[i].iov_len;
+            memcpy((char*)*buf + ptr, iovec[i].iov_base, iovec[i].iov_len);
+            ptr += iovec[i].iov_len;
         }
     }
-    return APR_SUCCESS;
 }
 
 
@@ -255,8 +249,8 @@ static apr_status_t collapse_iovec(char **off, apr_size_t *len,
  */
 
 /*
- * apr_status_t apr_socket_sendfile(apr_socket_t *, apr_file_t *, apr_hdtr_t *, 
- *                                 apr_off_t *, apr_size_t *, apr_int32_t flags)
+ * apr_status_t apr_sendfile(apr_socket_t *, apr_file_t *, apr_hdtr_t *, 
+ *                         apr_off_t *, apr_size_t *, apr_int32_t flags)
  *    Send a file from an open file descriptor to a socket, along with 
  *    optional headers and trailers
  * arg 1) The socket to which we're writing
@@ -266,12 +260,9 @@ static apr_status_t collapse_iovec(char **off, apr_size_t *len,
  * arg 5) Number of bytes to send out of the file
  * arg 6) APR flags that are mapped to OS specific flags
  */
-APR_DECLARE(apr_status_t) apr_socket_sendfile(apr_socket_t *sock, 
-                                              apr_file_t *file,
-                                              apr_hdtr_t *hdtr,
-                                              apr_off_t *offset,
-                                              apr_size_t *len,
-                                              apr_int32_t flags) 
+APR_DECLARE(apr_status_t) apr_sendfile(apr_socket_t *sock, apr_file_t *file,
+                                       apr_hdtr_t *hdtr, apr_off_t *offset,
+                                       apr_size_t *len, apr_int32_t flags) 
 {
     apr_status_t status = APR_SUCCESS;
     apr_ssize_t rv;
@@ -283,9 +274,7 @@ APR_DECLARE(apr_status_t) apr_socket_sendfile(apr_socket_t *sock,
     int ptr = 0;
     int bytes_to_send;   /* Bytes to send out of the file (not including headers) */
     int disconnected = 0;
-    int sendv_trailers = 0;
     HANDLE wait_event;
-    char hdtrbuf[4096];
 
     if (apr_os_level < APR_WIN_NT) {
         return APR_ENOTIMPL;
@@ -298,15 +287,13 @@ APR_DECLARE(apr_status_t) apr_socket_sendfile(apr_socket_t *sock,
     /* Handle the goofy case of sending headers/trailers and a zero byte file */
     if (!bytes_to_send && hdtr) {
         if (hdtr->numheaders) {
-            rv = apr_socket_sendv(sock, hdtr->headers, hdtr->numheaders, 
-                                  &nbytes);
+            rv = apr_sendv(sock, hdtr->headers, hdtr->numheaders, &nbytes);
             if (rv != APR_SUCCESS)
                 return rv;
             *len += nbytes;
         }
         if (hdtr->numtrailers) {
-            rv = apr_socket_sendv(sock, hdtr->trailers, hdtr->numtrailers,
-                                  &nbytes);
+            rv = apr_sendv(sock, hdtr->trailers, hdtr->numtrailers, &nbytes);
             if (rv != APR_SUCCESS)
                 return rv;
             *len += nbytes;
@@ -326,18 +313,8 @@ APR_DECLARE(apr_status_t) apr_socket_sendfile(apr_socket_t *sock,
     /* Collapse the headers into a single buffer */
     if (hdtr && hdtr->numheaders) {
         ptfb = &tfb;
-        nbytes = 0;
-        rv = collapse_iovec((char **)&ptfb->Head, &ptfb->HeadLength, 
-                            hdtr->headers, hdtr->numheaders, 
-                            hdtrbuf, sizeof(hdtrbuf));
-        /* If not enough buffer, punt to sendv */
-        if (rv == APR_INCOMPLETE) {
-            rv = apr_sendv(sock, hdtr->headers, hdtr->numheaders, &nbytes);
-            if (rv != APR_SUCCESS)
-                return rv;
-            *len += nbytes;
-            ptfb = NULL;
-        }
+        collapse_iovec((char **)&ptfb->Head, &ptfb->HeadLength, hdtr->headers, 
+                       hdtr->numheaders, sock->cntxt);
     }
 
     while (bytes_to_send) {
@@ -350,18 +327,11 @@ APR_DECLARE(apr_status_t) apr_socket_sendfile(apr_socket_t *sock,
             /* Collapse the trailers into a single buffer */
             if (hdtr && hdtr->numtrailers) {
                 ptfb = &tfb;
-                rv = collapse_iovec((char**) &ptfb->Tail, &ptfb->TailLength,
-                                    hdtr->trailers, hdtr->numtrailers,
-                                    hdtrbuf + ptfb->HeadLength,
-                                    sizeof(hdtrbuf) - ptfb->HeadLength);
-                if (rv == APR_INCOMPLETE) {
-                    /* If not enough buffer, punt to sendv, later */
-                    sendv_trailers = 1;
-                }
+                collapse_iovec((char**) &ptfb->Tail, &ptfb->TailLength, 
+                               hdtr->trailers, hdtr->numtrailers, sock->cntxt);
             }
             /* Disconnect the socket after last send */
-            if ((flags & APR_SENDFILE_DISCONNECT_SOCKET)
-                    && !sendv_trailers) {
+            if (flags & APR_SENDFILE_DISCONNECT_SOCKET) {
                 dwFlags |= TF_REUSE_SOCKET;
                 dwFlags |= TF_DISCONNECT;
                 disconnected = 1;
@@ -435,20 +405,11 @@ APR_DECLARE(apr_status_t) apr_socket_sendfile(apr_socket_t *sock,
     }
 
     if (status == APR_SUCCESS) {
-        if (sendv_trailers) {
-            rv = apr_sendv(sock, hdtr->trailers, hdtr->numtrailers, &nbytes);
-            if (rv != APR_SUCCESS)
-                return rv;
-            *len += nbytes;
-        }
-
-    
         /* Mark the socket as disconnected, but do not close it.
          * Note: The application must have stored the socket prior to making
-         * the call to apr_socket_sendfile in order to either reuse it 
-         * or close it.
+         * the call to apr_sendfile in order to either reuse it or close it.
          */
-        if (disconnected) {
+        if (flags & APR_SENDFILE_DISCONNECT_SOCKET) {
             sock->disconnected = 1;
             sock->socketdes = INVALID_SOCKET;
         }
@@ -459,52 +420,4 @@ APR_DECLARE(apr_status_t) apr_socket_sendfile(apr_socket_t *sock,
 #endif
     return status;
 }
-
-/* Deprecated */
-APR_DECLARE(apr_status_t) apr_sendfile(apr_socket_t *sock, apr_file_t *file,
-                                       apr_hdtr_t *hdtr, apr_off_t *offset,
-                                       apr_size_t *len, apr_int32_t flags) 
-{
-    return apr_socket_sendfile(sock, file, hdtr, offset, len, flags);
-}
-
 #endif
-
-/* Deprecated */
-APR_DECLARE(apr_status_t) apr_send(apr_socket_t *sock, const char *buf,
-                                   apr_size_t *len)
-{
-    return apr_socket_send(sock, buf, len);
-}
-
-/* Deprecated */
-APR_DECLARE(apr_status_t) apr_sendv(apr_socket_t *sock,
-                                    const struct iovec *vec,
-                                    apr_int32_t nvec, apr_size_t *nbytes)
-{
-    return apr_socket_sendv(sock, vec, nvec, nbytes);
-}
-
-/* Deprecated */
-APR_DECLARE(apr_status_t) apr_sendto(apr_socket_t *sock, apr_sockaddr_t *where,
-                                     apr_int32_t flags, const char *buf, 
-                                     apr_size_t *len)
-{
-    return apr_socket_sendto(sock, where, flags, buf, len);
-}
-
-/* Deprecated */
-APR_DECLARE(apr_status_t) apr_recvfrom(apr_sockaddr_t *from, 
-                                       apr_socket_t *sock,
-                                       apr_int32_t flags, 
-                                       char *buf, apr_size_t *len)
-{
-    return apr_socket_recvfrom(from, sock, flags, buf, len);
-}
-
-/* Deprecated */
-APR_DECLARE(apr_status_t) apr_recv(apr_socket_t *sock, char *buf,
-                                   apr_size_t *len) 
-{
-    return apr_socket_recv(sock, buf, len);
-}

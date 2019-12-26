@@ -179,6 +179,9 @@ typedef struct {
     /** ignore client's requests for uncached responses */
     int ignorecachecontrol;
     int ignorecachecontrol_set;
+    /* maximum amount of data to buffer on a streamed response where
+     * we haven't yet seen EOS */
+    apr_off_t max_streaming_buffer_size;
 } cache_server_conf;
 
 /* cache info information */
@@ -203,13 +206,6 @@ struct cache_info {
 };
 
 /* cache handle information */
-
-/* XXX TODO On the next structure change/MMN bump, 
- * count must become an apr_off_t, representing
- * the potential size of disk cached objects.
- * Then dig for
- * "XXX Bad Temporary Cast - see cache_object_t notes" 
- */
 typedef struct cache_object cache_object_t;
 struct cache_object {
     char *key;
@@ -254,8 +250,7 @@ typedef struct {
 
 /* cache_util.c */
 /* do a HTTP/1.1 age calculation */
-CACHE_DECLARE(apr_time_t) ap_cache_current_age(cache_info *info, const apr_time_t age_value,
-                                               apr_time_t now);
+CACHE_DECLARE(apr_time_t) ap_cache_current_age(cache_info *info, const apr_time_t age_value);
 
 /**
  * Check the freshness of the cache object per RFC2616 section 13.2 (Expiration Model)
@@ -272,14 +267,8 @@ CACHE_DECLARE(char *) generate_name(apr_pool_t *p, int dirlevels,
 CACHE_DECLARE(int) ap_cache_request_is_conditional(request_rec *r);
 CACHE_DECLARE(void) ap_cache_reset_output_filters(request_rec *r);
 CACHE_DECLARE(const char *)ap_cache_get_cachetype(request_rec *r, cache_server_conf *conf, const char *url);
-CACHE_DECLARE(int) ap_cache_liststr(apr_pool_t *p, const char *list,
-                                    const char *key, char **val);
+CACHE_DECLARE(int) ap_cache_liststr(const char *list, const char *key, char **val);
 CACHE_DECLARE(const char *)ap_cache_tokstr(apr_pool_t *p, const char *list, const char **str);
-
-/* Create a new table consisting of those elements from a request_rec's
- * headers_out that are allowed to be stored in a cache
- */
-CACHE_DECLARE(apr_table_t *)ap_cache_cacheable_hdrs_out(request_rec *r);
 
 /**
  * cache_storage.c

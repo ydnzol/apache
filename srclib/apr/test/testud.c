@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,69 +61,36 @@
 #include "apr_strings.h"
 #include "test_apr.h"
 
-static apr_pool_t *pool;
-static char *testdata;
-static int cleanup_called = 0;
-
 static apr_status_t string_cleanup(void *data)
 {
-    cleanup_called = 1;
     return APR_SUCCESS;
 }
 
-static void set_userdata(CuTest *tc)
+int main(void)
 {
-    apr_status_t rv;
-
-    rv = apr_pool_userdata_set(testdata, "TEST", string_cleanup, pool);
-    CuAssertIntEquals(tc, rv, APR_SUCCESS);
-}
-
-static void get_userdata(CuTest *tc)
-{
-    apr_status_t rv;
+    apr_pool_t *pool;
+    char *testdata;
     char *retdata;
 
-    rv = apr_pool_userdata_get((void **)&retdata, "TEST", pool);
-    CuAssertIntEquals(tc, rv, APR_SUCCESS);
-    CuAssertStrEquals(tc, retdata, testdata);
-}
+    printf("APR User Data Test\n==================\n\n");
 
-static void get_nonexistkey(CuTest *tc)
-{
-    apr_status_t rv;
-    char *retdata;
+    STD_TEST_NEQ("Initializing APR", apr_initialize())
+    atexit(apr_terminate);
 
-    rv = apr_pool_userdata_get((void **)&retdata, "DOESNTEXIST", pool);
-    CuAssertIntEquals(tc, rv, APR_SUCCESS);
-    CuAssertPtrEquals(tc, retdata, NULL);
-}
+    STD_TEST_NEQ("Creating a pool", apr_pool_create(&pool, NULL))
 
-static void post_pool_clear(CuTest *tc)
-{
-    apr_status_t rv;
-    char *retdata;
-
-    rv = apr_pool_userdata_get((void **)&retdata, "DOESNTEXIST", pool);
-    CuAssertIntEquals(tc, rv, APR_SUCCESS);
-    CuAssertPtrEquals(tc, retdata, NULL);
-}
-
-CuSuite *testud(void)
-{
-    CuSuite *suite = CuSuiteNew("User Data");
-
-    apr_pool_create(&pool, p);
     testdata = apr_pstrdup(pool, "This is a test\n");
 
-    SUITE_ADD_TEST(suite, set_userdata);
-    SUITE_ADD_TEST(suite, get_userdata);
-    SUITE_ADD_TEST(suite, get_nonexistkey);
+    printf("Testing pool\n");
+    STD_TEST_NEQ("    Setting user data into the pool",
+          apr_pool_userdata_set(testdata, "TEST", string_cleanup, pool))
+    
+    STD_TEST_NEQ("    Getting user data from the pool",
+          apr_pool_userdata_get((void **)&retdata, "TEST", pool))
 
-    apr_pool_clear(pool);
+    TEST_NEQ("    Checking the data we got", strcmp(testdata, retdata),
+             0, "OK","Failed :(")
 
-    SUITE_ADD_TEST(suite, post_pool_clear);
-
-    return suite;
+    printf("\nTest complete\n");
+    return 0;
 }
-

@@ -90,9 +90,6 @@ Package=<4>
     Project_Dep_Name mod_cgi
     End Project Dependency
     Begin Project Dependency
-    Project_Dep_Name mod_charset_lite
-    End Project Dependency
-    Begin Project Dependency
     Project_Dep_Name mod_dav_fs
     End Project Dependency
     Begin Project Dependency
@@ -127,9 +124,6 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name mod_isapi
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name mod_logio
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name mod_log_config
@@ -200,18 +194,6 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name wintty
     End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libapriconv_ccs_modules
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libapriconv_ces_modules
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name mod_auth_ldap
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name util_ldap
-    End Project Dependency
 }}}
 
 ###############################################################################
@@ -279,18 +261,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "apriconv"=".\srclib\apr-iconv\apriconv.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
 Project: "aprutil"=".\srclib\apr-util\aprutil.dsp" - Package Owner=<4>
 
 Package=<5>
@@ -299,9 +269,6 @@ Package=<5>
 
 Package=<4>
 {{{
-    Begin Project Dependency
-    Project_Dep_Name apriconv
-    End Project Dependency
     Begin Project Dependency
     Project_Dep_Name gen_uri_delims
     End Project Dependency
@@ -417,48 +384,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "libapriconv"=".\srclib\apr-iconv\libapriconv.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name libapr
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name apriconv ces
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "libapriconv_ccs_modules"=".\srclib\apr-iconv\ccs\libapriconv_ccs_modules.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
-Project: "libapriconv_ces_modules"=".\srclib\apr-iconv\ces\libapriconv_ces_modules.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
 Project: "libaprutil"=".\srclib\apr-util\libaprutil.dsp" - Package Owner=<4>
 
 Package=<5>
@@ -469,9 +394,6 @@ Package=<4>
 {{{
     Begin Project Dependency
     Project_Dep_Name libapr
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libapriconv
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name gen_uri_delims
@@ -493,9 +415,6 @@ Package=<4>
 {{{
     Begin Project Dependency
     Project_Dep_Name libapr
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libapriconv
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name libaprutil
@@ -696,30 +615,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_auth_ldap"=".\modules\experimental\mod_auth_ldap.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name libapr
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libaprutil
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libhttpd
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name util_ldap
-    End Project Dependency
-}}}
-
-###############################################################################
-
 Project: "mod_autoindex"=".\modules\generators\mod_autoindex.dsp" - Package Owner=<4>
 
 Package=<5>
@@ -784,27 +679,6 @@ Package=<4>
 ###############################################################################
 
 Project: "mod_cgi"=".\modules\generators\mod_cgi.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name libapr
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libaprutil
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libhttpd
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "mod_charset_lite"=".\modules\experimental\mod_charset_lite.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -978,7 +852,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_ext_filter"=".\modules\filters\mod_ext_filter.dsp" - Package Owner=<4>
+Project: "mod_ext_filter"=".\modules\experimental\mod_ext_filter.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -1126,27 +1000,6 @@ Package=<4>
 ###############################################################################
 
 Project: "mod_log_config"=".\modules\loggers\mod_log_config.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name libapr
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libaprutil
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libhttpd
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "mod_logio"=".\modules\loggers\mod_logio.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -1579,27 +1432,6 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name aprutil
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "util_ldap"=".\modules\experimental\util_ldap.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name libapr
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libaprutil
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libhttpd
     End Project Dependency
 }}}
 

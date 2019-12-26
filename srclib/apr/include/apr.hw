@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -108,8 +108,6 @@ extern "C" {
 #define APR_HAVE_LIMITS_H       1
 #define APR_HAVE_NETDB_H        0
 #define APR_HAVE_NETINET_IN_H   0
-#define APR_HAVE_NETINET_SCTP_H 0
-#define APR_HAVE_NETINET_SCTP_UIO_H 0
 #define APR_HAVE_NETINET_TCP_H  0
 #define APR_HAVE_PTHREAD_H      0
 #define APR_HAVE_SIGNAL_H       1
@@ -208,7 +206,6 @@ extern "C" {
 #define APR_HAVE_MEMCHR         1
 #define APR_HAVE_STRUCT_RLIMIT  0
 #define APR_HAVE_UNION_SEMUN    0
-#define APR_HAVE_SCTP           0
 
 #ifndef _WIN32_WCE
 #define APR_HAVE_STRICMP        1
@@ -234,6 +231,9 @@ extern "C" {
 #endif
 #ifndef NOUSER
 #define NOUSER
+#endif
+#ifndef NOGDI
+#define NOGDI
 #endif
 #ifndef NOMCX
 #define NOMCX
@@ -337,39 +337,14 @@ typedef  __int64     apr_off_t;
 typedef  int         apr_off_t;
 #endif
 typedef  int         apr_socklen_t;
-
-#ifdef WIN64
-#define APR_SIZEOF_VOIDP   8
-#else
-#define APR_SIZEOF_VOIDP   4
-#endif
-
-/* XXX These simply don't belong here, perhaps in apr_portabile.h
- * based on some APR_HAVE_PID/GID/UID?
- */
 typedef  int         pid_t;
 typedef  int         uid_t;
 typedef  int         gid_t;
 
+
 /* Mechanisms to properly type numeric literals */
 
 #define APR_INT64_C(val) (val##i64)
-
-
-#if APR_HAVE_IPV6
-#include <ws2tcpip.h>
-
-/* Appears in later flavors, not the originals. */
-#ifndef in_addr6
-#define  in6_addr    in_addr6
-#endif
-
-#ifndef WS2TCPIP_INLINE
-#define IN6_IS_ADDR_V4MAPPED(a) \
-    (   (*(const apr_uint64_t *)(const void *)(&(a)->s6_addr[0]) == 0) \
-     && (*(const apr_uint32_t *)(const void *)(&(a)->s6_addr[8]) == ntohl(0x0000ffff)))
-#endif
-#endif
 
 
 /* Definitions that APR programs need to work properly. */
@@ -428,20 +403,13 @@ typedef  int         gid_t;
 #define APR_DECLARE_DATA             __declspec(dllimport)
 #endif
 
-#ifdef WIN64
-#define APR_SSIZE_T_FMT          "I64d"
-#define APR_SIZE_T_FMT           "I64d"
-#else
 #define APR_SSIZE_T_FMT          "d"
+
 #define APR_SIZE_T_FMT           "d"
-#endif
 
-#if APR_HAS_LARGE_FILES
 #define APR_OFF_T_FMT            "I64d"
-#else
-#define APR_OFF_T_FMT            "d"
-#endif
 
+/* XXX: Win64 portability problem? */
 #define APR_PID_T_FMT            "d"
 
 #define APR_INT64_T_FMT          "I64d"

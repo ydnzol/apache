@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,12 +54,12 @@
 
 #define INCL_DOSERRORS
 #define INCL_DOS
-#include "apr_arch_threadproc.h"
+#include "threadproc.h"
 #include "apr_thread_proc.h"
 #include "apr_general.h"
 #include "apr_lib.h"
 #include "apr_portable.h"
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 #include <stdlib.h>
 
 APR_DECLARE(apr_status_t) apr_threadattr_create(apr_threadattr_t **new, apr_pool_t *pool)

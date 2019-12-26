@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,8 +52,7 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_file_io.h"
-#include "fsio.h"
+#include "fileio.h"
 #include "nks/dirio.h"
 #include "apr_file_io.h"
 #include "apr_general.h"
@@ -67,20 +66,18 @@ static apr_filetype_e filetype_from_mode(mode_t mode)
 
     if (S_ISREG(mode))
         type = APR_REG;
-    else if (S_ISDIR(mode))
+    if (S_ISDIR(mode))
         type = APR_DIR;
-    else if (S_ISCHR(mode))
+    if (S_ISCHR(mode))
         type = APR_CHR;
-    else if (S_ISBLK(mode))
+    if (S_ISBLK(mode))
         type = APR_BLK;
-    else if (S_ISFIFO(mode))
+    if (S_ISFIFO(mode))
         type = APR_PIPE;
-    else if (S_ISLNK(mode))
+    if (S_ISLNK(mode))
         type = APR_LNK;
-    else if (S_ISSOCK(mode))
+    if (S_ISSOCK(mode))
         type = APR_SOCK;
-    else
-        type = APR_UNKFILE;
     return type;
 }
 
@@ -106,6 +103,40 @@ static void fill_out_finfo(apr_finfo_t *finfo, struct stat *info,
      * }
      */
 }
+
+char *case_filename(apr_pool_t *pPool, const char *szFile)
+{
+    char *casedFileName = NULL;
+    char name[1024];
+    int rc;
+
+#ifdef NEW_API
+    rc = realname(szFile, name);
+    if (rc == 0) {
+        casedFileName = apr_pstrdup(pPool, name);
+    }
+#else
+    NXDirAttrWithName_t	*attrBuf;
+
+    attrBuf = (NXDirAttrWithName_t *) &name;
+    rc =NXGetAttr(NULL, szFile, NX_DELEVEL_NAME_ONLY, attrBuf, 1024, 0);
+    if (rc == 0) {
+        casedFileName = apr_pstrdup(pPool, attrBuf->deName);
+    }
+#endif
+    else
+    {
+        char *s;
+        s = strrchr(szFile, '/');
+        if (!s)
+            s = strrchr(szFile, ':');
+        if (s) {
+            casedFileName = apr_pstrdup(pPool, &s[1]);
+        }
+    }
+    return casedFileName;
+}
+
 
 APR_DECLARE(apr_status_t) apr_file_info_get(apr_finfo_t *finfo, 
                                             apr_int32_t wanted,
@@ -184,17 +215,131 @@ APR_DECLARE(apr_status_t) apr_file_attrs_set(const char *fname,
     return apr_file_perms_set(fname, finfo.protection);
 }
 
+typedef struct apr_stat_entry_t apr_stat_entry_t;
+
+struct apr_stat_entry_t {
+    struct stat info;
+    char *casedName;
+    apr_time_t expire;
+};
+
+extern apr_int32_t CpuCurrentProcessor; /* system variable */
+
+int cstat (const char *path, struct stat *buf, char **casedName, apr_pool_t *pool)
+{
+    apr_hash_t *statCache = (apr_hash_t *)getStatCache(CpuCurrentProcessor);
+    apr_pool_t *gPool = (apr_pool_t *)getGlobalPool(CpuCurrentProcessor);
+    apr_stat_entry_t *stat_entry;
+    struct stat *info;
+    apr_time_t now = apr_time_now();
+    char *key;
+    int ret;
+    int found = 0;
+
+    *casedName = NULL;
+
+    /* If there isn't a global pool then just stat the file
+       and return */
+    if (!gPool) {
+        char poolname[50];
+
+        if (apr_pool_create(&gPool, NULL) != APR_SUCCESS) {
+            ret = stat(path, buf);
+            if (ret == 0)
+                *casedName = case_filename(pool, path);
+            return ret;
+        }
+
+        sprintf (poolname, "cstat_mem_pool_%d", CpuCurrentProcessor);
+        apr_pool_tag(gPool, poolname);
+
+        setGlobalPool(gPool, CpuCurrentProcessor);
+    }
+
+    /* If we have a statCache hash table then use it.
+       Otherwise we need to create it and initialized it
+       with a new mutex lock. */
+    if (!statCache) {
+        statCache = apr_hash_make(gPool);
+        setStatCache((void*)statCache, CpuCurrentProcessor);
+    }
+
+    /* If we have a statCache then try to pull the information
+       from the cache.  Otherwise just stat the file and return.*/
+    if (statCache) {
+        stat_entry = (apr_stat_entry_t*) apr_hash_get(statCache, path, APR_HASH_KEY_STRING);
+        /* If we got an entry then check the expiration time.  If the entry
+           hasn't expired yet then copy the information and return. */
+        if (stat_entry) {
+            if ((now - stat_entry->expire) <= APR_USEC_PER_SEC) {
+                memcpy (buf, &(stat_entry->info), sizeof(struct stat));
+                if (stat_entry->casedName)
+                    *casedName = apr_pstrdup (pool, stat_entry->casedName);
+                else
+                    *casedName = case_filename(pool, path);
+                found = 1;
+            }
+        }
+
+        /* Since we are creating a separate stat cache for each processor, we
+           don't need to worry about locking the hash table before manipulating
+           it. */
+        if (!found) {
+            /* Bind the thread to the current cpu so that we don't wake
+               up on some other cpu and try to manipulate the wrong cache. */
+            NXThreadBind (CpuCurrentProcessor);
+            ret = stat(path, buf);
+            if (ret == 0) {
+                *casedName = case_filename(pool, path);
+                /* If we don't have a stat_entry then create one, copy
+                   the data and add it to the hash table. */
+                if (!stat_entry) {
+                    key = apr_pstrdup (gPool, path);
+                    stat_entry = apr_palloc (gPool, sizeof(apr_stat_entry_t));
+                    memcpy (&(stat_entry->info), buf, sizeof(struct stat));
+                    if (*casedName)
+                        stat_entry->casedName = apr_pstrdup (gPool, *casedName);
+                    stat_entry->expire = now;
+                    apr_hash_set(statCache, key, APR_HASH_KEY_STRING, stat_entry);
+                }
+                else {
+                    /* If we do have a stat_entry then it must have expired.  Just
+                       copy the data and reset the expiration. */
+                    memcpy (&(stat_entry->info), buf, sizeof(struct stat));
+
+                    /* If we have a casedName and don't have a cached name or the names don't
+                       compare, then cache the name. */
+                    if (*casedName && (!stat_entry->casedName || strcmp(*casedName, stat_entry->casedName))) {
+                        stat_entry->casedName = apr_pstrdup (gPool, *casedName);
+                    }
+                    stat_entry->expire = now;
+                }
+                NXThreadBind (NX_THR_UNBOUND);
+            }
+            else{
+                NXThreadBind (NX_THR_UNBOUND);
+                return ret;
+			}
+        }
+    }
+    else {
+        ret = stat(path, buf);
+        if (ret == 0)
+            *casedName = case_filename(pool, path);
+        return ret;
+    }
+    return 0;
+}
+
 APR_DECLARE(apr_status_t) apr_stat(apr_finfo_t *finfo, 
                                    const char *fname, 
                                    apr_int32_t wanted, apr_pool_t *pool)
 {
     struct stat info;
     int srv;
-    NXPathCtx_t pathCtx = 0;
+    char *casedName = NULL;
 
-    getcwdpath(NULL, &pathCtx, CTX_ACTUAL_CWD);
-    srv = getstat(pathCtx, fname, &info, ST_STAT_BITS|ST_NAME_BIT);
-    errno = srv;
+    srv = cstat(fname, &info, &casedName, pool);
 
     if (srv == 0) {
         finfo->pool = pool;
@@ -203,8 +348,10 @@ APR_DECLARE(apr_status_t) apr_stat(apr_finfo_t *finfo,
         if (wanted & APR_FINFO_LINK)
             wanted &= ~APR_FINFO_LINK;
         if (wanted & APR_FINFO_NAME) {
-            finfo->name = apr_pstrdup(pool, info.st_name);
-            finfo->valid |= APR_FINFO_NAME;
+            if (casedName) {
+                finfo->name = casedName;
+                finfo->valid |= APR_FINFO_NAME;
+            }
         }
         return (wanted & ~finfo->valid) ? APR_INCOMPLETE : APR_SUCCESS;
     }

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -130,15 +130,12 @@ typedef struct {
  */
 struct apr_dbm_t
 { 
-    /** Associated pool */
     apr_pool_t *pool;
 
     /** pointer to DB Implementation Specific data */
     void *file;
 
-    /** Current integer error code */
     int errcode;
-    /** Current string error code */
     const char *errmsg;
 
     /** the type of DBM */

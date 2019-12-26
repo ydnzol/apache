@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,15 +52,22 @@
  * <http://www.apache.org/>.
  */
 
+/* Some simple functions to make the test apps easier to write and
+ * a bit more consistent...
+ */
+
+/* Things to bear in mind when using these...
+ *
+ * If you include '\t' within the string passed in it won't be included
+ * in the spacing, so use spaces instead :)
+ * 
+ */ 
+
 #ifndef APR_TEST_INCLUDES
 #define APR_TEST_INCLUDES
 
 #include "CuTest.h"
 #include "apr_pools.h"
-
-/* Some simple functions to make the test apps easier to write and
- * a bit more consistent...
- */
 
 extern apr_pool_t *p;
 
@@ -68,36 +75,76 @@ CuSuite *getsuite(void);
 
 CuSuite *teststr(void);
 CuSuite *testtime(void);
-CuSuite *testvsn(void);
-CuSuite *testipsub(void);
-CuSuite *testmmap(void);
-CuSuite *testud(void);
-CuSuite *testtable(void);
-CuSuite *testhash(void);
-CuSuite *testsleep(void);
-CuSuite *testpool(void);
-CuSuite *testfmt(void);
-CuSuite *testfile(void);
-CuSuite *testdir(void);
-CuSuite *testfileinfo(void);
-CuSuite *testrand(void);
-CuSuite *testdso(void);
-CuSuite *testoc(void);
-CuSuite *testdup(void);
-CuSuite *testsockets(void);
-CuSuite *testproc(void);
-CuSuite *testpoll(void);
-CuSuite *testlock(void);
-CuSuite *testsockopt(void);
-CuSuite *testpipe(void);
-CuSuite *testthread(void);
-CuSuite *testgetopt(void);
-CuSuite *testnames(void);
-CuSuite *testuser(void);
-
-/* Assert that RV is an APR_SUCCESS value; else fail giving strerror
- * for RV and CONTEXT message. */
-void apr_assert_success(CuTest* tc, const char *context, apr_status_t rv);
 
 
+
+#include "apr_strings.h"
+#include "apr_time.h"
+
+
+#define TEST_EQ(str, func, value, good, bad) \
+    printf("%-60s", str); \
+    { \
+    apr_status_t rv; \
+    if ((rv = func) == value){ \
+        char errmsg[200]; \
+        printf("%s\n", bad); \
+        fprintf(stderr, "Error was %d : %s\n", rv, \
+                apr_strerror(rv, (char*)&errmsg, 200)); \
+        exit(-1); \
+    } \
+    printf("%s\n", good); \
+    }
+
+#define TEST_NEQ(str, func, value, good, bad) \
+    printf("%-60s", str); \
+    { \
+    apr_status_t rv; \
+    if ((rv = func) != value){ \
+        char errmsg[200]; \
+        printf("%s\n", bad); \
+        fprintf(stderr, "Error was %d : %s\n", rv, \
+                apr_strerror(rv, (char*)&errmsg, 200)); \
+        exit(-1); \
+    } \
+    printf("%s\n", good); \
+    }
+
+#define TEST_STATUS(str, func, testmacro, good, bad) \
+    printf("%-60s", str); \
+    { \
+        apr_status_t rv = func; \
+        if (!testmacro(rv)) { \
+            char errmsg[200]; \
+            printf("%s\n", bad); \
+            fprintf(stderr, "Error was %d : %s\n", rv, \
+                    apr_strerror(rv, (char*)&errmsg, 200)); \
+            exit(-1); \
+        } \
+        printf("%s\n", good); \
+    }
+
+#define STD_TEST_NEQ(str, func) \
+	TEST_NEQ(str, func, APR_SUCCESS, "OK", "Failed");
+
+#define PRINT_ERROR(rv) \
+    { \
+        char errmsg[200]; \
+        fprintf(stderr, "Error was %d : %s\n", rv, \
+                apr_strerror(rv, (char*)&errmsg, 200)); \
+        exit(-1); \
+    }
+
+#define MSG_AND_EXIT(msg) \
+    printf("%s\n", msg); \
+    exit (-1);
+
+#define TIME_FUNCTION(time, function) \
+    { \
+        apr_time_t tt = apr_time_now(); \
+        function; \
+        time = apr_time_now() - tt; \
+    }
+    
+    
 #endif /* APR_TEST_INCLUDES */

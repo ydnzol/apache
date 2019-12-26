@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -101,13 +101,6 @@ typedef struct tsort_
     struct tsort_ **ppPredecessors;
     struct tsort_ *pNext;
 } TSort;
-
-#ifdef NETWARE
-#define get_apd                 APP_DATA* apd = (APP_DATA*)get_app_data(gLibId);
-#define s_aHooksToSort          ((apr_array_header_t *)(apd->gs_aHooksToSort))
-#define s_phOptionalHooks       ((apr_hash_t *)(apd->gs_phOptionalHooks))
-#define s_phOptionalFunctions   ((apr_hash_t *)(apd->gs_phOptionalFunctions))
-#endif
 
 static int crude_order(const void *a_,const void *b_)
 {
@@ -223,10 +216,7 @@ static apr_array_header_t *sort_hook(apr_array_header_t *pHooks,
     return pNew;
 }
 
-#ifndef NETWARE
 static apr_array_header_t *s_aHooksToSort;
-#endif
-
 typedef struct
 {
     const char *szHookName;
@@ -236,13 +226,10 @@ typedef struct
 APU_DECLARE(void) apr_hook_sort_register(const char *szHookName,
 					apr_array_header_t **paHooks)
 {
-#ifdef NETWARE
-    get_apd
-#endif
     HookSortEntry *pEntry;
 
     if(!s_aHooksToSort)
-        s_aHooksToSort=apr_array_make(apr_hook_global_pool,1,sizeof(HookSortEntry));
+	s_aHooksToSort=apr_array_make(apr_hook_global_pool,1,sizeof(HookSortEntry));
     pEntry=apr_array_push(s_aHooksToSort);
     pEntry->szHookName=szHookName;
     pEntry->paHooks=paHooks;
@@ -250,9 +237,6 @@ APU_DECLARE(void) apr_hook_sort_register(const char *szHookName,
 
 APU_DECLARE(void) apr_hook_sort_all()
 {
-#ifdef NETWARE
-    get_apd
-#endif
     int n;
 
     for(n=0 ; n < s_aHooksToSort->nelts ; ++n) {
@@ -267,16 +251,11 @@ APU_DECLARE(void) apr_sort_hooks()
         apr_hook_sort_all();
 }
 
-#ifndef NETWARE
 static apr_hash_t *s_phOptionalHooks;
 static apr_hash_t *s_phOptionalFunctions;
-#endif
 
 APU_DECLARE(void) apr_hook_deregister_all(void)
 {
-#ifdef NETWARE
-    get_apd
-#endif
     int n;    
 
     for(n=0 ; n < s_aHooksToSort->nelts ; ++n) {
@@ -335,9 +314,6 @@ APR_DECLARE_EXTERNAL_HOOK(apr,APU,void,_optional,(void))
 
 APU_DECLARE(apr_array_header_t *) apr_optional_hook_get(const char *szName)
 {
-#ifdef NETWARE
-    get_apd
-#endif
     apr_array_header_t **ppArray;
 
     if(!s_phOptionalHooks)
@@ -352,9 +328,6 @@ APU_DECLARE(void) apr_optional_hook_add(const char *szName,void (*pfn)(void),
 					const char * const *aszPre,
 					const char * const *aszSucc,int nOrder)
 {
-#ifdef NETWARE
-    get_apd
-#endif
     apr_array_header_t *pArray=apr_optional_hook_get(szName);
     apr_LINK__optional_t *pHook;
 
@@ -384,9 +357,6 @@ APU_DECLARE(void) apr_optional_hook_add(const char *szName,void (*pfn)(void),
 
 APU_DECLARE(apr_opt_fn_t *) apr_dynamic_fn_retrieve(const char *szName)
 {
-#ifdef NETWARE
-    get_apd
-#endif
     if(!s_phOptionalFunctions)
 	return NULL;
     return (void(*)(void))apr_hash_get(s_phOptionalFunctions,szName,strlen(szName));
@@ -401,9 +371,6 @@ APU_DECLARE(apr_opt_fn_t *) apr_retrieve_optional_fn(const char *szName)
 APU_DECLARE_NONSTD(void) apr_dynamic_fn_register(const char *szName,
                                                   apr_opt_fn_t *pfn)
 {
-#ifdef NETWARE
-    get_apd
-#endif
     if(!s_phOptionalFunctions)
 	s_phOptionalFunctions=apr_hash_make(apr_hook_global_pool);
     apr_hash_set(s_phOptionalFunctions,szName,strlen(szName),(void *)pfn);

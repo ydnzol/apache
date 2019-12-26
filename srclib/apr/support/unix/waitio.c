@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,8 +52,8 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_file_io.h"
-#include "apr_arch_networkio.h"
+#include "fileio.h"
+#include "networkio.h"
 #include "apr_poll.h"
 #include "apr_errno.h"
 #include "apr_support.h"

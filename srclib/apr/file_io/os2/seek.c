@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 #include "apr_file_io.h"
 #include "apr_lib.h"
 #include <string.h>
@@ -80,7 +80,7 @@ static apr_status_t setptr(apr_file_t *thefile, unsigned long pos )
             thefile->bufpos = thefile->dataRead = 0;
     }
 
-    return APR_FROM_OS_ERROR(rc);
+    return APR_OS2_STATUS(rc);
 }
 
 
@@ -130,7 +130,7 @@ APR_DECLARE(apr_status_t) apr_file_seek(apr_file_t *thefile, apr_seek_where_t wh
             break;
         }
 
-        return APR_FROM_OS_ERROR(DosSetFilePtr(thefile->filedes, *offset, where, (ULONG *)offset));
+        return APR_OS2_STATUS(DosSetFilePtr(thefile->filedes, *offset, where, (ULONG *)offset));
     }
 }
 
@@ -141,7 +141,7 @@ APR_DECLARE(apr_status_t) apr_file_trunc(apr_file_t *fp, apr_off_t offset)
     int rc = DosSetFileSize(fp->filedes, offset);
 
     if (rc != 0) {
-        return APR_FROM_OS_ERROR(rc);
+        return APR_OS2_STATUS(rc);
     }
 
     if (fp->buffered) {

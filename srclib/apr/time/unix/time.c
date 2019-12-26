@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,7 @@
 #include "apr_strings.h"
 
 /* private APR headers */
-#include "apr_arch_internal_time.h"
+#include "internal_time.h"
 
 /* System Headers required for time library */
 #if APR_HAVE_SYS_TIME_H
@@ -203,8 +203,7 @@ APR_DECLARE(apr_status_t) apr_time_exp_get(apr_time_t *t, apr_time_exp_t *xt)
     return APR_SUCCESS;
 }
 
-APR_DECLARE(apr_status_t) apr_time_exp_gmt_get(apr_time_t *t, 
-                                               apr_time_exp_t *xt)
+APR_DECLARE(apr_status_t) apr_implode_gmt(apr_time_t *t, apr_time_exp_t *xt)
 {
     apr_status_t status = apr_time_exp_get(t, xt);
     if (status == APR_SUCCESS)
@@ -385,10 +384,3 @@ APR_DECLARE(apr_status_t) apr_explode_localtime(apr_time_exp_t *result,
 {
     return apr_time_exp_lt(result, input);
 }
-
-/* Deprecated */
-APR_DECLARE(apr_status_t) apr_implode_gmt(apr_time_t *t, apr_time_exp_t *xt)
-{
-    return apr_time_exp_gmt_get(t, xt);
-}
-

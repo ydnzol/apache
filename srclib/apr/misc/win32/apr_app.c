@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -75,10 +75,10 @@
 #include "ShellAPI.h"
 #include "crtdbg.h"
 #include "wchar.h"
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 #include "assert.h"
 #include "apr_private.h"
-#include "apr_arch_misc.h"
+#include "misc.h"
 
 /* This symbol is _private_, although it must be exported.
  */

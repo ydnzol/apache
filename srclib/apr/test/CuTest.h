@@ -38,7 +38,7 @@
 /* CuString */
 
 char* CuStrAlloc(int size);
-char* CuStrCopy(const char* old);
+char* CuStrCopy(char* old);
 
 #define CU_ALLOC(TYPE)		((TYPE*) malloc(sizeof(TYPE)))
 
@@ -56,9 +56,9 @@ typedef struct
 void CuStringInit(CuString* str);
 CuString* CuStringNew(void);
 void CuStringRead(CuString* str, char* path);
-void CuStringAppend(CuString* str, const char* text);
+void CuStringAppend(CuString* str, char* text);
 void CuStringAppendChar(CuString* str, char ch);
-void CuStringAppendFormat(CuString* str, const char* format, ...);
+void CuStringAppendFormat(CuString* str, char* format, ...);
 void CuStringResize(CuString* str, int newSize);
 
 /* CuTest */
@@ -81,17 +81,13 @@ struct CuTest
 void CuInit(int argc, char *argv[]);
 void CuTestInit(CuTest* t, char* name, TestFunction function);
 CuTest* CuTestNew(char* name, TestFunction function);
-void CuFail(CuTest* tc, const char* message);
-void CuNotImpl(CuTest* tc, const char* message);
-void CuAssert(CuTest* tc, const char* message, int condition);
+void CuFail(CuTest* tc, char* message);
+void CuAssert(CuTest* tc, char* message, int condition);
 void CuAssertTrue(CuTest* tc, int condition);
-void CuAssertStrEquals(CuTest* tc, const char* expected, const char* actual);
-void CuAssertStrNEquals(CuTest* tc, const char* expected, const char* actual,
-                        int n);
+void CuAssertStrEquals(CuTest* tc, char* expected, char* actual);
 void CuAssertIntEquals(CuTest* tc, int expected, int actual);
-void CuAssertPtrEquals(CuTest* tc, const void* expected, const void* actual);
-void CuAssertPtrNotNull(CuTest* tc, const void* pointer);
-
+void CuAssertPtrEquals(CuTest* tc, void* expected, void* actual);
+void CuAssertPtrNotNull(CuTest* tc, void* pointer);
 void CuTestRun(CuTest* tc);
 
 /* CuSuite */
@@ -131,10 +127,7 @@ typedef struct
 CuSuiteList* CuSuiteListNew(char* name);
 void CuSuiteListAdd(CuSuiteList* testSuite, CuSuite *testCase);
 void CuSuiteListRun(CuSuiteList* testSuite);
-void CuSuiteListRunWithSummary(CuSuiteList* testSuite);
 void CuSuiteListSummary(CuSuiteList* testSuite, CuString* summary);
-/* Print details of test suite results; returns total number of
- * tests which failed. */
-int CuSuiteListDetails(CuSuiteList* testSuite, CuString* details);
+void CuSuiteListDetails(CuSuiteList* testSuite, CuString* details);
 #endif /* CU_TEST_H */
 

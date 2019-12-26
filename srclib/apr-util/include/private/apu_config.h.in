@@ -6,7 +6,7 @@
 /* Define if the inbuf parm to iconv() is const char ** */
 #undef APU_ICONV_INBUF_CONST
 
-/* Define if CODESET is defined in langinfo.h */
+/* CODESET defined in langinfo.h */
 #undef HAVE_CODESET
 
 /* Define to 1 if you have the <iconv.h> header file. */

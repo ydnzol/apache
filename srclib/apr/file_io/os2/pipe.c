@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,12 +53,11 @@
  */
 
 #define INCL_DOSERRORS
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 #include "apr_file_io.h"
 #include "apr_general.h"
 #include "apr_lib.h"
 #include "apr_strings.h"
-#include "apr_portable.h"
 #include <string.h>
 #include <process.h>
 
@@ -73,13 +72,13 @@ APR_DECLARE(apr_status_t) apr_file_pipe_create(apr_file_t **in, apr_file_t **out
     rc = DosCreateNPipe(pipename, filedes, NP_ACCESS_INBOUND, NP_NOWAIT|1, 4096, 4096, 0);
 
     if (rc)
-        return APR_FROM_OS_ERROR(rc);
+        return APR_OS2_STATUS(rc);
 
     rc = DosConnectNPipe(filedes[0]);
 
     if (rc && rc != ERROR_PIPE_NOT_CONNECTED) {
         DosClose(filedes[0]);
-        return APR_FROM_OS_ERROR(rc);
+        return APR_OS2_STATUS(rc);
     }
 
     rc = DosOpen (pipename, filedes+1, &action, 0, FILE_NORMAL,
@@ -89,7 +88,7 @@ APR_DECLARE(apr_status_t) apr_file_pipe_create(apr_file_t **in, apr_file_t **out
 
     if (rc) {
         DosClose(filedes[0]);
-        return APR_FROM_OS_ERROR(rc);
+        return APR_OS2_STATUS(rc);
     }
 
     (*in) = (apr_file_t *)apr_palloc(pool, sizeof(apr_file_t));
@@ -98,7 +97,7 @@ APR_DECLARE(apr_status_t) apr_file_pipe_create(apr_file_t **in, apr_file_t **out
     if (rc) {
         DosClose(filedes[0]);
         DosClose(filedes[1]);
-        return APR_FROM_OS_ERROR(rc);
+        return APR_OS2_STATUS(rc);
     }
 
     rc = DosSetNPipeSem(filedes[0], (HSEM)(*in)->pipeSem, 1);
@@ -111,7 +110,7 @@ APR_DECLARE(apr_status_t) apr_file_pipe_create(apr_file_t **in, apr_file_t **out
         DosClose(filedes[0]);
         DosClose(filedes[1]);
         DosCloseEventSem((*in)->pipeSem);
-        return APR_FROM_OS_ERROR(rc);
+        return APR_OS2_STATUS(rc);
     }
 
     (*in)->pool = pool;
@@ -158,13 +157,13 @@ APR_DECLARE(apr_status_t) apr_file_pipe_timeout_set(apr_file_t *thepipe, apr_int
         if (thepipe->timeout >= 0) {
             if (thepipe->blocking != BLK_OFF) {
                 thepipe->blocking = BLK_OFF;
-                return APR_FROM_OS_ERROR(DosSetNPHState(thepipe->filedes, NP_NOWAIT));
+                return APR_OS2_STATUS(DosSetNPHState(thepipe->filedes, NP_NOWAIT));
             }
         }
         else if (thepipe->timeout == -1) {
             if (thepipe->blocking != BLK_ON) {
                 thepipe->blocking = BLK_ON;
-                return APR_FROM_OS_ERROR(DosSetNPHState(thepipe->filedes, NP_WAIT));
+                return APR_OS2_STATUS(DosSetNPHState(thepipe->filedes, NP_WAIT));
             }
         }
     }
@@ -180,21 +179,4 @@ APR_DECLARE(apr_status_t) apr_file_pipe_timeout_get(apr_file_t *thepipe, apr_int
         return APR_SUCCESS;
     }
     return APR_EINVAL;
-}
-
-
-
-APR_DECLARE(apr_status_t) apr_os_pipe_put(apr_file_t **file,
-                                          apr_os_file_t *thefile,
-                                          apr_pool_t *pool)
-{
-    (*file) = apr_pcalloc(pool, sizeof(apr_file_t));
-    (*file)->pool = pool;
-    (*file)->isopen = TRUE;
-    (*file)->pipe = 1;
-    (*file)->blocking = BLK_UNKNOWN; /* app needs to make a timeout call */
-    (*file)->timeout = -1;
-    (*file)->filedes = *thefile;
-
-    return APR_SUCCESS;
 }

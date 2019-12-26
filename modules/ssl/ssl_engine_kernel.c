@@ -64,6 +64,105 @@
 #include "mod_ssl.h"
 
 /*
+ *  Close the SSL part of the socket connection
+ *  (called immediately _before_ the socket is closed)
+ */
+/* XXX: perhaps ssl_abort() should call us or vice-versa
+ * lot of the same happening in both places
+ */
+apr_status_t ssl_hook_CloseConnection(SSLFilterRec *filter)
+{
+    SSL *ssl = filter->pssl;
+    const char *type = "";
+    conn_rec *conn;
+    SSLConnRec *sslconn;
+
+    if (!ssl) {
+        return APR_SUCCESS;
+    }
+
+    conn = (conn_rec *)SSL_get_app_data(ssl);
+    sslconn = myConnConfig(conn);
+
+    /*
+     * Now close the SSL layer of the connection. We've to take
+     * the TLSv1 standard into account here:
+     *
+     * | 7.2.1. Closure alerts
+     * |
+     * | The client and the server must share knowledge that the connection is
+     * | ending in order to avoid a truncation attack. Either party may
+     * | initiate the exchange of closing messages.
+     * |
+     * | close_notify
+     * |     This message notifies the recipient that the sender will not send
+     * |     any more messages on this connection. The session becomes
+     * |     unresumable if any connection is terminated without proper
+     * |     close_notify messages with level equal to warning.
+     * |
+     * | Either party may initiate a close by sending a close_notify alert.
+     * | Any data received after a closure alert is ignored.
+     * |
+     * | Each party is required to send a close_notify alert before closing
+     * | the write side of the connection. It is required that the other party
+     * | respond with a close_notify alert of its own and close down the
+     * | connection immediately, discarding any pending writes. It is not
+     * | required for the initiator of the close to wait for the responding
+     * | close_notify alert before closing the read side of the connection.
+     *
+     * This means we've to send a close notify message, but haven't to wait
+     * for the close notify of the client. Actually we cannot wait for the
+     * close notify of the client because some clients (including Netscape
+     * 4.x) don't send one, so we would hang.
+     */
+
+    /*
+     * exchange close notify messages, but allow the user
+     * to force the type of handshake via SetEnvIf directive
+     */
+    switch (sslconn->shutdown_type) {
+      case SSL_SHUTDOWN_TYPE_UNSET:
+      case SSL_SHUTDOWN_TYPE_STANDARD:
+        /* send close notify, but don't wait for clients close notify
+           (standard compliant and safe, so it's the DEFAULT!) */
+        SSL_set_shutdown(ssl, SSL_RECEIVED_SHUTDOWN);
+        type = "standard";
+        break;
+      case SSL_SHUTDOWN_TYPE_UNCLEAN:
+        /* perform no close notify handshake at all
+           (violates the SSL/TLS standard!) */
+        SSL_set_shutdown(ssl, SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
+        type = "unclean";
+        break;
+      case SSL_SHUTDOWN_TYPE_ACCURATE:
+        /* send close notify and wait for clients close notify
+           (standard compliant, but usually causes connection hangs) */
+        SSL_set_shutdown(ssl, 0);
+        type = "accurate";
+        break;
+    }
+
+    SSL_smart_shutdown(ssl);
+
+    /* and finally log the fact that we've closed the connection */
+    if (conn->base_server->loglevel >= APLOG_INFO) {
+        ap_log_error(APLOG_MARK, APLOG_INFO, 0, conn->base_server,
+                     "Connection to child %ld closed with %s shutdown"
+                     "(server %s, client %s)",
+                     conn->id, type,
+                     ssl_util_vhostid(conn->pool, conn->base_server),
+                     conn->remote_ip ? conn->remote_ip : "unknown");
+    }
+
+    /* deallocate the SSL connection */
+    SSL_free(ssl);
+    sslconn->ssl = NULL;
+    filter->pssl = NULL; /* so filters know we've been shutdown */
+
+    return APR_SUCCESS;
+}
+
+/*
  *  Post Read Request Handler
  */
 int ssl_hook_ReadReq(request_rec *r)
@@ -446,10 +545,9 @@ int ssl_hook_Access(request_rec *r)
 
                 if ((dc->nOptions & SSL_OPT_OPTRENEGOTIATE) &&
                     (verify_old == SSL_VERIFY_NONE) &&
-                    ((cert = SSL_get_peer_certificate(ssl)) != NULL))
+                    SSL_get_peer_certificate(ssl))
                 {
                     renegotiate_quick = TRUE;
-                    X509_free(cert);
                 }
 
                 ap_log_error(APLOG_MARK, APLOG_DEBUG, 0,
@@ -719,7 +817,6 @@ int ssl_hook_Access(request_rec *r)
         if ((cert = SSL_get_peer_certificate(ssl))) {
             sslconn->client_cert = cert;
             sslconn->client_dn = NULL;
-            X509_free(cert);
         }
 
         /*
@@ -736,8 +833,7 @@ int ssl_hook_Access(request_rec *r)
                 return HTTP_FORBIDDEN;
             }
 
-            if (do_verify &&
-                ((cert = SSL_get_peer_certificate(ssl)) == NULL)) {
+            if (do_verify && !SSL_get_peer_certificate(ssl)) {
                 ap_log_error(APLOG_MARK, APLOG_ERR, 0, r->server,
                              "Re-negotiation handshake failed: "
                              "Client certificate missing");
@@ -872,7 +968,7 @@ int ssl_hook_UserCheck(request_rec *r)
         X509_NAME *name = X509_get_subject_name(sslconn->client_cert);
         char *cp = X509_NAME_oneline(name, NULL, 0);
         sslconn->client_dn = apr_pstrdup(r->connection->pool, cp);
-        modssl_free(cp);
+        free(cp);
     }
 
     clientdn = (char *)sslconn->client_dn;
@@ -1203,11 +1299,11 @@ int ssl_callback_SSLVerify(int ok, X509_STORE_CTX *ctx)
                      iname ? iname : "-unknown-");
 
         if (sname) {
-            modssl_free(sname);
+            free(sname);
         }
 
         if (iname) {
-            modssl_free(iname);
+            free(iname);
         }
     }
 
@@ -1303,7 +1399,6 @@ int ssl_callback_SSLVerify_CRL(int ok, X509_STORE_CTX *ctx, conn_rec *c)
     X509_NAME *subject, *issuer;
     X509 *cert;
     X509_CRL *crl;
-    EVP_PKEY *pubkey;
     int i, n, rc;
 
     /*
@@ -1390,21 +1485,15 @@ int ssl_callback_SSLVerify_CRL(int ok, X509_STORE_CTX *ctx, conn_rec *c)
         /*
          * Verify the signature on this CRL
          */
-        pubkey = X509_get_pubkey(cert);
-        if (X509_CRL_verify(crl, pubkey) <= 0) {
+        if (X509_CRL_verify(crl, X509_get_pubkey(cert)) <= 0) {
             ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
                          "Invalid signature on CRL");
 
             X509_STORE_CTX_set_error(ctx, X509_V_ERR_CRL_SIGNATURE_FAILURE);
             X509_OBJECT_free_contents(&obj);
-            if (pubkey)
-                EVP_PKEY_free(pubkey);
 
             return FALSE;
         }
-
-        if (pubkey)
-            EVP_PKEY_free(pubkey);
 
         /*
          * Check date of CRL to make sure it's not expired
@@ -1466,7 +1555,7 @@ int ssl_callback_SSLVerify_CRL(int ok, X509_STORE_CTX *ctx, conn_rec *c)
                                  "Certificate with serial %ld (0x%lX) "
                                  "revoked per CRL from issuer %s",
                                  serial, serial, cp);
-                    modssl_free(cp);
+                    free(cp);
                 }
 
                 X509_STORE_CTX_set_error(ctx, X509_V_ERR_CERT_REVOKED);
@@ -1492,7 +1581,7 @@ static void modssl_proxy_info_log(server_rec *s,
     SSLSrvConfigRec *sc = mySrvConfig(s);
     char name_buf[256];
     X509_NAME *name;
-    char *dn;
+    const char *dn;
 
     if (s->loglevel < APLOG_DEBUG) {
         return;
@@ -1504,7 +1593,6 @@ static void modssl_proxy_info_log(server_rec *s,
     ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                  SSLPROXY_CERT_CB_LOG_FMT "%s, sending %s", 
                  sc->vhost_id, msg, dn ? dn : "-uknown-");
-    modssl_free(dn);
 }
 
 /*

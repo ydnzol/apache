@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,9 +56,10 @@
 #include "apr_errno.h"
 #include "apr_general.h"
 #include "apr_lib.h"
-#include "test_apr.h"
-#include "apr_strings.h"
+#include <errno.h>
 #include <time.h>
+#include <stdio.h>
+#include "test_apr.h"
 
 #define STR_SIZE 45
 
@@ -68,7 +69,7 @@
  *           2002-08-14 12:05:36.186711 -25200 [257 Sat].
  * Which happens to be when I wrote the new tests.
  */
-static apr_time_t now = APR_INT64_C(1032030336186711);
+apr_time_t now = 1032030336186711;
 
 static char* print_time (apr_pool_t *pool, const apr_time_exp_t *xt)
 {
@@ -103,15 +104,17 @@ static void test_now(CuTest *tc)
      * 1 second.
      */
     CuAssert(tc, "apr_time and OS time do not agree", 
-             (timediff > -2) && (timediff < 2));
+             (timediff > -1) && (timediff < 1));
 }
 
 static void test_gmtstr(CuTest *tc)
 {
     apr_status_t rv;
     apr_time_exp_t xt;
+    time_t os_now;
 
     rv = apr_time_exp_gmt(&xt, now);
+    os_now = now / APR_USEC_PER_SEC;
     if (rv == APR_ENOTIMPL) {
         CuNotImpl(tc, "apr_time_exp_gmt");
     }
@@ -124,15 +127,13 @@ static void test_localstr(CuTest *tc)
 {
     apr_status_t rv;
     apr_time_exp_t xt;
+    time_t os_now;
 
     rv = apr_time_exp_lt(&xt, now);
+    os_now = now / APR_USEC_PER_SEC;
     if (rv == APR_ENOTIMPL) {
         CuNotImpl(tc, "apr_time_exp_lt");
     }
-    /* XXX: This test is bogus, and a good example of why one never
-     * runs tests in their own timezone.  Of course changing the delta
-     * has no impact on the resulting time, only the tm_gmtoff.
-     */
     CuAssertTrue(tc, rv == APR_SUCCESS);
     CuAssertStrEquals(tc, "2002-08-14 12:05:36.186711 -25200 [257 Sat] DST",
                       print_time(p, &xt));
@@ -182,9 +183,9 @@ static void test_imp_gmt(CuTest *tc)
 
     rv = apr_time_exp_gmt(&xt, now);
     CuAssertTrue(tc, rv == APR_SUCCESS);
-    rv = apr_time_exp_gmt_get(&imp, &xt);
+    rv = apr_implode_gmt(&imp, &xt);
     if (rv == APR_ENOTIMPL) {
-        CuNotImpl(tc, "apr_time_exp_gmt_get");
+        CuNotImpl(tc, "apr_implode_gmt");
     }
     CuAssertTrue(tc, rv == APR_SUCCESS);
     CuAssertTrue(tc, now == imp);
@@ -208,10 +209,6 @@ static void test_ctime(CuTest *tc)
     apr_status_t rv;
     char str[STR_SIZE];
 
-    /* XXX: This test is bogus, and a good example of why one never
-     * runs tests in their own timezone.  Of course changing the delta
-     * has no impact on the resulting time, only the tm_gmtoff.
-     */
     rv = apr_ctime(str, now);
     if (rv == APR_ENOTIMPL) {
         CuNotImpl(tc, "apr_ctime");
@@ -257,6 +254,8 @@ static void test_exp_tz(CuTest *tc)
 {
     apr_status_t rv;
     apr_time_exp_t xt;
+    char str[STR_SIZE];
+    apr_size_t sz;
     apr_int32_t hr_off = -5 * 3600; /* 5 hours in seconds */
 
     rv = apr_time_exp_tz(&xt, now, hr_off);
@@ -264,15 +263,7 @@ static void test_exp_tz(CuTest *tc)
         CuNotImpl(tc, "apr_time_exp_tz");
     }
     CuAssertTrue(tc, rv == APR_SUCCESS);
-    CuAssertTrue(tc, (xt.tm_usec == 186711) && 
-                     (xt.tm_sec == 36) &&
-                     (xt.tm_min == 5) && 
-                     (xt.tm_hour == 14) &&
-                     (xt.tm_mday == 14) &&
-                     (xt.tm_mon == 8) &&
-                     (xt.tm_year == 102) &&
-                     (xt.tm_wday == 6) &&
-                     (xt.tm_yday == 256));
+    CuAssertStrEquals(tc, "19:05:36", str);
 }
 
 static void test_strftimeoffset(CuTest *tc)
@@ -289,11 +280,12 @@ static void test_strftimeoffset(CuTest *tc)
         CuNotImpl(tc, "apr_strftime");
     }
     CuAssertTrue(tc, rv == APR_SUCCESS);
+    CuAssertStrEquals(tc, "14:05:36", str);
 }
 
 CuSuite *testtime(void)
 {
-    CuSuite *suite = CuSuiteNew("Time");
+    CuSuite *suite = CuSuiteNew("Test Time");
 
     SUITE_ADD_TEST(suite, test_now);
     SUITE_ADD_TEST(suite, test_gmtstr);
@@ -311,3 +303,9 @@ CuSuite *testtime(void)
     return suite;
 }
 
+#ifdef SINGLE_PROG
+CuSuite *getsuite(void)
+{
+    return testtime();
+}
+#endif

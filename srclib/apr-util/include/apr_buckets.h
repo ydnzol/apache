@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -87,10 +87,9 @@ extern "C" {
 /** default bucket buffer size - 8KB minus room for memory allocator headers */
 #define APR_BUCKET_BUFF_SIZE 8000
 
-/** Determines how a bucket or brigade should be read */
 typedef enum {
-    APR_BLOCK_READ,   /**< block until data becomes available */
-    APR_NONBLOCK_READ /**< return immediately if no data is available */
+    APR_BLOCK_READ,   /* block until data becomes available */
+    APR_NONBLOCK_READ /* return immediately if no data is available */
 } apr_read_type_e;
 
 /**
@@ -149,19 +148,11 @@ typedef enum {
  * Forward declaration of the main types.
  */
 
-/** @see apr_bucket_brigade */
 typedef struct apr_bucket_brigade apr_bucket_brigade;
-/** @see apr_bucket */
 typedef struct apr_bucket apr_bucket;
-/** @see apr_bucket_alloc_t */
 typedef struct apr_bucket_alloc_t apr_bucket_alloc_t;
 
-/** @see apr_bucket_type_t */
 typedef struct apr_bucket_type_t apr_bucket_type_t;
-
-/**
- * Basic bucket type
- */
 struct apr_bucket_type_t {
     /**
      * The name of the bucket type
@@ -310,9 +301,6 @@ struct apr_bucket_brigade {
 };
 
 
-/**
- * Function called when a brigade should be flushed
- */
 typedef apr_status_t (*apr_brigade_flush)(apr_bucket_brigade *bb, void *ctx);
 
 /**
@@ -559,7 +547,6 @@ typedef apr_status_t (*apr_brigade_flush)(apr_bucket_brigade *bb, void *ctx);
  * occur because of bucket splits or buckets that refer to globally
  * cached data. */
 
-/** @see apr_bucket_refcount */
 typedef struct apr_bucket_refcount apr_bucket_refcount;
 /**
  * The structure used to manage the shared resource must start with an
@@ -574,7 +561,7 @@ struct apr_bucket_refcount {
 
 /*  *****  Reference-counted bucket types  *****  */
 
-/** @see apr_bucket_heap */
+
 typedef struct apr_bucket_heap apr_bucket_heap;
 /**
  * A bucket referring to data allocated off the heap.
@@ -592,7 +579,6 @@ struct apr_bucket_heap {
     void (*free_func)(void *data);
 };
 
-/** @see apr_bucket_pool */
 typedef struct apr_bucket_pool apr_bucket_pool;
 /**
  * A bucket referring to data allocated from a pool
@@ -630,7 +616,6 @@ struct apr_bucket_pool {
 };
 
 #if APR_HAS_MMAP
-/** @see apr_bucket_mmap */
 typedef struct apr_bucket_mmap apr_bucket_mmap;
 /**
  * A bucket referring to an mmap()ed file
@@ -643,7 +628,6 @@ struct apr_bucket_mmap {
 };
 #endif
 
-/** @see apr_bucket_file */
 typedef struct apr_bucket_file apr_bucket_file;
 /**
  * A bucket referring to an file
@@ -663,20 +647,19 @@ struct apr_bucket_file {
 #endif /* APR_HAS_MMAP */
 };
 
-/** @see apr_bucket_structs */
 typedef union apr_bucket_structs apr_bucket_structs;
 /**
  * A union of all bucket structures so we know what
  * the max size is.
  */
 union apr_bucket_structs {
-    apr_bucket      b;      /**< Bucket */
-    apr_bucket_heap heap;   /**< Heap */
-    apr_bucket_pool pool;   /**< Pool */
+    apr_bucket      b;
+    apr_bucket_heap heap;
+    apr_bucket_pool pool;
 #if APR_HAS_MMAP
-    apr_bucket_mmap mmap;   /**< MMap */
+    apr_bucket_mmap mmap;
 #endif
-    apr_bucket_file file;   /**< File */
+    apr_bucket_file file;
 };
 
 /**
@@ -689,9 +672,8 @@ union apr_bucket_structs {
 /*  *****  Bucket Brigade Functions  *****  */
 /**
  * Create a new bucket brigade.  The bucket brigade is originally empty.
- * @param p The pool to associate with the brigade.  Data is not allocated out
- *          of the pool, but a cleanup is registered.
- * @param list The bucket allocator to use
+ * @param The pool to associate with the brigade.  Data is not allocated out
+ *        of the pool, but a cleanup is registered.
  * @return The empty bucket brigade
  */
 APU_DECLARE(apr_bucket_brigade *) apr_brigade_create(apr_pool_t *p,
@@ -709,7 +691,7 @@ APU_DECLARE(apr_status_t) apr_brigade_destroy(apr_bucket_brigade *b);
  * buckets within the bucket brigade's bucket list.  This is similar to
  * apr_brigade_destroy(), except that it does not deregister the brigade's
  * pool cleanup function.
- * @param data The bucket brigade to clean up
+ * @param b The bucket brigade to clean up
  * @remark Generally, you should use apr_brigade_destroy().  This function
  *         can be useful in situations where you have a single brigade that
  *         you wish to reuse many times by destroying all of the buckets in
@@ -776,10 +758,10 @@ APU_DECLARE(apr_status_t) apr_brigade_flatten(apr_bucket_brigade *bb,
 
 /**
  * Creates a pool-allocated string representing a flat bucket brigade
- * @param bb The bucket brigade to create the char array from
+ * @param bb The bucket brigade to create the iovec from
  * @param c On return, the allocated char array
  * @param len On return, the length of the char array.
- * @param pool The pool to allocate the string from.
+ * @param p The pool to allocate the string from.
  */
 APU_DECLARE(apr_status_t) apr_brigade_pflatten(apr_bucket_brigade *bb, 
                                                char **c,
@@ -842,7 +824,7 @@ APU_DECLARE(apr_status_t) apr_brigade_write(apr_bucket_brigade *b,
  * @param b The bucket brigade to add to
  * @param flush The flush function to use if the brigade is full
  * @param ctx The structure to pass to the flush function
- * @param vec The strings to add (address plus length for each)
+ * @param iovec The strings to add (address plus length for each)
  * @param nvec The number of entries in iovec
  * @return APR_SUCCESS or error code
  */
@@ -990,7 +972,6 @@ APU_DECLARE_NONSTD(void) apr_bucket_free(void *block);
  * Setaside data so that stack data is not destroyed on returning from
  * the function
  * @param e The bucket to setaside
- * @param p The pool to setaside into
  */
 #define apr_bucket_setaside(e,p) (e)->type->setaside(e,p)
 
@@ -1112,7 +1093,7 @@ APU_DECLARE_DATA extern const apr_bucket_type_t apr_bucket_type_pool;
 APU_DECLARE_DATA extern const apr_bucket_type_t apr_bucket_type_pipe;
 /**
  * The IMMORTAL bucket type.  This bucket represents a segment of data that
- * the creator is willing to take responsibility for.  The core will do
+ * the creator is willing to take responsability for.  The core will do
  * nothing with the data in an immortal bucket
  */
 APU_DECLARE_DATA extern const apr_bucket_type_t apr_bucket_type_immortal;
@@ -1366,7 +1347,7 @@ APU_DECLARE(apr_bucket *) apr_bucket_pool_make(apr_bucket *b, const char *buf,
 #if APR_HAS_MMAP
 /**
  * Create a bucket referring to mmap()ed memory.
- * @param mm The mmap to insert into the bucket
+ * @param mmap The mmap to insert into the bucket
  * @param start The offset of the first byte in the mmap
  *              that this bucket refers to
  * @param length The number of bytes referred to by this bucket
@@ -1381,7 +1362,7 @@ APU_DECLARE(apr_bucket *) apr_bucket_mmap_create(apr_mmap_t *mm,
 /**
  * Make the bucket passed in a bucket refer to an MMAP'ed file
  * @param b The bucket to make into a MMAP bucket
- * @param mm The mmap to insert into the bucket
+ * @param mmap The mmap to insert into the bucket
  * @param start The offset of the first byte in the mmap
  *              that this bucket refers to
  * @param length The number of bytes referred to by this bucket
@@ -1394,7 +1375,7 @@ APU_DECLARE(apr_bucket *) apr_bucket_mmap_make(apr_bucket *b, apr_mmap_t *mm,
 
 /**
  * Create a bucket referring to a socket.
- * @param thissock The socket to put in the bucket
+ * @param thissocket The socket to put in the bucket
  * @param list The freelist from which this bucket should be allocated
  * @return The new bucket, or NULL if allocation failed
  */
@@ -1403,7 +1384,7 @@ APU_DECLARE(apr_bucket *) apr_bucket_socket_create(apr_socket_t *thissock,
 /**
  * Make the bucket passed in a bucket refer to a socket
  * @param b The bucket to make into a SOCKET bucket
- * @param thissock The socket to put in the bucket
+ * @param thissocket The socket to put in the bucket
  * @return The new bucket, or NULL if allocation failed
  */
 APU_DECLARE(apr_bucket *) apr_bucket_socket_make(apr_bucket *b, 
@@ -1457,14 +1438,16 @@ APU_DECLARE(apr_bucket *) apr_bucket_file_make(apr_bucket *b, apr_file_t *fd,
                                                apr_off_t offset,
                                                apr_size_t len, apr_pool_t *p);
 
+#if APR_HAS_MMAP
 /**
  * Enable or disable memory-mapping for a FILE bucket (default is enabled)
  * @param b The bucket
- * @param enabled Whether memory-mapping should be enabled
+ * @param enable Whether memory-mapping should be enabled
  * @return APR_SUCCESS normally, or an error code if the operation fails
  */
 APU_DECLARE(apr_status_t) apr_bucket_file_enable_mmap(apr_bucket *b,
                                                       int enabled);
+#endif /* APR_HAS_MMAP */
 
 /** @} */
 #ifdef __cplusplus

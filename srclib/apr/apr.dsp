@@ -190,10 +190,6 @@ SOURCE=.\misc\win32\apr_app.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\misc\win32\charset.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\misc\unix\errorcodes.c
 # End Source File
 # Begin Source File
@@ -262,11 +258,16 @@ SOURCE=.\poll\unix\poll.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\network_io\unix\sa_common.c
+# PROP Exclude_From_Build 1
+# End Source File
+# Begin Source File
+
 SOURCE=.\network_io\win32\sendrecv.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\network_io\unix\sockaddr.c
+SOURCE=.\network_io\win32\sockaddr.c
 # End Source File
 # Begin Source File
 
@@ -391,43 +392,43 @@ SOURCE=.\include\arch\win32\apr_private.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\include\arch\win32\apr_arch_atime.h
+SOURCE=.\include\arch\win32\atime.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\include\arch\win32\apr_arch_dso.h
+SOURCE=.\include\arch\win32\dso.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\include\arch\win32\apr_arch_file_io.h
+SOURCE=.\include\arch\win32\fileio.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\include\arch\win32\apr_arch_inherit.h
+SOURCE=.\include\arch\win32\inherit.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\include\arch\win32\apr_arch_misc.h
+SOURCE=.\include\arch\win32\misc.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\include\arch\win32\apr_arch_networkio.h
+SOURCE=.\include\arch\win32\networkio.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\include\arch\win32\apr_arch_thread_mutex.h
+SOURCE=.\include\arch\win32\thread_mutex.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\include\arch\win32\apr_arch_thread_rwlock.h
+SOURCE=.\include\arch\win32\thread_rwlock.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\include\arch\win32\apr_arch_threadproc.h
+SOURCE=.\include\arch\win32\threadproc.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\include\arch\win32\apr_arch_utf8.h
+SOURCE=.\include\arch\win32\utf8.h
 # End Source File
 # End Group
 # Begin Group "Public Header Files"

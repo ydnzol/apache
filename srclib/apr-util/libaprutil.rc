@@ -20,7 +20,7 @@ BEGIN
       VALUE "FileDescription", "Apache APR Utility Library\0"
       VALUE "FileVersion", "0.0.0.0\0"
       VALUE "InternalName", "libaprutil\0"
-      VALUE "LegalCopyright", "Copyright © 2000-2003 The Apache Software Foundation.\0"
+      VALUE "LegalCopyright", "Copyright © 2000-2002 The Apache Software Foundation.\0"
       VALUE "OriginalFilename", "libaprutil.exe\0"
       VALUE "ProductName", "Apache Portable Runtime\0"
       VALUE "ProductVersion", "0.0.0.0\0"

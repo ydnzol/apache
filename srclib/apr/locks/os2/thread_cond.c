@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,9 +56,9 @@
 #include "apr_lib.h"
 #include "apr_strings.h"
 #include "apr_portable.h"
-#include "apr_arch_thread_mutex.h"
-#include "apr_arch_thread_cond.h"
-#include "apr_arch_file_io.h"
+#include "thread_mutex.h"
+#include "thread_cond.h"
+#include "fileio.h"
 #include <string.h>
 
 APR_DECLARE(apr_status_t) apr_thread_cond_create(apr_thread_cond_t **cond,

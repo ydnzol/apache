@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@
  */
 
 #include "apr.h"
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 #include "apr_file_io.h"
 #include "apr_strings.h"
 #define APR_WANT_STRFUNC
@@ -322,12 +322,5 @@ APR_DECLARE(apr_status_t) apr_filepath_merge(char **newpath,
     }
 
     *newpath = path;
-    return APR_SUCCESS;
-}
-
-
-APR_DECLARE(apr_status_t) apr_filepath_encoding(int *style, apr_pool_t *p)
-{
-    *style = APR_FILEPATH_ENCODING_LOCALE;
     return APR_SUCCESS;
 }

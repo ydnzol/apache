@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,8 +54,8 @@
 
 #include "apr_private.h"
 
-#include "apr_arch_misc.h"
-#include "apr_arch_file_io.h"
+#include "misc.h"
+#include "fileio.h"
 #include <crtdbg.h>
 #include <assert.h>
 

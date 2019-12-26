@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,12 +52,12 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_threadproc.h"
-#include "apr_arch_file_io.h"
+#include "threadproc.h"
+#include "fileio.h"
 #include "apr_strings.h"
 #include "apr_portable.h"
 
-#include <proc.h>
+#include <nks/vm.h>
 
 apr_status_t apr_netware_proc_cleanup(void *theproc)
 {
@@ -196,8 +196,11 @@ APR_DECLARE(apr_status_t) apr_procattr_child_err_set(apr_procattr_t *attr, apr_f
 APR_DECLARE(apr_status_t) apr_procattr_dir_set(apr_procattr_t *attr, 
                                const char *dir) 
 {
-    return apr_filepath_merge(&attr->currdir, NULL, dir, 
-                              APR_FILEPATH_NATIVE, attr->pool);
+    attr->currdir = apr_pstrdup(attr->pool, dir);
+    if (attr->currdir) {
+        return APR_SUCCESS;
+    }
+    return APR_ENOMEM;
 }
 
 APR_DECLARE(apr_status_t) apr_procattr_cmdtype_set(apr_procattr_t *attr,
@@ -301,24 +304,10 @@ APR_DECLARE(apr_status_t) apr_proc_create(apr_proc_t *newproc,
     newproc->out = attr->parent_out;
     newproc->err = attr->parent_err;
 
-    /* attr->detached and PROC_DETACHED do not mean the same thing.  attr->detached means
-     * start the NLM in a separate address space.  PROC_DETACHED means don't wait for the
-     * NLM to unload by calling wait() or waitpid(), just clean up */
-    addr_space = (attr->detached ? 0 : PROC_CURRENT_SPACE) | PROC_LOAD_SILENT | PROC_DETACHED;
+    addr_space = attr->detached ? 0 : PROC_CURRENT_SPACE;
 
-    if (attr->currdir) {
-        char *fullpath = NULL;
-        apr_status_t rv;
-
-        if ((rv = apr_filepath_merge(&fullpath, attr->currdir, progname, 
-                                     APR_FILEPATH_NATIVE, pool)) != APR_SUCCESS) {
-            return rv;
-        }
-        progname = fullpath;
-    } 
-
-    if ((newproc->pid = procve(progname, addr_space, (const char**)env, &wire, 
-        NULL, NULL, 0, NULL, (const char **)args)) == -1) {
+    if ((newproc->pid = processve(progname, addr_space, (const char**)env, &wire, 
+        NULL, NULL, (const char **)args)) == 0) {
         return errno;
     }
 

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -103,8 +103,7 @@ extern "C" {
                                         writes across process/machines */
 #define APR_FILE_NOCLEANUP  2048   /**< Do not register a cleanup when the file
                                         is opened */
-#define APR_SENDFILE_ENABLED  4096 /**< Advisory flag that this file should 
-                                        support apr_sendfile operation */ 
+ 
 /** @} */
 
 /**
@@ -113,11 +112,8 @@ extern "C" {
  */
 
 /* flags for apr_file_seek */
-/** Set the file position */
 #define APR_SET SEEK_SET
-/** Current */
 #define APR_CUR SEEK_CUR
-/** Go to end of file */
 #define APR_END SEEK_END
 /** @} */
 
@@ -170,28 +166,25 @@ typedef struct apr_file_t         apr_file_t;
  * @param fname The full path to the file (using / on all systems)
  * @param flag Or'ed value of:
  * <PRE>
- *         APR_READ              open for reading
- *         APR_WRITE             open for writing
- *         APR_CREATE            create the file if not there
- *         APR_APPEND            file ptr is set to end prior to all writes
- *         APR_TRUNCATE          set length to zero if file exists
- *         APR_BINARY            not a text file (This flag is ignored on 
- *                               UNIX because it has no meaning)
- *         APR_BUFFERED          buffer the data.  Default is non-buffered
- *         APR_EXCL              return error if APR_CREATE and file exists
- *         APR_DELONCLOSE        delete the file after closing.
- *         APR_XTHREAD           Platform dependent tag to open the file
- *                               for use across multiple threads
- *         APR_SHARELOCK         Platform dependent support for higher
- *                               level locked read/write access to support
- *                               writes across process/machines
- *         APR_FILE_NOCLEANUP    Do not register a cleanup with the pool 
- *                               passed in on the <EM>cont</EM> argument (see below).
- *                               The apr_os_file_t handle in apr_file_t will not
- *                               be closed when the pool is destroyed.
- *         APR_SENDFILE_ENABLED  Open with appropriate platform semantics
- *                               for sendfile operations.  Advisory only,
- *                               apr_sendfile does not check this flag.
+ *           APR_READ             open for reading
+ *           APR_WRITE            open for writing
+ *           APR_CREATE           create the file if not there
+ *           APR_APPEND           file ptr is set to end prior to all writes
+ *           APR_TRUNCATE         set length to zero if file exists
+ *           APR_BINARY           not a text file (This flag is ignored on 
+ *                                UNIX because it has no meaning)
+ *           APR_BUFFERED         buffer the data.  Default is non-buffered
+ *           APR_EXCL             return error if APR_CREATE and file exists
+ *           APR_DELONCLOSE       delete the file after closing.
+ *           APR_XTHREAD          Platform dependent tag to open the file
+ *                                for use across multiple threads
+ *           APR_SHARELOCK        Platform dependent support for higher
+ *                                level locked read/write access to support
+ *                                writes across process/machines
+ *           APR_FILE_NOCLEANUP   Do not register a cleanup with the pool 
+ *                                passed in on the <EM>cont</EM> argument (see below).
+ *                                The apr_os_file_t handle in apr_file_t will not
+ &                                be closed when the pool is destroyed.
  * </PRE>
  * @param perm Access permissions for file.
  * @param cont The pool to use.
@@ -641,8 +634,7 @@ APR_DECLARE(apr_status_t) apr_dir_make(const char *path, apr_fileperms_t perm,
  * will be reported if PATH already exists.
  * @param path the path for the directory to be created.  (use / on all systems)
  * @param perm Permissions for the new direcoty.
- * @param pool the pool to use.
- */
+ * @param cont the pool to use.  */
 APR_DECLARE(apr_status_t) apr_dir_make_recursive(const char *path,
                                                  apr_fileperms_t perm,
                                                  apr_pool_t *pool);

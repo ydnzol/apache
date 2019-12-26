@@ -330,19 +330,7 @@ static int create_entity(cache_handle_t *h, request_rec *r,
     apr_file_t *tmpfile;
 
     if (strcasecmp(type, "disk")) {
-        return DECLINED;
-    }
-
-    if (conf->cache_root == NULL) {
-        return DECLINED;
-    }
-
-    if (len < conf->minfs || len > conf->maxfs) {
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, r->server,
-                     "cache_disk: URL %s failed the size check, "
-                     "or is incomplete", 
-                     key);
-        return DECLINED;
+	return DECLINED;
     }
 
     /* Allocate and initialize cache_object_t and disk_cache_object_t */
@@ -350,8 +338,7 @@ static int create_entity(cache_handle_t *h, request_rec *r,
     obj->vobj = dobj = apr_pcalloc(r->pool, sizeof(*dobj));
 
     obj->key = apr_pstrdup(r->pool, key);
-    /* XXX Bad Temporary Cast - see cache_object_t notes */
-    obj->info.len = (apr_size_t) len;
+    obj->info.len = len;
     obj->complete = 0;   /* Cache object is not complete */
 
     dobj->name = obj->key;
@@ -361,24 +348,16 @@ static int create_entity(cache_handle_t *h, request_rec *r,
     rv = apr_file_mktemp(&tmpfile, dobj->tempfile,  
                          APR_CREATE | APR_READ | APR_WRITE | APR_EXCL, r->pool);
 
-    if (rv == APR_SUCCESS) {
-        /* Populate the cache handle */
-        h->cache_obj = obj;
-        h->read_body = &read_body;
-        h->read_headers = &read_headers;
-        h->write_body = &write_body;
-        h->write_headers = &write_headers;
-        h->remove_entity = &remove_entity;
+    /* Populate the cache handle */
+    h->cache_obj = obj;
+    h->read_body = &read_body;
+    h->read_headers = &read_headers;
+    h->write_body = &write_body;
+    h->write_headers = &write_headers;
+    h->remove_entity = &remove_entity;
 
-        ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server,
-                     "disk_cache: Caching URL %s",  key);
-    }
-    else {
-        ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server,
-                     "disk_cache: Could not cache URL %s [%d]", key, rv);
-
-        return DECLINED;
-    }
+    ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server,
+                 "disk_cache: Caching URL %s",  key);
 
     return OK;
 }
@@ -386,11 +365,12 @@ static int create_entity(cache_handle_t *h, request_rec *r,
 static int open_entity(cache_handle_t *h, request_rec *r, const char *type, const char *key)
 {
     apr_status_t rc;
-    static int error_logged = 0;
     disk_cache_conf *conf = ap_get_module_config(r->server->module_config, 
                                                  &disk_cache_module);
-    char *data;
-    char *headers;
+    char *data = data_file(r->pool, conf->dirlevels, conf->dirlength, 
+                           conf->cache_root, key);
+    char *headers = header_file(r->pool, conf->dirlevels, conf->dirlength, 
+                                conf->cache_root, key);
     apr_file_t *fd;
     apr_file_t *hfd;
     apr_finfo_t finfo;
@@ -402,22 +382,8 @@ static int open_entity(cache_handle_t *h, request_rec *r, const char *type, cons
 
     /* Look up entity keyed to 'url' */
     if (strcasecmp(type, "disk")) {
-        return DECLINED;
+	return DECLINED;
     }
-
-    if (conf->cache_root == NULL) {
-        if (!error_logged) {
-            error_logged = 1;
-            ap_log_error(APLOG_MARK, APLOG_ERR, 0, r->server,
-                         "disk_cache: Cannot cache files to disk without a CacheRoot specified.");
-        }
-        return DECLINED;
-    }
-
-    data = data_file(r->pool, conf->dirlevels, conf->dirlength, 
-                     conf->cache_root, key);
-    headers = header_file(r->pool, conf->dirlevels, conf->dirlength, 
-                          conf->cache_root, key);
 
     /* Open the data file */
     rc = apr_file_open(&fd, data, APR_READ|APR_BINARY, 0, r->pool);
@@ -603,9 +569,8 @@ static apr_status_t write_headers(cache_handle_t *h, request_rec *r, cache_info 
 
         if (r->headers_out) {
             int i;
-            apr_table_t* headers_out = ap_cache_cacheable_hdrs_out(r);
-            apr_table_entry_t *elts = (apr_table_entry_t *) apr_table_elts(headers_out)->elts;
-            for (i = 0; i < apr_table_elts(headers_out)->nelts; ++i) {
+            apr_table_entry_t *elts = (apr_table_entry_t *) apr_table_elts(r->headers_out)->elts;
+            for (i = 0; i < apr_table_elts(r->headers_out)->nelts; ++i) {
                 if (elts[i].key != NULL) {
                     buf = apr_pstrcat(r->pool, elts[i].key, ": ",  elts[i].val, CRLF, NULL);
                     amt = strlen(buf);
@@ -704,7 +669,6 @@ static void *create_config(apr_pool_t *p, server_rec *s)
     conf->space = DEFAULT_CACHE_SIZE;
     conf->maxfs = DEFAULT_MAX_FILE_SIZE;
     conf->minfs = DEFAULT_MIN_FILE_SIZE;
-    conf->expirychk = 1;
 
     conf->cache_root = NULL;
     conf->cache_root_len = 0;
@@ -780,10 +744,10 @@ static const char
 static const char
 *set_cache_exchk(cmd_parms *parms, void *in_struct_ptr, int flag)
 {
+    /* XXX 
     disk_cache_conf *conf = ap_get_module_config(parms->server->module_config, 
                                                  &disk_cache_module);
-    conf->expirychk = flag;
-
+    */
     return NULL;
 }
 static const char
@@ -847,7 +811,6 @@ static const char
     */
     return NULL;
 }
-
 static const command_rec disk_cache_cmds[] =
 {
     AP_INIT_TAKE1("CacheRoot", set_cache_root, NULL, RSRC_CONF,

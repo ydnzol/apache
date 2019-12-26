@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,34 +54,28 @@
 
 #include <stdio.h>
 
-#include "test_apr.h"
 #include "apr_version.h"
 #include "apr_general.h"
 
 
-static void test_strings(CuTest *tc)
-{
-    CuAssertStrEquals(tc, APR_VERSION_STRING, apr_version_string());
-}
-
-static void test_ints(CuTest *tc)
+int main(int argc, char **argv)
 {
     apr_version_t vsn;
 
+    printf("compiled integer form: %d.%d.%d%s\ncompiled string form:  %s\n",
+           APR_MAJOR_VERSION, APR_MINOR_VERSION, APR_PATCH_VERSION,
+#ifdef APR_IS_DEV_VERSION
+           "-dev",
+#else
+           "",
+#endif
+           APR_VERSION_STRING);
+
     apr_version(&vsn);
+    printf("runtime integer form:  %d.%d.%d%s\nruntime string form:   %s\n",
+           vsn.major, vsn.minor, vsn.patch,
+           vsn.is_dev ? "-dev" : "",
+           apr_version_string());
 
-    CuAssertIntEquals(tc, APR_MAJOR_VERSION, vsn.major);
-    CuAssertIntEquals(tc, APR_MINOR_VERSION, vsn.minor);
-    CuAssertIntEquals(tc, APR_PATCH_VERSION, vsn.patch);
+    return 0;
 }
-
-CuSuite *testvsn(void)
-{
-    CuSuite *suite = CuSuiteNew("Versioning");
-
-    SUITE_ADD_TEST(suite, test_strings);
-    SUITE_ADD_TEST(suite, test_ints);
-
-    return suite;
-}
-

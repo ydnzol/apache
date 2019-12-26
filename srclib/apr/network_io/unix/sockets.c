@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,11 +52,11 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_networkio.h"
+#include "networkio.h"
 #include "apr_network_io.h"
 #include "apr_support.h"
 #include "apr_portable.h"
-#include "apr_arch_inherit.h"
+#include "inherit.h"
 
 #if defined(BEOS) && !defined(BEOS_BONE)
 #define close closesocket
@@ -77,10 +77,9 @@ static apr_status_t socket_cleanup(void *sock)
     }
 }
 
-static void set_socket_vars(apr_socket_t *sock, int family, int type, int protocol)
+static void set_socket_vars(apr_socket_t *sock, int family, int type)
 {
     sock->type = type;
-    sock->protocol = protocol;
     apr_sockaddr_vars_set(sock->local_addr, family, 0);
     apr_sockaddr_vars_set(sock->remote_addr, family, 0);
     sock->netmask = 0;
@@ -104,14 +103,8 @@ static void alloc_socket(apr_socket_t **new, apr_pool_t *p)
     (*new)->remote_addr->pool = p;
 }
 
-apr_status_t apr_socket_protocol_get(apr_socket_t *sock, int *protocol)
-{
-    *protocol = sock->protocol;
-    return APR_SUCCESS;
-}
-
-apr_status_t apr_socket_create_ex(apr_socket_t **new, int ofamily, int type,
-                                  int protocol, apr_pool_t *cont)
+apr_status_t apr_socket_create(apr_socket_t **new, int ofamily, int type,
+                               apr_pool_t *cont)
 {
     int family = ofamily;
 
@@ -125,19 +118,19 @@ apr_status_t apr_socket_create_ex(apr_socket_t **new, int ofamily, int type,
 
     alloc_socket(new, cont);
 
-    (*new)->socketdes = socket(family, type, protocol);
+    (*new)->socketdes = socket(family, type, 0);
 
 #if APR_HAVE_IPV6
     if ((*new)->socketdes < 0 && ofamily == APR_UNSPEC) {
         family = APR_INET;
-        (*new)->socketdes = socket(family, type, protocol);
+        (*new)->socketdes = socket(family, type, 0);
     }
 #endif
 
     if ((*new)->socketdes < 0) {
         return errno;
     }
-    set_socket_vars(*new, family, type, protocol);
+    set_socket_vars(*new, family, type);
 
     (*new)->timeout = -1;
     (*new)->inherit = 0;
@@ -146,14 +139,7 @@ apr_status_t apr_socket_create_ex(apr_socket_t **new, int ofamily, int type,
     return APR_SUCCESS;
 } 
 
-apr_status_t apr_socket_create(apr_socket_t **new, int family, int type,
-                               apr_pool_t *cont)
-{
-    return apr_socket_create_ex(new, family, type, 0, cont);
-}
-
-apr_status_t apr_socket_shutdown(apr_socket_t *thesocket, 
-                                 apr_shutdown_how_e how)
+apr_status_t apr_shutdown(apr_socket_t *thesocket, apr_shutdown_how_e how)
 {
     return (shutdown(thesocket->socketdes, how) == -1) ? errno : APR_SUCCESS;
 }
@@ -163,7 +149,7 @@ apr_status_t apr_socket_close(apr_socket_t *thesocket)
     return apr_pool_cleanup_run(thesocket->cntxt, thesocket, socket_cleanup);
 }
 
-apr_status_t apr_socket_bind(apr_socket_t *sock, apr_sockaddr_t *sa)
+apr_status_t apr_bind(apr_socket_t *sock, apr_sockaddr_t *sa)
 {
     if (bind(sock->socketdes, 
              (struct sockaddr *)&sa->sa, sa->salen) == -1) {
@@ -179,7 +165,7 @@ apr_status_t apr_socket_bind(apr_socket_t *sock, apr_sockaddr_t *sa)
     }
 }
 
-apr_status_t apr_socket_listen(apr_socket_t *sock, apr_int32_t backlog)
+apr_status_t apr_listen(apr_socket_t *sock, apr_int32_t backlog)
 {
     if (listen(sock->socketdes, backlog) == -1)
         return errno;
@@ -187,11 +173,10 @@ apr_status_t apr_socket_listen(apr_socket_t *sock, apr_int32_t backlog)
         return APR_SUCCESS;
 }
 
-apr_status_t apr_socket_accept(apr_socket_t **new, apr_socket_t *sock,
-                               apr_pool_t *connection_context)
+apr_status_t apr_accept(apr_socket_t **new, apr_socket_t *sock, apr_pool_t *connection_context)
 {
     alloc_socket(new, connection_context);
-    set_socket_vars(*new, sock->local_addr->sa.sin.sin_family, SOCK_STREAM, sock->protocol);
+    set_socket_vars(*new, sock->local_addr->sa.sin.sin_family, SOCK_STREAM);
 
 #ifndef HAVE_POLL
     (*new)->connected = 1;
@@ -258,7 +243,7 @@ apr_status_t apr_socket_accept(apr_socket_t **new, apr_socket_t *sock,
     return APR_SUCCESS;
 }
 
-apr_status_t apr_socket_connect(apr_socket_t *sock, apr_sockaddr_t *sa)
+apr_status_t apr_connect(apr_socket_t *sock, apr_sockaddr_t *sa)
 {
     int rc;        
 
@@ -337,11 +322,7 @@ apr_status_t apr_os_sock_make(apr_socket_t **apr_sock,
                               apr_pool_t *cont)
 {
     alloc_socket(apr_sock, cont);
-#ifdef APR_ENABLE_FOR_1_0 /* no protocol field yet */
-    set_socket_vars(*apr_sock, os_sock_info->family, os_sock_info->type, os_sock_info->protocol);
-#else
-    set_socket_vars(*apr_sock, os_sock_info->family, os_sock_info->type, 0);
-#endif
+    set_socket_vars(*apr_sock, os_sock_info->family, os_sock_info->type);
     (*apr_sock)->timeout = -1;
     (*apr_sock)->socketdes = *os_sock_info->os_sock;
     if (os_sock_info->local) {
@@ -364,9 +345,6 @@ apr_status_t apr_os_sock_make(apr_socket_t **apr_sock,
         /* XXX IPv6 - this assumes sin_port and sin6_port at same offset */
         (*apr_sock)->remote_addr->port = ntohs((*apr_sock)->remote_addr->sa.sin.sin_port);
     }
-    else {
-        (*apr_sock)->remote_addr_unknown = 1;
-    }
         
     (*apr_sock)->inherit = 0;
     apr_pool_cleanup_register((*apr_sock)->cntxt, (void *)(*apr_sock), 
@@ -382,11 +360,10 @@ apr_status_t apr_os_sock_put(apr_socket_t **sock, apr_os_sock_t *thesock,
         /* XXX IPv6 figure out the family here! */
         /* XXX figure out the actual socket type here */
         /* *or* just decide that apr_os_sock_put() has to be told the family and type */
-        set_socket_vars(*sock, APR_INET, SOCK_STREAM, 0);
+        set_socket_vars(*sock, APR_INET, SOCK_STREAM);
         (*sock)->timeout = -1;
     }
     (*sock)->local_port_unknown = (*sock)->local_interface_unknown = 1;
-    (*sock)->remote_addr_unknown = 1;
     (*sock)->socketdes = *thesock;
     return APR_SUCCESS;
 }
@@ -394,34 +371,3 @@ apr_status_t apr_os_sock_put(apr_socket_t **sock, apr_os_sock_t *thesock,
 APR_IMPLEMENT_INHERIT_SET(socket, inherit, cntxt, socket_cleanup)
 
 APR_IMPLEMENT_INHERIT_UNSET(socket, inherit, cntxt, socket_cleanup)
-
-/* deprecated */
-apr_status_t apr_shutdown(apr_socket_t *thesocket, apr_shutdown_how_e how)
-{
-    return apr_socket_shutdown(thesocket, how);
-}
-
-/* deprecated */
-apr_status_t apr_bind(apr_socket_t *sock, apr_sockaddr_t *sa)
-{
-    return apr_socket_bind(sock, sa);
-}
-
-/* deprecated */
-apr_status_t apr_listen(apr_socket_t *sock, apr_int32_t backlog)
-{
-    return apr_socket_listen(sock, backlog);
-}
-
-/* deprecated */
-apr_status_t apr_accept(apr_socket_t **new, apr_socket_t *sock,
-                        apr_pool_t *connection_context)
-{
-    return apr_socket_accept(new, sock, connection_context);
-}
-
-/* deprecated */
-apr_status_t apr_connect(apr_socket_t *sock, apr_sockaddr_t *sa)
-{
-    return apr_socket_connect(sock, sa);
-}

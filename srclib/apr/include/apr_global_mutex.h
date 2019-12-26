@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -77,7 +77,6 @@ extern "C" {
 
 #if !APR_PROC_MUTEX_IS_GLOBAL || defined(DOXYGEN)
 
-/** Opaque global mutex structure. */
 typedef struct apr_global_mutex_t apr_global_mutex_t;
 
 /*   Function definitions */

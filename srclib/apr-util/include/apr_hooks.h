@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -97,11 +97,9 @@ typedef struct ns##_LINK_##name##_t \
 #define APR_HOOK_STRUCT(members) \
 static struct { members } _hooks;
 
-/** macro to link the hook structure */
 #define APR_HOOK_LINK(name) \
     apr_array_header_t *link_##name;
 
-/** macro to implement the hook */
 #define APR_IMPLEMENT_EXTERNAL_HOOK_BASE(ns,link,name) \
 link##_DECLARE(void) ns##_hook_##name(ns##_HOOK_##name##_t *pf,const char * const *aszPre, \
                                       const char * const *aszSucc,int nOrder) \
@@ -133,7 +131,7 @@ link##_DECLARE(void) ns##_hook_##name(ns##_HOOK_##name##_t *pf,const char * cons
  * @param link The linkage declaration prefix of the hook
  * @param name The name of the hook
  * @param args_decl The declaration of the arguments for the hook
- * @param args_use The names for the arguments for the hook
+ * @param args_used The names for the arguments for the hook
  * @note The link prefix FOO corresponds to FOO_DECLARE() macros, which
  * provide export linkage from the module that IMPLEMENTs the hook, and
  * import linkage from external modules that link to the hook's module.
@@ -161,12 +159,9 @@ link##_DECLARE(void) ns##_run_##name args_decl \
  * other than OK or DECLINE
  * @param ns The namespace prefix of the hook functions
  * @param link The linkage declaration prefix of the hook
- * @param ret Type to return
  * @param name The name of the hook
  * @param args_decl The declaration of the arguments for the hook
- * @param args_use The names for the arguments for the hook
- * @param ok Success value
- * @param decline Decline value
+ * @param args_used The names for the arguments for the hook
  * @note The link prefix FOO corresponds to FOO_DECLARE() macros, which
  * provide export linkage from the module that IMPLEMENTs the hook, and
  * import linkage from external modules that link to the hook's module.
@@ -200,10 +195,8 @@ link##_DECLARE(ret) ns##_run_##name args_decl \
  * @param ns The namespace prefix of the hook functions
  * @param link The linkage declaration prefix of the hook
  * @param name The name of the hook
- * @param ret Type to return
  * @param args_decl The declaration of the arguments for the hook
- * @param args_use The names for the arguments for the hook
- * @param decline Decline value
+ * @param args_used The names for the arguments for the hook
  * @note The link prefix FOO corresponds to FOO_DECLARE() macros, which
  * provide export linkage from the module that IMPLEMENTs the hook, and
  * import linkage from external modules that link to the hook's module.

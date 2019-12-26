@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
  * <http://www.apache.org/>.
  */
 
-#include "win32/apr_arch_atime.h"
+#include "win32/atime.h"
 #include "apr_portable.h"
 #include "apr_strings.h"
 
@@ -155,12 +155,8 @@ APR_DECLARE(apr_status_t) apr_ctime(char *date_str, apr_time_t t)
     return APR_SUCCESS;
 }
 
-
-#ifndef _WIN32_WCE
-
 int win32_strftime_extra(char *s, size_t max, const char *format,
-                         const struct tm *tm) 
-{
+                         const struct tm *tm) {
    /* If the new format string is bigger than max, the result string won't fit
     * anyway. If format strings are added, made sure the padding below is
     * enough */
@@ -193,11 +189,6 @@ int win32_strftime_extra(char *s, size_t max, const char *format,
                 i += 2;
                 j += 11;
                 break;
-            case 'R':
-                memcpy(new_format + j, "%H:%M", 5);
-                i += 2;
-                j += 5;
-                break;
             case 'T':
                 memcpy(new_format + j, "%H:%M:%S", 8);
                 i += 2;
@@ -225,18 +216,12 @@ int win32_strftime_extra(char *s, size_t max, const char *format,
     }
     free(new_format);
     return return_value;
-}
-
-#endif
-
+ }
 
 APR_DECLARE(apr_status_t) apr_strftime(char *s, apr_size_t *retsize,
                                        apr_size_t max, const char *format,
                                        apr_time_exp_t *xt)
 {
-#ifdef _WIN32_WCE
-    return APR_ENOTIMPL;
-#else
     struct tm tm;
     memset(&tm, 0, sizeof tm);
     tm.tm_sec  = xt->tm_sec;
@@ -250,5 +235,4 @@ APR_DECLARE(apr_status_t) apr_strftime(char *s, apr_size_t *retsize,
     tm.tm_isdst = xt->tm_isdst;
     (*retsize) = win32_strftime_extra(s, max, format, &tm);
     return APR_SUCCESS;
-#endif
 }

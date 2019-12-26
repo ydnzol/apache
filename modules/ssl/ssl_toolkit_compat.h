@@ -97,19 +97,13 @@
 
 #define modssl_X509_verify_cert X509_verify_cert
 
-#if (OPENSSL_VERSION_NUMBER < 0x00904000)
-#define modssl_PEM_read_bio_X509(b, x, cb, arg) PEM_read_bio_X509(b, x, cb)
-#else
-#define modssl_PEM_read_bio_X509(b, x, cb, arg) PEM_read_bio_X509(b, x, cb, arg)
-#endif
+#define modssl_PEM_read_bio_X509 PEM_read_bio_X509
 
 #define modssl_PEM_X509_INFO_read_bio PEM_X509_INFO_read_bio 
 
 #define modssl_PEM_read_bio_PrivateKey PEM_read_bio_PrivateKey
 
 #define modssl_set_cipher_list SSL_set_cipher_list
-
-#define modssl_free OPENSSL_free
 
 #define EVP_PKEY_reference_inc(pkey) \
    CRYPTO_add(&((pkey)->references), +1, CRYPTO_LOCK_X509_PKEY)
@@ -153,8 +147,6 @@
 
 #define modssl_set_cipher_list(ssl, l) \
    SSL_set_cipher_list(ssl, (char *)l)
-
-#define modssl_free free
 
 #ifndef PEM_F_DEF_CALLBACK
 #define PEM_F_DEF_CALLBACK PEM_F_DEF_CB

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,8 +55,8 @@
 #include "apr.h"
 #include "apr_private.h"
 #include "apr_portable.h"
-#include "apr_arch_proc_mutex.h"
-#include "apr_arch_thread_mutex.h"
+#include "proc_mutex.h"
+#include "thread_mutex.h"
 
 APR_DECLARE(apr_status_t) apr_proc_mutex_create(apr_proc_mutex_t **mutex,
                                                 const char *fname,
@@ -106,11 +106,6 @@ APR_DECLARE(apr_status_t) apr_proc_mutex_unlock(apr_proc_mutex_t *mutex)
     if (mutex)
         return apr_thread_mutex_unlock(mutex->mutex);
     return APR_ENOLOCK;
-}
-
-APR_DECLARE(apr_status_t) apr_proc_mutex_cleanup(void *mutex)
-{
-    return apr_proc_mutex_destroy(mutex);
 }
 
 APR_DECLARE(apr_status_t) apr_proc_mutex_destroy(apr_proc_mutex_t *mutex)

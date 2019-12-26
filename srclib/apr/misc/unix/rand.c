@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@
 #include "apr_want.h"
 #include "apr_general.h"
 
-#include "apr_arch_misc.h"
+#include "misc.h"
 #include <sys/stat.h>
 #if APR_HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -74,50 +74,34 @@
 #include <sys/un.h>
 #endif
 
-#ifndef SHUT_RDWR
-#define SHUT_RDWR 2
-#endif
-
 #if APR_HAS_RANDOM
 
+/* This tells the preprocessor to put quotes around the value. */
+#define	XSTR(x)	#x
+#define	STR(x)	XSTR(x)
+
 APR_DECLARE(apr_status_t) apr_generate_random_bytes(unsigned char *buf, 
-#ifdef APR_ENABLE_FOR_1_0
-                                                    apr_size_t length)
-#else
-                                                    int length)
-#endif
+                                                    int length) 
 {
 #ifdef DEV_RANDOM
 
-    int fd = -1;
+    int rnd, rc;
+    apr_size_t got, tot;
 
-    /* On BSD/OS 4.1, /dev/random gives out 8 bytes at a time, then
-     * gives EOF, so reading 'length' bytes may require opening the
-     * device several times. */
-    do {
-        apr_ssize_t rc;
+    if ((rnd = open(STR(DEV_RANDOM), O_RDONLY)) == -1) 
+	return errno;
 
-        if (fd == -1)
-            if ((fd = open(DEV_RANDOM, O_RDONLY)) == -1)
-                return errno;
-        
-        rc = read(fd, buf, length);
-        if (rc < 0) {
-            int errnum = errno;
-            close(fd);
-            return errnum;
-        }
-        else if (rc == 0) {
-            close(fd);
-            fd = -1; /* force open() again */
+    for (tot=0; tot<length; tot += got) {
+        if ((rc = read(rnd, buf+tot, length-tot)) < 0) {
+	    return errno;
         }
         else {
-            buf += rc;
-            length -= rc;
+            got = rc;
         }
-    } while (length > 0);
-    
-    close(fd);
+    }
+
+    close(rnd);
+
 #elif defined(OS2)
     static UCHAR randbyte();
     unsigned int idx;

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -79,7 +79,6 @@ int main(int argc, const char * const argv[])
     apr_sockaddr_t *localsa = NULL, *remotesa;
     apr_status_t stat;
     int family = APR_UNSPEC;
-    int protocol;
     apr_getopt_t *opt;
     const char *optarg;
     char optchar;
@@ -114,7 +113,7 @@ int main(int argc, const char * const argv[])
     }
 
     APR_TEST_SUCCESS(rv, "Creating new socket", 
-        apr_socket_create_ex(&sock, family, SOCK_STREAM, APR_PROTO_TCP, context))
+        apr_socket_create(&sock, family, SOCK_STREAM, context))
 
     APR_TEST_SUCCESS(rv, "Setting option APR_SO_NONBLOCK",
         apr_socket_opt_set(sock, APR_SO_NONBLOCK, 1))
@@ -128,10 +127,10 @@ int main(int argc, const char * const argv[])
     }
 
     APR_TEST_SUCCESS(rv, "Binding socket to port",
-        apr_socket_bind(sock, localsa))
+        apr_bind(sock, localsa))
     
     APR_TEST_SUCCESS(rv, "Listening to socket",
-        apr_socket_listen(sock, 5))
+        apr_listen(sock, 5))
     
     APR_TEST_BEGIN(rv, "Setting up for polling",
         apr_poll_setup(&sdset, 1, context))
@@ -152,14 +151,8 @@ int main(int argc, const char * const argv[])
     fprintf(stdout, "OK\n");
 
     APR_TEST_SUCCESS(rv, "Accepting a connection",
-        apr_socket_accept(&sock2, sock, context))
+        apr_accept(&sock2, sock, context))
 
-    apr_socket_protocol_get(sock2, &protocol);
-    if (protocol != APR_PROTO_TCP) {
-        fprintf(stderr, "Error: protocol not conveyed from listening socket "
-                "to connected socket!\n");
-        exit(1);
-    }
     apr_socket_addr_get(&remotesa, APR_REMOTE, sock2);
     apr_sockaddr_ip_get(&remote_ipaddr, remotesa);
     apr_sockaddr_port_get(&remote_port, remotesa);
@@ -171,7 +164,7 @@ int main(int argc, const char * const argv[])
 
     length = STRLEN;
     APR_TEST_BEGIN(rv, "Receiving data from socket",
-        apr_socket_recv(sock2, datasend, &length))
+        apr_recv(sock2, datasend, &length))
 
     if (strcmp(datasend, "Send data test")) {
         fprintf(stdout, "Failed\n");
@@ -186,10 +179,10 @@ int main(int argc, const char * const argv[])
 
     length = STRLEN;
     APR_TEST_SUCCESS(rv, "Sending data over socket",
-        apr_socket_send(sock2, datarecv, &length))
+        apr_send(sock2, datarecv, &length))
     
     APR_TEST_SUCCESS(rv, "Shutting down accepted socket",
-        apr_socket_shutdown(sock2, APR_SHUTDOWN_READ))
+        apr_shutdown(sock2, APR_SHUTDOWN_READ))
 
     APR_TEST_SUCCESS(rv, "Closing duplicate socket",
         apr_socket_close(sock2))

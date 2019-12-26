@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -139,7 +139,7 @@ static const cmd *parse_command(const char *str);
 static void prdatum(FILE *stream, apr_datum_t d);
 static void oops(apr_dbm_t *dbm, apr_status_t rv, const char *s1,
                  const char *s2);
-static void show_usage(void);
+static void show_usage();
 
 int main(int argc, const char * const * argv)
 {
@@ -427,7 +427,7 @@ static void oops(apr_dbm_t * dbm, apr_status_t rv, const char *s1,
     exit(1);
 }
 
-static void show_usage(void)
+static void show_usage()
 {
     int i;
 

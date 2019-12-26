@@ -23,11 +23,12 @@
     <directive module="mpm_common">MaxClients</directive>, which
     controls the maximum total number of threads that may be
     launched.</p>
-</summary>
-<seealso><a href="../bind.html">Setting which addresses and ports Apache
-uses</a></seealso>
 
-<section id="how-it-works"><title>How it Works</title>
+</summary>
+<seealso><a href="../bind.html">Setting which addresses and
+    ports Apache uses</a></seealso>
+
+<section><title>How it Works</title>
     <p>Each process has a fixed
     number of threads. The server adjusts to handle load by
     increasing or decreasing the number of processes.</p>
@@ -39,7 +40,7 @@ uses</a></seealso>
     individual threads then listen for connections and serve them when
     they arrive.</p>
 
-    <p>Apache always tries to maintain a pool of <dfn>spare</dfn> or
+    <p>Apache always tries to maintain a pool of <em>spare</em> or
     idle server threads, which stand ready to serve incoming
     requests. In this way, clients do not need to wait for a new
     threads or processes to be created before their requests can be
@@ -66,14 +67,12 @@ uses</a></seealso>
     <p>A typical configuration of the process-thread controls in
     the <module>worker</module> MPM could look as follows:</p>
 
-    <example>
-      StartServers         2<br />
-      MaxClients         150<br />
-      MinSpareThreads     25<br />
-      MaxSpareThreads     75<br />
-      ThreadsPerChild     25<br />
-      ServerLimit         16
-    </example>
+<example><pre>StartServers         2
+MaxClients         150
+MinSpareThreads     25
+MaxSpareThreads     75
+ThreadsPerChild     25
+ServerLimit         16</pre></example>
 
     <p>While the parent process is usually started as root under Unix
     in order to bind to port 80, the child processes and threads are
@@ -92,8 +91,7 @@ uses</a></seealso>
     old ones and launching new ones.</p>
 </section>
  
-<directivesynopsis location="mpm_common"><name>AcceptMutex</name>
-</directivesynopsis>
+
 <directivesynopsis location="mpm_common"><name>CoreDumpDirectory</name>
 </directivesynopsis>
 <directivesynopsis location="mpm_common"><name>Group</name>
