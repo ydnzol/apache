@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_networkio.h"
+#include "networkio.h"
 #include "apr_network_io.h"
 #include "apr_general.h"
 #include "apr_lib.h"
@@ -170,8 +170,7 @@ APR_DECLARE(apr_status_t) apr_getsocketopt(apr_socket_t *sock,
 }
                                            
 
-APR_DECLARE(apr_status_t) apr_gethostname(char *buf, apr_int32_t len, 
-                                          apr_pool_t *cont)
+APR_DECLARE(apr_status_t) apr_gethostname(char *buf, apr_int32_t len, apr_pool_t *cont)
 {
     if (gethostname(buf, len) == -1) {
         buf[0] = '\0';
@@ -183,3 +182,4 @@ APR_DECLARE(apr_status_t) apr_gethostname(char *buf, apr_int32_t len,
     }
     return APR_SUCCESS;
 }
+

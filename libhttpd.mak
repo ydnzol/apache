@@ -39,12 +39,12 @@ ALL : ".\include\mod_dav.h" "$(OUTDIR)\libhttpd.dll"
 
 !ELSE 
 
-ALL : "gen_test_char - Win32 Release" "pcreposix - Win32 Release" "libaprutil - Win32 Release" "libapriconv - Win32 Release" "libapr - Win32 Release" ".\include\mod_dav.h" "$(OUTDIR)\libhttpd.dll"
+ALL : "gen_test_char - Win32 Release" "pcreposix - Win32 Release" "libaprutil - Win32 Release" "libapr - Win32 Release" ".\include\mod_dav.h" "$(OUTDIR)\libhttpd.dll"
 
 !ENDIF 
 
 !IF "$(RECURSE)" == "1" 
-CLEAN :"libapr - Win32 ReleaseCLEAN" "libapriconv - Win32 ReleaseCLEAN" "libaprutil - Win32 ReleaseCLEAN" "pcreposix - Win32 ReleaseCLEAN" "gen_test_char - Win32 ReleaseCLEAN" 
+CLEAN :"libapr - Win32 ReleaseCLEAN" "libaprutil - Win32 ReleaseCLEAN" "pcreposix - Win32 ReleaseCLEAN" "gen_test_char - Win32 ReleaseCLEAN" 
 !ELSE 
 CLEAN :
 !ENDIF 
@@ -68,7 +68,6 @@ CLEAN :
 	-@erase "$(INTDIR)\mpm_winnt.obj"
 	-@erase "$(INTDIR)\nt_eventlog.obj"
 	-@erase "$(INTDIR)\protocol.obj"
-	-@erase "$(INTDIR)\provider.obj"
 	-@erase "$(INTDIR)\request.obj"
 	-@erase "$(INTDIR)\rfc1413.obj"
 	-@erase "$(INTDIR)\scoreboard.obj"
@@ -165,11 +164,9 @@ LINK32_OBJS= \
 	"$(INTDIR)\mpm_winnt.obj" \
 	"$(INTDIR)\nt_eventlog.obj" \
 	"$(INTDIR)\service.obj" \
-	"$(INTDIR)\provider.obj" \
 	"$(INTDIR)\scoreboard.obj" \
 	"$(INTDIR)\libhttpd.res" \
 	".\srclib\apr\Release\libapr.lib" \
-	".\srclib\apr-iconv\Release\libapriconv.lib" \
 	".\srclib\apr-util\Release\libaprutil.lib" \
 	".\srclib\pcre\LibR\pcreposix.lib"
 
@@ -195,12 +192,12 @@ ALL : ".\server\test_char.h" ".\include\mpm_default.h" ".\include\mpm.h" ".\incl
 
 !ELSE 
 
-ALL : "gen_test_char - Win32 Debug" "pcreposix - Win32 Debug" "libaprutil - Win32 Debug" "libapriconv - Win32 Debug" "libapr - Win32 Debug" ".\server\test_char.h" ".\include\mpm_default.h" ".\include\mpm.h" ".\include\mod_proxy.h" ".\include\mod_include.h" ".\include\mod_dav.h" ".\include\mod_core.h" ".\include\mod_cgi.h" "$(OUTDIR)\libhttpd.dll"
+ALL : "gen_test_char - Win32 Debug" "pcreposix - Win32 Debug" "libaprutil - Win32 Debug" "libapr - Win32 Debug" ".\server\test_char.h" ".\include\mpm_default.h" ".\include\mpm.h" ".\include\mod_proxy.h" ".\include\mod_include.h" ".\include\mod_dav.h" ".\include\mod_core.h" ".\include\mod_cgi.h" "$(OUTDIR)\libhttpd.dll"
 
 !ENDIF 
 
 !IF "$(RECURSE)" == "1" 
-CLEAN :"libapr - Win32 DebugCLEAN" "libapriconv - Win32 DebugCLEAN" "libaprutil - Win32 DebugCLEAN" "pcreposix - Win32 DebugCLEAN" "gen_test_char - Win32 DebugCLEAN" 
+CLEAN :"libapr - Win32 DebugCLEAN" "libaprutil - Win32 DebugCLEAN" "pcreposix - Win32 DebugCLEAN" "gen_test_char - Win32 DebugCLEAN" 
 !ELSE 
 CLEAN :
 !ENDIF 
@@ -224,7 +221,6 @@ CLEAN :
 	-@erase "$(INTDIR)\mpm_winnt.obj"
 	-@erase "$(INTDIR)\nt_eventlog.obj"
 	-@erase "$(INTDIR)\protocol.obj"
-	-@erase "$(INTDIR)\provider.obj"
 	-@erase "$(INTDIR)\request.obj"
 	-@erase "$(INTDIR)\rfc1413.obj"
 	-@erase "$(INTDIR)\scoreboard.obj"
@@ -329,11 +325,9 @@ LINK32_OBJS= \
 	"$(INTDIR)\mpm_winnt.obj" \
 	"$(INTDIR)\nt_eventlog.obj" \
 	"$(INTDIR)\service.obj" \
-	"$(INTDIR)\provider.obj" \
 	"$(INTDIR)\scoreboard.obj" \
 	"$(INTDIR)\libhttpd.res" \
 	".\srclib\apr\Debug\libapr.lib" \
-	".\srclib\apr-iconv\Debug\libapriconv.lib" \
 	".\srclib\apr-util\Debug\libaprutil.lib" \
 	".\srclib\pcre\LibD\pcreposix.lib"
 
@@ -741,12 +735,6 @@ SOURCE=.\server\mpm\winnt\nt_eventlog.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-SOURCE=.\server\provider.c
-
-"$(INTDIR)\provider.obj" : $(SOURCE) "$(INTDIR)" ".\include\os.h"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
 SOURCE=.\server\scoreboard.c
 
 "$(INTDIR)\scoreboard.obj" : $(SOURCE) "$(INTDIR)" ".\include\mpm.h" ".\include\os.h"
@@ -781,32 +769,6 @@ SOURCE=.\server\mpm\winnt\service.c
 "libapr - Win32 DebugCLEAN" : 
    cd ".\srclib\apr"
    $(MAKE) /$(MAKEFLAGS) /F ".\libapr.mak" CFG="libapr - Win32 Debug" RECURSE=1 CLEAN 
-   cd "..\.."
-
-!ENDIF 
-
-!IF  "$(CFG)" == "libhttpd - Win32 Release"
-
-"libapriconv - Win32 Release" : 
-   cd ".\srclib\apr-iconv"
-   $(MAKE) /$(MAKEFLAGS) /F ".\libapriconv.mak" CFG="libapriconv - Win32 Release" 
-   cd "..\.."
-
-"libapriconv - Win32 ReleaseCLEAN" : 
-   cd ".\srclib\apr-iconv"
-   $(MAKE) /$(MAKEFLAGS) /F ".\libapriconv.mak" CFG="libapriconv - Win32 Release" RECURSE=1 CLEAN 
-   cd "..\.."
-
-!ELSEIF  "$(CFG)" == "libhttpd - Win32 Debug"
-
-"libapriconv - Win32 Debug" : 
-   cd ".\srclib\apr-iconv"
-   $(MAKE) /$(MAKEFLAGS) /F ".\libapriconv.mak" CFG="libapriconv - Win32 Debug" 
-   cd "..\.."
-
-"libapriconv - Win32 DebugCLEAN" : 
-   cd ".\srclib\apr-iconv"
-   $(MAKE) /$(MAKEFLAGS) /F ".\libapriconv.mak" CFG="libapriconv - Win32 Debug" RECURSE=1 CLEAN 
    cd "..\.."
 
 !ENDIF 

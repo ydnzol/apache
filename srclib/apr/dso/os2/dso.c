@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_dso.h"
+#include "dso.h"
 #include "apr_strings.h"
 #include "apr_portable.h"
 #include <stdio.h>
@@ -73,7 +73,7 @@ static apr_status_t dso_cleanup(void *thedso)
     if (rc == 0)
         dso->handle = 0;
 
-    return APR_FROM_OS_ERROR(rc);
+    return APR_OS2_STATUS(rc);
 }
 
 
@@ -89,9 +89,9 @@ APR_DECLARE(apr_status_t) apr_dso_load(apr_dso_handle_t **res_handle, const char
     (*res_handle)->failed_module = NULL;
 
     if ((rc = DosLoadModule(failed_module, sizeof(failed_module), path, &handle)) != 0) {
-        (*res_handle)->load_error = APR_FROM_OS_ERROR(rc);
+        (*res_handle)->load_error = APR_OS2_STATUS(rc);
         (*res_handle)->failed_module = apr_pstrdup(ctx, failed_module);
-        return APR_FROM_OS_ERROR(rc);
+        return APR_OS2_STATUS(rc);
     }
 
     (*res_handle)->handle  = handle;
@@ -116,7 +116,7 @@ APR_DECLARE(apr_status_t) apr_dso_sym(apr_dso_handle_sym_t *ressym,
     int rc;
 
     if (symname == NULL || ressym == NULL)
-        return APR_ESYMNOTFOUND;
+        return APR_EINIT;
 
     if ((rc = DosQueryProcAddr(handle->handle, 0, symname, &func)) != 0) {
         handle->load_error = APR_FROM_OS_ERROR(rc);

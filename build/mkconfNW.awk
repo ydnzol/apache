@@ -20,8 +20,6 @@ BEGIN {
     B["errordir"] = A["ServerRoot"]"/"A["errordir"]
     B["proxycachedir"] = A["ServerRoot"]"/"A["proxycachedir"]
     B["cgidir"] = A["ServerRoot"]"/"A["cgidir"]
-    B["listen_stmt_1"] = "Listen "A["Port"]
-    B["listen_stmt_2"] = ""
 }
 
 /@@LoadModule@@/ {
@@ -32,11 +30,9 @@ BEGIN {
     print "#LoadModule dav_module modules/mod_dav.nlm"
     print "#LoadModule dav_fs_module modules/moddavfs.nlm"
     print "#LoadModule expires_module modules/expires.nlm"
-    print "#LoadModule ext_filter_module modules/extfiltr.nlm"
     print "#LoadModule file_cache_module modules/filecach.nlm"
     print "#LoadModule headers_module modules/headers.nlm"
     print "#LoadModule info_module modules/info.nlm"
-    print "#LoadModule logio_module modules/modlogio.nlm"
     print "#LoadModule mime_magic_module modules/mimemagi.nlm"
     print "#LoadModule proxy_module modules/proxy.nlm"
     print "#LoadModule proxy_connect_module modules/proxycon.nlm"
@@ -67,11 +63,6 @@ match ($0,/@exp_.*@/) {
     sub(/@exp_.*@/,B[s],$0)
 }
 
-match ($0,/@nonssl_.*@/) {
-    s=substr($0,RSTART+8,RLENGTH-9)
-    sub(/@nonssl_.*@/,B[s],$0)
-}
-
 {
     print
 }
@@ -86,5 +77,5 @@ END {
     print "# Change this to SecureListen on specific IP addresses as shown below to "
     print "# prevent Apache from glomming onto all bound IP addresses (0.0.0.0)"
     print "#"
-    print "#SecureListen 443 \"SSL CertificateDNS\""
+    print "#SecureListen 443 \"SSL CertificateIP\""
 }

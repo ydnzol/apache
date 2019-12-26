@@ -12,13 +12,10 @@
     <html xml:lang="{$messages/@lang}" lang="{$messages/@lang}">
       <xsl:call-template name="head"/>
 
-<xsl:text>
-</xsl:text> <!-- insert line break -->
-
       <body id="directive-index">
         <xsl:call-template name="top"/>
 
-        <xsl:variable name="directives" select="document(sitemap/category[@id='modules']/modulefilelist/modulefile)/modulesynopsis[status!='Obsolete']/directivesynopsis[not(@location)]"/>
+        <xsl:variable name="directives" select="document(sitemap/category[@id='modules']/modulefilelist/modulefile)/modulesynopsis/directivesynopsis[not(@location)]"/>
 
         <!-- collect the start letters -->
         <xsl:variable name="start-letters">
@@ -32,13 +29,7 @@
             <xsl:value-of select="title"/>
           </h1>
 
-<xsl:text>
-</xsl:text> <!-- insert line break -->
-
           <xsl:apply-templates select="summary" />
-
-<xsl:text>
-</xsl:text> <!-- insert line break -->
 
           <!-- letter line -->
           <p class="letters">
@@ -54,15 +45,8 @@
 
         </div> <!-- /preamble -->
 
-<xsl:text>
-</xsl:text> <!-- insert line break -->
-
         <div id="directive-list">
           <ul>
-
-<xsl:text>
-</xsl:text> <!-- insert line break -->
-
             <xsl:call-template name="dindex-of-letter">
               <xsl:with-param name="letters-todo" select="$start-letters"/>
               <xsl:with-param name="directives" select="$directives"/>
@@ -70,14 +54,7 @@
           </ul>
         </div> <!-- /directive-list -->
 
-<xsl:text>
-</xsl:text> <!-- insert line break -->
-
         <xsl:call-template name="bottom"/>
-
-<xsl:text>
-</xsl:text> <!-- insert line break -->
-
       </body>
     </html>
   </xsl:template>
@@ -97,17 +74,22 @@
     <xsl:for-each select="$directives[$letter=translate(substring(normalize-space(name),1,1),$lowercase,$uppercase)]">
     <xsl:sort select="name"/>
 
-      <li>
-        <a href="{../name}.html#{translate(name,$uppercase,$lowercase)}">
-          <xsl:if test="position()=1">
-            <xsl:attribute name="id"><xsl:value-of select="$letter"/></xsl:attribute>
-            <xsl:attribute name="name"><xsl:value-of select="$letter"/></xsl:attribute>
-          </xsl:if>
+      <li><xsl:choose>
+        <xsl:when test="position()=1">
+          <a name="{$letter}" id="{$letter}" href="{../name}.html#{translate(name,$uppercase,$lowercase)}">
+            <xsl:if test="@type = 'section'">&lt;</xsl:if>
+            <xsl:value-of select="name"/>
+            <xsl:if test="@type = 'section'">&gt;</xsl:if>
+          </a>
+        </xsl:when>
 
-          <xsl:if test="@type = 'section'">&lt;</xsl:if>
-          <xsl:value-of select="name"/>
-          <xsl:if test="@type = 'section'">&gt;</xsl:if>
-        </a>
+        <xsl:otherwise>
+          <a href="{../name}.html#{translate(name,$uppercase,$lowercase)}">
+            <xsl:if test="@type = 'section'">&lt;</xsl:if>
+            <xsl:value-of select="name"/>
+            <xsl:if test="@type = 'section'">&gt;</xsl:if>
+          </a>
+        </xsl:otherwise></xsl:choose>
       </li>
 
 <xsl:text>

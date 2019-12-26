@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8' ?>
 <!DOCTYPE manualpage SYSTEM "./style/manualpage.dtd">
-<?xml-stylesheet type="text/xsl" href="./style/manual.de.xsl"?>
-<!-- English revision: 1.11.2.3 -->
+<?xml-stylesheet type="text/xsl" href="./style/manual.en.xsl"?>
+<!-- English revision: 1.5 -->
 
 <manualpage>
 <relativepath href="."/>
@@ -24,9 +24,6 @@
     schaffen, die der vieler anderer Open Source Projekte &#228;hnlich
     sieht.</p>
 </summary>
-
-<seealso><a href="invoking.html">Apache starten</a></seealso>
-<seealso><a href="stopping.html">Beenden und Neustarten</a></seealso>
 
 <section id="overview"><title>&#220;berblick f&#252;r die Ungeduldigen</title>
 
@@ -150,25 +147,34 @@
 <section id="download"><title>Download</title>
 
     <p>Der Apache kann von der <a
-    href="http://httpd.apache.org/download.cgi">Apache HTTP Server
-    Downloadseite</a> heruntergeladen werden, auf der verschiedene
-    Spiegelserver angegeben sind. Sie finden hier die jeweils aktuelle
-    stabile Version.</p>
+    href="http://www.apache.org/dist/httpd/">Apache Software
+    Foundation Downloadseite</a> oder von einem <a
+    href="http://www.apache.org/dyn/closer.cgi">nahegelegenen
+    Mirror</a> heruntergeladen werden.</p>
+
+    <p>Versionsnummern, die auf <code>alpha</code> enden, zeigen
+    fr&#252;he Entwicklungsversionen an, die m&#246;glicherweise nicht
+    funktionieren. Versionsnummern, die auf <code>beta</code> enden,
+    zeigen verl&#228;&#223;lichere Ausgaben an, die jedoch noch weitere
+    Tests oder Bugfixes ben&#246;tigen. Wenn Sie die beste verf&#252;gbare
+    Produktivversion des Apache HTTP Servers herunterladen wollen, sollten
+    Sie die letzte Version w&#228;hlen, die weder <code>alpha</code>,
+    noch <code>beta</code> in ihrem Dateinamen enth&#228;lt.</p>
 
     <p>Nach dem Download, insbesondere, wenn ein Mirror benutzt wurde, ist es
     wichtig, zu pr&#252;fen, dass Sie eine vollst&#228;ndige, nicht
     modifizierte Version des Apache HTTP Servers erhalten haben. Dies kann
     durch Pr&#252;fen des heruntergeladenen Tarballs gegen die PGP-Signatur
     erreicht werden. Dies ist wiederum ein Zweischrittverfahren. Zuerst
-    m&#252;ssen Sie die <a href="http://www.apache.org/dist/httpd/KEYS">
-    <code>KEYS</code></a>-Datei ebenfalls von der Apache
-    Distributionsseite beziehen. (Um sicherzustellen, dass die
-    <code>KEYS</code>-Datei selbst nicht ver&#228;ndert wurde, ist
-    es sinnvoll, eine Datei aus einer fr&#252;heren Distribution des
-    Apache zu verwenden, oder den Schl&#252;ssel von einem &#246;ffentlichen
-    Schl&#252;sselserver zu importieren.) Die Schl&#252;ssel werden mit einem
-    der folgenden Befehle (abh&#228;ngig von Ihrer PGP Version) zu Ihrem
-    pers&#246;nlichen Schl&#252;sselring hinzugef&#252;gt:</p>
+    m&#252;ssen Sie die <code>KEYS</code>-Datei von der <a
+    href="http://www.apache.org/dist/httpd/">Apache Distributionsseite</a>
+    beziehen. (Um sicherzustellen, dass die <code>KEYS</code>-Datei selbst
+    nicht ver&#228;ndert wurde, ist es sinnvoll, eine Datei aus einer
+    fr&#252;heren Distribution des Apache zu verwenden, oder den
+    Schl&#252;ssel von einem &#246;ffentlichen Schl&#252;sselserver zu
+    importieren.) Die Schl&#252;ssel werden mit einem der folgenden Befehle
+    (abh&#228;ngig von Ihrer PGP Version) zu Ihrem pers&#246;nlichen
+    Schl&#252;sselring hinzugef&#252;gt:</p>
 
   <example>$ pgp &lt; KEYS</example>
 
@@ -176,16 +182,13 @@
 
   <example>$ gpg --import KEYS</example>
 
-    <p>Der n&auml;chste Schritt ist das Testen des Tarballs gegen
+    <p>Der n&#228;chste Schritt ist das Testen des Tarballs gegen
     die PGP-Signatur, die immer von der <a
-    href="http://httpd.apache.org/download.cgi">Apache Originalseite</a>
-    bezogen werden sollte. Den Link zur Signaturdatei finden Sie hinter
-    dem jeweiligen Download-Link oder im entsprechenden Verzeichnis auf der
-    <a href="http://www.apache.org/dist/httpd/">Apache-Distributionsseite</a>
-    Sie hat den gleichen Dateinamen wie der Tarball, aber zus&auml;tzlich die
-    Endung <code>.asc</code>. Nun k&ouml;nnen Sie die Distribution mit
-    einem der folgenden Befehle (wiederum abh&auml;ngig von Ihrer PGP
-    Version) pr&uuml;fen:</p>
+    href="http://www.apache.org/dist/httpd/">Apache Originalseite</a>
+    bezogen werden sollte. Die Signaturdatei hat den gleichen Dateinamen
+    wie der Tarball, aber zus&#228;tzlich die Endung <code>.asc</code>. Nun
+    k&#246;nnen Sie die Distribution mit einem der folgenden Befehle
+    (wiederum abh&#228;ngig von Ihrer PGP Version) pr&#252;fen:</p>
 
   <example>$ pgp httpd-2_0_<em>NN</em>.tar.gz.asc</example>
 
@@ -215,8 +218,8 @@
     aus einem simplen Dekomprimieren und danach "Ent-tarren":</p>
 
   <example>
-      $ gzip -d httpd-2_1_<em>NN</em>.tar.gz<br />
-      $ tar xvf httpd-2_1_<em>NN</em>.tar
+      $ gzip -d httpd-2_0_<em>NN</em>.tar.gz<br />
+      $ tar xvf httpd-2_0_<em>NN</em>.tar
   </example>
 
     <p>Dies erstellt unterhalb des aktuellen Verzeichnisses ein neues
@@ -254,9 +257,8 @@
     haben, folgt hier ein typisches Beispiel, das den Apache mit einem
     speziellen Compiler und Compilerflags f&#252;r das
     Installationsverzeichnis <code>/sk/pkg/apache</code> kompiliert, sowie
-    die beiden zus&#228;tzlichen Module <module>mod_rewrite</module> und
-    <module>mod_speling</module> f&#252;r sp&#228;teres Laden durch den
-    DSO-Mechanismus:</p>
+    die beiden zus&#228;tzlichen Module mod_rewrite und mod_speling
+    f&#252;r sp&#228;teres Laden durch den DSO-Mechanismus:</p>
 
   <example>
       $ CC="pgcc" CFLAGS="-O2" \<br />
@@ -307,16 +309,15 @@
 
       <dt><code>LIBS=...</code></dt>
 
-      <dd>Informationen &#252;ber den Ablageort von Libraries
-      ("<code>-L</code>" und "<code>-l</code>" Optionen), die
-      an den Linker durchgereicht werden.</dd>
+      <dd>Informationen &#252;ber den Ablageort von Libraries ("-L" und
+      "-l" Optionen), die an den Linker durchgereicht werden.</dd>
 
       <dt><code>INCLUDES=...</code></dt>
 
       <dd>Suchverzeichnisse f&#252;r Header-Dateien
-      ("<code>-I<em>Verzeichnis</em></code>").</dd>
+      ("-I<em>Verzeichnis</em>").</dd>
 
-      <dt><code>TARGET=...</code> [Default: <code>apache</code>]</dt>
+      <dt><code>TARGET=...</code> [Default: apache]</dt>
 
       <dd>Name der lauff&#228;higen Datei, die erstellt wird.</dd>
 
@@ -354,7 +355,7 @@
 
       <dt><code>--quiet</code></dt>
 
-      <dd>Verhindert die Ausgabe der &#252;blichen "<code>checking...</code>"
+      <dd>Verhindert die Ausgabe der &#252;blichen "checking..."
       Nachrichten.</dd>
 
       <dt><code>--verbose</code></dt>
@@ -375,7 +376,7 @@
 
     <dl>
       <dt><code>--prefix=<em>PREFIX</em></code> [Default:
-      <code>/usr/local/apache2</code>]</dt>
+      /usr/local/apache2]</dt>
 
       <dd>Gibt das Verzeichnis an, in dem die Apache-Dateien
       installiert werden.</dd>
@@ -386,7 +387,7 @@
 
     <dl>
       <dt><code>--exec-prefix=<em>EPREFIX</em></code> [Default:
-      <code><em>PREFIX</em></code>]</dt>
+      <em>PREFIX</em>]</dt>
 
       <dd>Gibt das Verzeichnis an, in dem Architektur-abh&#228;ngige Dateien
       abgelegt werden.</dd>
@@ -420,7 +421,7 @@
     stehen in verschiedenen Modulen bereit. W&#228;hrend des
     Konfigurationsprozesses m&#252;ssen Sie ausw&#228;hlen, welche Module
     f&#252;r die Verwendung mit Ihrem Server kompiliert werden sollen. Eine
-    <a href="mod/">Liste von Modulen</a> ist in dieser
+    <a href="mod/index-bytype.html">Liste von Modulen</a> ist in dieser
     Dokumentation enthalten. Module mit dem <a
     href="mod/module-dict.html#Status">Status</a> "Base"
     sind standardm&#228;&#223;ig enthalten und m&#252;ssen ausdr&#252;cklich
@@ -476,9 +477,8 @@
     <p>Die <em>MODUL-LISTE</em> in den Optionen
     <code>--enable-modules</code> und <code>--enable-mods-shared</code>
     ist &#252;blicherweise eine durch Leerzeichen getrennte Liste von
-    Modul-Bezeichnern. Zum Beispiel k&#246;nnen zum Aktivieren von
-    <module>mod_dav</module> und <module>mod_info</module> beide
-    benutzt werden, sowohl</p>
+    Modul-Bezeichnern. Zum Beispiel k&#246;nnen zum Aktivieren vom mod_dav
+    und mod_info beide benutzt werden, sowohl</p>
 
   <example>./configure --enable-dav --enable-info</example>
 
@@ -491,8 +491,8 @@
     die meisten der Module in einem Schritt hinzuzuf&#252;gen. Sie
     k&#246;nnen Module, die Sie nicht benutzen m&#246;chten, mit der Option
     <code>--disable-<em>MODUL</em></code> entfernen. Um beispielsweise alle
-    Module mit Ausnahme von <module>mod_info</module> als DSOs einzubinden,
-    k&#246;nnen Sie</p>
+    Module mit Ausnahme von mod_info als DSOs einzubinden, k&#246;nnen
+    Sie</p>
 
   <example>
       ./configure --enable-mods-shared=all
@@ -584,16 +584,15 @@
 
     <p>Als n&#228;chstes k&#246;nnen Sie Ihren Apache HTTP Server anpassen,
     indem Sie die <a href="configuring.html">Konfigurationsdateien</a>
-    unterhalb von <code><em>PREFIX</em>/conf/</code> editieren.</p>
+    unterhalb von <em>PREFIX</em>/conf/ editieren.</p>
 
   <example>$ vi <em>PREFIX</em>/conf/httpd.conf</example>
 
-    <p>Werfen Sie auch einen Blick in das Apache-Handbuch unter <a
-    href="./">docs/manual/</a>. Die aktuellste Version dieses Handbuchs
-    sowie eine komplette Referenz der verf&#252;gbaren <a
-    href="mod/directives.html">Konfigurationsanweisungen</a> finden
-    Sie unter <a href="http://httpd.apache.org/docs-2.0/"
-    >http://httpd.apache.org/docs-2.0/</a>.</p>
+    <p>Im Apache Handbuch finden Sie unter <a
+    href="./">docs/manual/</a> oder <a
+    href="http://httpd.apache.org/docs/">http://httpd.apache.org/docs/</a>
+    eine komplette Referenz der verf&#252;gbaren <a
+    href="mod/directives.html">Konfigurationsanweisungen</a>.</p>
 </section>
 
 <section id="test"><title>Testen</title>

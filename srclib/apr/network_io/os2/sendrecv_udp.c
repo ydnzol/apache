@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_networkio.h"
+#include "networkio.h"
 #include "apr_errno.h"
 #include "apr_general.h"
 #include "apr_network_io.h"
@@ -61,10 +61,8 @@
 #include <sys/time.h>
 
 
-APR_DECLARE(apr_status_t) apr_socket_sendto(apr_socket_t *sock, 
-                                            apr_sockaddr_t *where,
-                                            apr_int32_t flags, const char *buf,
-                                            apr_size_t *len)
+APR_DECLARE(apr_status_t) apr_sendto(apr_socket_t *sock, apr_sockaddr_t *where,
+                                     apr_int32_t flags, const char *buf, apr_size_t *len)
 {
     apr_ssize_t rv;
     int serrno;
@@ -101,10 +99,9 @@ APR_DECLARE(apr_status_t) apr_socket_sendto(apr_socket_t *sock,
 
 
 
-APR_DECLARE(apr_status_t) apr_socket_recvfrom(apr_sockaddr_t *from,
-                                              apr_socket_t *sock,
-                                              apr_int32_t flags, char *buf,
-                                              apr_size_t *len)
+APR_DECLARE(apr_status_t) apr_recvfrom(apr_sockaddr_t *from, apr_socket_t *sock,
+                                       apr_int32_t flags, char *buf, 
+                                       apr_size_t *len)
 {
     apr_ssize_t rv;
     int serrno;
@@ -139,22 +136,4 @@ APR_DECLARE(apr_status_t) apr_socket_recvfrom(apr_sockaddr_t *from,
         return APR_EOF;
 
     return APR_SUCCESS;
-}
-
-/* deprecated */
-APR_DECLARE(apr_status_t) apr_sendto(apr_socket_t *sock, apr_sockaddr_t *where,
-                                     apr_int32_t flags, const char *buf,
-                                     apr_size_t *len)
-{
-    return apr_socket_sendto(sock, where, flags, buf, len);
-}
-
-
-
-APR_DECLARE(apr_status_t) apr_recvfrom(apr_sockaddr_t *from,
-                                       apr_socket_t *sock,
-                                       apr_int32_t flags, char *buf,
-                                       apr_size_t *len)
-{
-    return apr_socket_recvfrom(from, sock, flags, buf, len);
 }

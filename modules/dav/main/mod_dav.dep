@@ -133,7 +133,6 @@
 .\providers.c : \
 	"..\..\..\include\ap_config.h"\
 	"..\..\..\include\ap_mmn.h"\
-	"..\..\..\include\ap_provider.h"\
 	"..\..\..\include\ap_release.h"\
 	"..\..\..\include\httpd.h"\
 	"..\..\..\include\os.h"\
@@ -271,7 +270,6 @@
 	"..\..\..\srclib\apr-util\include\apr_buckets.h"\
 	"..\..\..\srclib\apr-util\include\apr_dbm.h"\
 	"..\..\..\srclib\apr-util\include\apr_hooks.h"\
-	"..\..\..\srclib\apr-util\include\apr_optional.h"\
 	"..\..\..\srclib\apr-util\include\apr_optional_hooks.h"\
 	"..\..\..\srclib\apr-util\include\apr_uri.h"\
 	"..\..\..\srclib\apr-util\include\apr_xml.h"\

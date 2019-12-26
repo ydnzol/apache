@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@
  */
 
 #include <nks/fsio.h>
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 
 
 apr_status_t apr_file_lock(apr_file_t *thefile, int type)

@@ -24,11 +24,11 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_dso.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\dso.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\file_io\unix\copy.c : \
@@ -54,10 +54,10 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\file_io\win32\dir.c : \
@@ -84,11 +84,11 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_atime.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\atime.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\file_io\unix\fileacc.c : \
@@ -115,10 +115,10 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\file_io\win32\filedup.c : \
@@ -145,11 +145,11 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_inherit.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\inherit.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\file_io\win32\filepath.c : \
@@ -176,10 +176,10 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\file_io\win32\filestat.c : \
@@ -206,11 +206,11 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_atime.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\atime.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\file_io\win32\filesys.c : \
@@ -237,10 +237,10 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\file_io\win32\flock.c : \
@@ -266,10 +266,10 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\file_io\unix\fullrw.c : \
@@ -311,10 +311,10 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\file_io\win32\open.c : \
@@ -341,11 +341,11 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_inherit.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\inherit.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\file_io\win32\pipe.c : \
@@ -372,10 +372,10 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\file_io\win32\readwrite.c : \
@@ -402,11 +402,11 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_atime.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\atime.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\file_io\win32\seek.c : \
@@ -432,10 +432,10 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\locks\win32\proc_mutex.c : \
@@ -460,9 +460,9 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_proc_mutex.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\proc_mutex.h"\
 	
 
 .\locks\win32\thread_cond.c : \
@@ -487,9 +487,9 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_thread_cond.h"\
-	".\include\arch\win32\apr_arch_thread_mutex.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\thread_cond.h"\
+	".\include\arch\win32\thread_mutex.h"\
 	
 
 .\locks\win32\thread_mutex.c : \
@@ -514,9 +514,9 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_thread_mutex.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\thread_mutex.h"\
 	
 
 .\locks\win32\thread_rwlock.c : \
@@ -541,8 +541,8 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_thread_rwlock.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\thread_rwlock.h"\
 	
 
 .\memory\unix\apr_pools.c : \
@@ -571,29 +571,6 @@
 	".\include\arch\win32\apr_private.h"\
 	
 
-.\misc\win32\charset.c : \
-	".\include\apr.h"\
-	".\include\apr_allocator.h"\
-	".\include\apr_dso.h"\
-	".\include\apr_errno.h"\
-	".\include\apr_file_info.h"\
-	".\include\apr_file_io.h"\
-	".\include\apr_general.h"\
-	".\include\apr_global_mutex.h"\
-	".\include\apr_inherit.h"\
-	".\include\apr_network_io.h"\
-	".\include\apr_pools.h"\
-	".\include\apr_portable.h"\
-	".\include\apr_proc_mutex.h"\
-	".\include\apr_shm.h"\
-	".\include\apr_strings.h"\
-	".\include\apr_thread_mutex.h"\
-	".\include\apr_thread_proc.h"\
-	".\include\apr_time.h"\
-	".\include\apr_user.h"\
-	".\include\apr_want.h"\
-	
-
 .\misc\unix\errorcodes.c : \
 	".\include\apr.h"\
 	".\include\apr_allocator.h"\
@@ -617,8 +594,8 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\misc.h"\
 	
 
 .\misc\unix\getopt.c : \
@@ -644,8 +621,8 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\misc.h"\
 	
 
 .\misc\win32\internal.c : \
@@ -671,10 +648,10 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\misc\win32\misc.c : \
@@ -700,10 +677,10 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\misc\unix\otherchild.c : \
@@ -729,11 +706,11 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_threadproc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\threadproc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\misc\win32\rand.c : \
@@ -757,8 +734,8 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\misc.h"\
 	
 
 .\misc\win32\start.c : \
@@ -785,18 +762,18 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\misc\win32\utf8.c : \
 	".\include\apr.h"\
 	".\include\apr_errno.h"\
 	".\include\apr_lib.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\misc\unix\version.c : \
@@ -820,7 +797,6 @@
 	".\include\apr_inherit.h"\
 	".\include\apr_mmap.h"\
 	".\include\apr_pools.h"\
-	".\include\apr_ring.h"\
 	".\include\apr_thread_mutex.h"\
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
@@ -845,7 +821,6 @@
 	".\include\apr_pools.h"\
 	".\include\apr_portable.h"\
 	".\include\apr_proc_mutex.h"\
-	".\include\apr_ring.h"\
 	".\include\apr_shm.h"\
 	".\include\apr_strings.h"\
 	".\include\apr_tables.h"\
@@ -854,10 +829,10 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\network_io\unix\inet_ntop.c : \
@@ -875,8 +850,8 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_networkio.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\networkio.h"\
 	
 
 .\network_io\unix\inet_pton.c : \
@@ -893,8 +868,8 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_networkio.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\networkio.h"\
 	
 
 .\poll\unix\poll.c : \
@@ -921,11 +896,11 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_networkio.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\networkio.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\poll\unix\pollacc.c : \
@@ -952,11 +927,11 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_networkio.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\networkio.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\network_io\win32\sendrecv.c : \
@@ -982,14 +957,14 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_networkio.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\networkio.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
-.\network_io\unix\sockaddr.c : \
+.\network_io\win32\sockaddr.c : \
 	".\include\apr.h"\
 	".\include\apr_allocator.h"\
 	".\include\apr_errno.h"\
@@ -1005,8 +980,9 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_networkio.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\networkio.h"\
+	".\network_io\unix\sa_common.c"\
 	
 
 .\network_io\win32\sockets.c : \
@@ -1031,10 +1007,10 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_inherit.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_networkio.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\inherit.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\networkio.h"\
 	
 
 .\network_io\win32\sockopt.c : \
@@ -1052,7 +1028,7 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_networkio.h"\
+	".\include\arch\win32\networkio.h"\
 	
 
 .\passwd\apr_getpass.c : \
@@ -1091,10 +1067,10 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\strings\apr_cpystrn.c : \
@@ -1223,11 +1199,11 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_threadproc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\threadproc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\threadproc\win32\signals.c : \
@@ -1253,11 +1229,11 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_threadproc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\threadproc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 .\threadproc\win32\thread.c : \
@@ -1282,9 +1258,9 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_threadproc.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\threadproc.h"\
 	
 
 .\threadproc\win32\threadpriv.c : \
@@ -1308,8 +1284,8 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_threadproc.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\threadproc.h"\
 	
 
 .\time\win32\access.c : \
@@ -1322,8 +1298,8 @@
 	".\include\apr_thread_mutex.h"\
 	".\include\apr_time.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_atime.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\atime.h"\
 	
 
 .\time\win32\time.c : \
@@ -1348,9 +1324,9 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_atime.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\atime.h"\
+	".\include\arch\win32\misc.h"\
 	
 
 .\time\win32\timestr.c : \
@@ -1374,8 +1350,8 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_atime.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\atime.h"\
 	
 
 .\user\win32\groupinfo.c : \
@@ -1426,10 +1402,10 @@
 	".\include\apr_time.h"\
 	".\include\apr_user.h"\
 	".\include\apr_want.h"\
-	".\include\arch\win32\apr_arch_file_io.h"\
-	".\include\arch\win32\apr_arch_misc.h"\
-	".\include\arch\win32\apr_arch_utf8.h"\
 	".\include\arch\win32\apr_private.h"\
+	".\include\arch\win32\fileio.h"\
+	".\include\arch\win32\misc.h"\
+	".\include\arch\win32\utf8.h"\
 	
 
 !IF  "$(CFG)" == "libapr - Win32 Release"

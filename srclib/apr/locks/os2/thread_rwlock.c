@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,8 +56,8 @@
 #include "apr_lib.h"
 #include "apr_strings.h"
 #include "apr_portable.h"
-#include "apr_arch_thread_rwlock.h"
-#include "apr_arch_file_io.h"
+#include "thread_rwlock.h"
+#include "fileio.h"
 #include <string.h>
 
 static apr_status_t thread_rwlock_cleanup(void *therwlock)

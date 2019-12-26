@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,6 @@
 #include "apu_config.h"
 #include "apr_lib.h"
 #include "apr_strings.h"
-#include "apr_portable.h"
 #include "apr_xlate.h"
 
 /* If no implementation is available, don't generate code here since
@@ -74,6 +73,9 @@
 #if APR_HAVE_STRINGS_H
 #include <strings.h>
 #endif
+#ifdef HAVE_LANGINFO_H
+#include <langinfo.h>
+#endif
 #ifdef HAVE_ICONV_H
 #include <iconv.h>
 #endif
@@ -81,7 +83,7 @@
 #include <apr_iconv.h>
 #endif
 
-#if defined(APU_ICONV_INBUF_CONST) || APU_HAVE_APR_ICONV
+#if defined(APU_ICONV_INBUF_CONST) || APU_HAS_APR_ICONV
 #define ICONV_INBUF_TYPE const char **
 #else
 #define ICONV_INBUF_TYPE char **
@@ -96,21 +98,78 @@ struct apr_xlate_t {
     char *frompage;
     char *topage;
     char *sbcs_table;
-#if APU_HAVE_ICONV
+#if APU_HAVE_APR_ICONV || APU_HAVE_ICONV
     iconv_t ich;
-#elif APU_HAVE_APR_ICONV
-    apr_iconv_t ich;
 #endif
 };
 
+/* get_default_charset()
+ *
+ * simple heuristic to determine codepage of source code so that
+ * literal strings (e.g., "GET /\r\n") in source code can be translated
+ * properly
+ *
+ * If appropriate, a symbol can be set at configure time to determine
+ * this.  On EBCDIC platforms, it will be important how the code was
+ * unpacked.
+ */
 
-static const char *handle_special_names(const char *page, apr_pool_t *pool)
+static const char *get_default_charset(void)
+{
+#ifdef __MVS__
+#    ifdef __CODESET__
+        return __CODESET__;
+#    else
+        return "IBM-1047";
+#    endif
+#endif
+
+    if ('}' == 0xD0) {
+        return "IBM-1047";
+    }
+
+    if ('{' == 0xFB) {
+        return "EDF04";
+    }
+
+    if ('A' == 0xC1) {
+        return "EBCDIC"; /* not useful */
+    }
+
+    if ('A' == 0x41) {
+        return "ISO8859-1"; /* not necessarily true */
+    }
+
+    return "unknown";
+}
+
+/* get_locale_charset()
+ *
+ * If possible on this system, get the charset of the locale.  Otherwise,
+ * defer to get_default_charset().
+ */
+
+static const char *get_locale_charset(void)
+{
+#if defined(HAVE_NL_LANGINFO) && defined(HAVE_CODESET)
+    const char *charset;
+
+    charset = nl_langinfo(CODESET);
+    if (charset) {
+        return charset;
+    }
+#endif
+
+    return get_default_charset();
+}
+
+static const char *handle_special_names(const char *page)
 {
     if (page == APR_DEFAULT_CHARSET) {
-        return apr_os_default_encoding(pool);
+        return get_default_charset();
     }
     else if (page == APR_LOCALE_CHARSET) {
-        return apr_os_locale_encoding(pool);
+        return get_locale_charset();
     }
     else {
         return page;
@@ -121,9 +180,9 @@ static apr_status_t apr_xlate_cleanup(void *convset)
 {
     apr_xlate_t *old = convset;
 
-#if APU_HAVE_APR_ICONV
+#if APU_HAS_APR_ICONV
     if (old->ich != (apr_iconv_t)-1) {
-        return apr_iconv_close(old->ich, old->pool);
+        return apr_iconv_close(old->ich);
     }
 
 #elif APU_HAVE_ICONV
@@ -173,43 +232,7 @@ static void check_sbcs(apr_xlate_t *convset)
         /* TODO: add the table to the cache */
     }
 }
-#elif APU_HAVE_APR_ICONV
-static void check_sbcs(apr_xlate_t *convset)
-{
-    char inbuf[256], outbuf[256];
-    char *inbufptr = inbuf;
-    char *outbufptr = outbuf;
-    apr_size_t inbytes_left, outbytes_left;
-    int i;
-    apr_size_t translated;
-    apr_status_t rv;
-
-    for (i = 0; i < sizeof(inbuf); i++) {
-        inbuf[i] = i;
-    }
-
-    inbytes_left = outbytes_left = sizeof(inbuf);
-    rv = apr_iconv(convset->ich, (ICONV_INBUF_TYPE)&inbufptr,
-                   &inbytes_left, &outbufptr, &outbytes_left,
-                   &translated);
-
-    if ((rv == APR_SUCCESS)
-        && (translated != (apr_size_t)-1)
-        && inbytes_left == 0
-        && outbytes_left == 0) {
-        /* hurray... this is simple translation; save the table,
-         * close the iconv descriptor
-         */
-
-        convset->sbcs_table = apr_palloc(convset->pool, sizeof(outbuf));
-        memcpy(convset->sbcs_table, outbuf, sizeof(outbuf));
-        apr_iconv_close(convset->ich, convset->pool);
-        convset->ich = (apr_iconv_t)-1;
-
-        /* TODO: add the table to the cache */
-    }
-}
-#endif /* APU_HAVE_APR_ICONV */
+#endif /* APU_HAVE_ICONV */
 
 static void make_identity_table(apr_xlate_t *convset)
 {
@@ -225,14 +248,14 @@ APU_DECLARE(apr_status_t) apr_xlate_open(apr_xlate_t **convset,
                                          const char *frompage,
                                          apr_pool_t *pool)
 {
-    apr_status_t rv;
+    apr_status_t status;
     apr_xlate_t *new;
     int found = 0;
 
     *convset = NULL;
 
-    topage = handle_special_names(topage, pool);
-    frompage = handle_special_names(frompage, pool);
+    topage = handle_special_names(topage);
+    frompage = handle_special_names(frompage);
 
     new = (apr_xlate_t *)apr_pcalloc(pool, sizeof(apr_xlate_t));
     if (!new) {
@@ -260,7 +283,7 @@ APU_DECLARE(apr_status_t) apr_xlate_open(apr_xlate_t **convset,
         make_identity_table(new);
     }
 
-#if APU_HAVE_APR_ICONV
+#if APU_HAS_APR_ICONV
     if (!found) {
         rv = apr_iconv_open(topage, frompage, pool, &new->ich);
         if (rv != APR_SUCCESS) {
@@ -289,14 +312,14 @@ APU_DECLARE(apr_status_t) apr_xlate_open(apr_xlate_t **convset,
         *convset = new;
         apr_pool_cleanup_register(pool, (void *)new, apr_xlate_cleanup,
                             apr_pool_cleanup_null);
-        rv = APR_SUCCESS;
+        status = APR_SUCCESS;
     }
     else {
-        rv = APR_EINVAL; /* iconv() would return EINVAL if it
+        status = APR_EINVAL; /* iconv() would return EINVAL if it
                                 couldn't handle the pair */
     }
 
-    return rv;
+    return status;
 }
 
 APU_DECLARE(apr_status_t) apr_xlate_sb_get(apr_xlate_t *convset, int *onoff)
@@ -314,7 +337,7 @@ APU_DECLARE(apr_status_t) apr_xlate_conv_buffer(apr_xlate_t *convset,
     apr_status_t status = APR_SUCCESS;
 
 #if APU_HAVE_APR_ICONV
-    if (convset->ich != (apr_iconv_t)-1) {
+    if (convset->ich != (iconv_t)-1) {
         const char *inbufptr = inbuf;
         apr_size_t translated;
         char *outbufptr = outbuf;
@@ -350,7 +373,7 @@ APU_DECLARE(apr_status_t) apr_xlate_conv_buffer(apr_xlate_t *convset,
 
              /* Sometimes, iconv is not good about setting errno. */
             case 0:
-                if (*inbytes_left)
+                if (inbytes_left)
                     status = APR_INCOMPLETE;
                 break;
 

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,7 @@
 #define INCL_DOS
 #define INCL_DOSERRORS
 
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 #include "apr_file_io.h"
 #include "apr_lib.h"
 #include "apr_strings.h"
@@ -117,7 +117,7 @@ APR_DECLARE(apr_status_t) apr_file_read(apr_file_t *thefile, void *buf, apr_size
             return APR_EOF;
         }
 
-        return APR_FROM_OS_ERROR(rc);
+        return APR_OS2_STATUS(rc);
     } else {
         if (thefile->pipe)
             DosResetEventSem(thefile->pipeSem, &rc);
@@ -127,18 +127,13 @@ APR_DECLARE(apr_status_t) apr_file_read(apr_file_t *thefile, void *buf, apr_size
         if (rc == ERROR_NO_DATA && thefile->timeout != 0) {
             int rcwait = DosWaitEventSem(thefile->pipeSem, thefile->timeout >= 0 ? thefile->timeout / 1000 : SEM_INDEFINITE_WAIT);
 
-            if (rcwait == 0) {
+            if (rcwait == 0)
                 rc = DosRead(thefile->filedes, buf, *nbytes, &bytesread);
-            }
-            else if (rcwait == ERROR_TIMEOUT) {
-                *nbytes = 0;
-                return APR_TIMEUP;
-            }
         }
 
         if (rc) {
             *nbytes = 0;
-            return APR_FROM_OS_ERROR(rc);
+            return APR_OS2_STATUS(rc);
         }
 
         *nbytes = bytesread;
@@ -192,7 +187,7 @@ APR_DECLARE(apr_status_t) apr_file_write(apr_file_t *thefile, const void *buf, a
         }
 
         apr_thread_mutex_unlock(thefile->mutex);
-        return APR_FROM_OS_ERROR(rc);
+        return APR_OS2_STATUS(rc);
     } else {
         if (thefile->flags & APR_APPEND) {
             FILELOCK all = { 0, 0x7fffffff };
@@ -214,7 +209,7 @@ APR_DECLARE(apr_status_t) apr_file_write(apr_file_t *thefile, const void *buf, a
 
         if (rc) {
             *nbytes = 0;
-            return APR_FROM_OS_ERROR(rc);
+            return APR_OS2_STATUS(rc);
         }
 
         *nbytes = byteswritten;
@@ -254,7 +249,7 @@ APR_DECLARE(apr_status_t) apr_file_putc(char ch, apr_file_t *thefile)
     rc = DosWrite(thefile->filedes, &ch, 1, &byteswritten);
 
     if (rc) {
-        return APR_FROM_OS_ERROR(rc);
+        return APR_OS2_STATUS(rc);
     }
     
     return APR_SUCCESS;
@@ -318,7 +313,7 @@ APR_DECLARE(apr_status_t) apr_file_flush(apr_file_t *thefile)
                 thefile->bufpos = 0;
         }
 
-        return APR_FROM_OS_ERROR(rc);
+        return APR_OS2_STATUS(rc);
     } else {
         /* There isn't anything to do if we aren't buffering the output
          * so just return success.
@@ -390,5 +385,5 @@ apr_status_t apr_file_check_read(apr_file_t *fd)
     if (rc == ERROR_TIMEOUT)
         return APR_TIMEUP;
 
-    return APR_FROM_OS_ERROR(rc);
+    return APR_OS2_STATUS(rc);
 }

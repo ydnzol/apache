@@ -39,12 +39,12 @@ ALL : "$(OUTDIR)\aprutil.lib"
 
 !ELSE 
 
-ALL : "xml - Win32 Release" "gen_uri_delims - Win32 Release" "apriconv - Win32 Release" "$(OUTDIR)\aprutil.lib"
+ALL : "xml - Win32 Release" "gen_uri_delims - Win32 Release" "$(OUTDIR)\aprutil.lib"
 
 !ENDIF 
 
 !IF "$(RECURSE)" == "1" 
-CLEAN :"apriconv - Win32 ReleaseCLEAN" "gen_uri_delims - Win32 ReleaseCLEAN" "xml - Win32 ReleaseCLEAN" 
+CLEAN :"gen_uri_delims - Win32 ReleaseCLEAN" "xml - Win32 ReleaseCLEAN" 
 !ELSE 
 CLEAN :
 !ENDIF 
@@ -68,11 +68,8 @@ CLEAN :
 	-@erase "$(INTDIR)\apr_dbm_gdbm.obj"
 	-@erase "$(INTDIR)\apr_dbm_sdbm.obj"
 	-@erase "$(INTDIR)\apr_hooks.obj"
-	-@erase "$(INTDIR)\apr_ldap_compat.obj"
-	-@erase "$(INTDIR)\apr_ldap_url.obj"
 	-@erase "$(INTDIR)\apr_md4.obj"
 	-@erase "$(INTDIR)\apr_md5.obj"
-	-@erase "$(INTDIR)\apr_queue.obj"
 	-@erase "$(INTDIR)\apr_rmm.obj"
 	-@erase "$(INTDIR)\apr_sha1.obj"
 	-@erase "$(INTDIR)\apr_strmatch.obj"
@@ -156,10 +153,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\apr_dbm_sdbm.obj" \
 	"$(INTDIR)\apr_base64.obj" \
 	"$(INTDIR)\apr_hooks.obj" \
-	"$(INTDIR)\apr_ldap_compat.obj" \
-	"$(INTDIR)\apr_ldap_url.obj" \
 	"$(INTDIR)\apr_date.obj" \
-	"$(INTDIR)\apr_queue.obj" \
 	"$(INTDIR)\apr_rmm.obj" \
 	"$(INTDIR)\sdbm.obj" \
 	"$(INTDIR)\sdbm_hash.obj" \
@@ -169,7 +163,6 @@ LIB32_OBJS= \
 	"$(INTDIR)\apr_uri.obj" \
 	"$(INTDIR)\xlate.obj" \
 	"$(INTDIR)\apr_xml.obj" \
-	"..\apr-iconv\LibR\apriconv.lib" \
 	".\xml\expat\lib\LibR\xml.lib"
 
 "$(OUTDIR)\aprutil.lib" : "$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
@@ -187,16 +180,16 @@ OutDir=.\LibD
 
 !IF "$(RECURSE)" == "0" 
 
-ALL : ".\uri\uri_delims.h" ".\include\private\apu_select_dbm.h" ".\include\private\apu_config.h" ".\include\apu.h" ".\include\apr_ldap.h" "$(OUTDIR)\aprutil.lib"
+ALL : ".\uri\uri_delims.h" ".\include\private\apu_select_dbm.h" ".\include\private\apu_config.h" ".\include\apu.h" "$(OUTDIR)\aprutil.lib"
 
 !ELSE 
 
-ALL : "xml - Win32 Debug" "gen_uri_delims - Win32 Debug" "apriconv - Win32 Debug" ".\uri\uri_delims.h" ".\include\private\apu_select_dbm.h" ".\include\private\apu_config.h" ".\include\apu.h" ".\include\apr_ldap.h" "$(OUTDIR)\aprutil.lib"
+ALL : "xml - Win32 Debug" "gen_uri_delims - Win32 Debug" ".\uri\uri_delims.h" ".\include\private\apu_select_dbm.h" ".\include\private\apu_config.h" ".\include\apu.h" "$(OUTDIR)\aprutil.lib"
 
 !ENDIF 
 
 !IF "$(RECURSE)" == "1" 
-CLEAN :"apriconv - Win32 DebugCLEAN" "gen_uri_delims - Win32 DebugCLEAN" "xml - Win32 DebugCLEAN" 
+CLEAN :"gen_uri_delims - Win32 DebugCLEAN" "xml - Win32 DebugCLEAN" 
 !ELSE 
 CLEAN :
 !ENDIF 
@@ -220,11 +213,8 @@ CLEAN :
 	-@erase "$(INTDIR)\apr_dbm_gdbm.obj"
 	-@erase "$(INTDIR)\apr_dbm_sdbm.obj"
 	-@erase "$(INTDIR)\apr_hooks.obj"
-	-@erase "$(INTDIR)\apr_ldap_compat.obj"
-	-@erase "$(INTDIR)\apr_ldap_url.obj"
 	-@erase "$(INTDIR)\apr_md4.obj"
 	-@erase "$(INTDIR)\apr_md5.obj"
-	-@erase "$(INTDIR)\apr_queue.obj"
 	-@erase "$(INTDIR)\apr_rmm.obj"
 	-@erase "$(INTDIR)\apr_sha1.obj"
 	-@erase "$(INTDIR)\apr_strmatch.obj"
@@ -240,7 +230,6 @@ CLEAN :
 	-@erase "$(INTDIR)\uuid.obj"
 	-@erase "$(INTDIR)\xlate.obj"
 	-@erase "$(OUTDIR)\aprutil.lib"
-	-@erase ".\include\apr_ldap.h"
 	-@erase ".\include\apu.h"
 	-@erase ".\include\private\apu_config.h"
 	-@erase ".\include\private\apu_select_dbm.h"
@@ -314,10 +303,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\apr_dbm_sdbm.obj" \
 	"$(INTDIR)\apr_base64.obj" \
 	"$(INTDIR)\apr_hooks.obj" \
-	"$(INTDIR)\apr_ldap_compat.obj" \
-	"$(INTDIR)\apr_ldap_url.obj" \
 	"$(INTDIR)\apr_date.obj" \
-	"$(INTDIR)\apr_queue.obj" \
 	"$(INTDIR)\apr_rmm.obj" \
 	"$(INTDIR)\sdbm.obj" \
 	"$(INTDIR)\sdbm_hash.obj" \
@@ -327,7 +313,6 @@ LIB32_OBJS= \
 	"$(INTDIR)\apr_uri.obj" \
 	"$(INTDIR)\xlate.obj" \
 	"$(INTDIR)\apr_xml.obj" \
-	"..\apr-iconv\LibD\apriconv.lib" \
 	".\xml\expat\lib\LibD\xml.lib"
 
 "$(OUTDIR)\aprutil.lib" : "$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
@@ -493,26 +478,9 @@ SOURCE=.\hooks\apr_hooks.c
 
 
 SOURCE=.\ldap\apr_ldap_compat.c
-
-"$(INTDIR)\apr_ldap_compat.obj" : $(SOURCE) "$(INTDIR)" ".\include\apr_ldap.h" ".\include\apu.h"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-SOURCE=.\ldap\apr_ldap_url.c
-
-"$(INTDIR)\apr_ldap_url.obj" : $(SOURCE) "$(INTDIR)" ".\include\apr_ldap.h" ".\include\apu.h"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
 SOURCE=.\misc\apr_date.c
 
 "$(INTDIR)\apr_date.obj" : $(SOURCE) "$(INTDIR)" ".\include\apu.h"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
-SOURCE=.\misc\apr_queue.c
-
-"$(INTDIR)\apr_queue.obj" : $(SOURCE) "$(INTDIR)" ".\include\apu.h"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
@@ -574,25 +542,7 @@ SOURCE=.\include\apr_ldap.hw
 
 !IF  "$(CFG)" == "aprutil - Win32 Release"
 
-InputPath=.\include\apr_ldap.hw
-
-".\include\apr_ldap.h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	<<tempfile.bat 
-	@echo off 
-	type .\include\apr_ldap.hw > .\include\apr_ldap.h
-<< 
-	
-
 !ELSEIF  "$(CFG)" == "aprutil - Win32 Debug"
-
-InputPath=.\include\apr_ldap.hw
-
-".\include\apr_ldap.h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	<<tempfile.bat 
-	@echo off 
-	type .\include\apr_ldap.hw > .\include\apr_ldap.h
-<< 
-	
 
 !ENDIF 
 
@@ -697,32 +647,6 @@ InputPath=.\uri\gen_uri_delims.exe
 	.\uri\gen_uri_delims.exe >.\uri\uri_delims.h 
 << 
 	
-
-!ENDIF 
-
-!IF  "$(CFG)" == "aprutil - Win32 Release"
-
-"apriconv - Win32 Release" : 
-   cd ".\..\apr-iconv"
-   $(MAKE) /$(MAKEFLAGS) /F ".\apriconv.mak" CFG="apriconv - Win32 Release" 
-   cd "..\apr-util"
-
-"apriconv - Win32 ReleaseCLEAN" : 
-   cd ".\..\apr-iconv"
-   $(MAKE) /$(MAKEFLAGS) /F ".\apriconv.mak" CFG="apriconv - Win32 Release" RECURSE=1 CLEAN 
-   cd "..\apr-util"
-
-!ELSEIF  "$(CFG)" == "aprutil - Win32 Debug"
-
-"apriconv - Win32 Debug" : 
-   cd ".\..\apr-iconv"
-   $(MAKE) /$(MAKEFLAGS) /F ".\apriconv.mak" CFG="apriconv - Win32 Debug" 
-   cd "..\apr-util"
-
-"apriconv - Win32 DebugCLEAN" : 
-   cd ".\..\apr-iconv"
-   $(MAKE) /$(MAKEFLAGS) /F ".\apriconv.mak" CFG="apriconv - Win32 Debug" RECURSE=1 CLEAN 
-   cd "..\apr-util"
 
 !ENDIF 
 

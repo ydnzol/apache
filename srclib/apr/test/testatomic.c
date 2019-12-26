@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,17 +68,22 @@
 #include <pthread.h>
 #endif
 
+#if defined(__FreeBSD__) && (__FreeBSD__ < 5)
+
+int main(void)
+{
+    printf("atomic test skipped\n");
+}
+
+#else 
+
 apr_pool_t *context;
 apr_atomic_t y;      /* atomic locks */
 
 static apr_status_t check_basic_atomics(volatile apr_atomic_t*p)
 {
     apr_atomic_t oldval;
-    apr_uint32_t casval = 0;
-    float object1, object2;
-    void *casptr;
-    void *oldptr;
-
+    apr_atomic_t casval = 0;
     apr_atomic_set(&y, 2);
     printf("%-60s", "testing apr_atomic_dec");
     if (apr_atomic_dec(&y) == 0) {
@@ -117,29 +122,6 @@ static apr_status_t check_basic_atomics(volatile apr_atomic_t*p)
     }
     printf("OK\n");
 
-    printf("%-60s", "testing CAS for pointers");
-    casptr = NULL;
-    oldptr = apr_atomic_casptr(&casptr, &object1, 0);
-    if (oldptr != 0) {
-        fprintf(stderr, "Failed\noldval =%p should be zero\n", oldptr);
-        return APR_EGENERAL;
-    }
-    printf("OK\n");
-    printf("%-60s", "testing CAS for pointers - match non-null");
-    oldptr = apr_atomic_casptr(&casptr, &object2, &object1);
-    if (oldptr != &object1) {
-        fprintf(stderr, "Failed\noldval =%p should be %p\n", oldptr, &object1);
-        return APR_EGENERAL;
-    }
-    printf("OK\n");
-    printf("%-60s", "testing CAS for pointers - no match");
-    oldptr = apr_atomic_casptr(&casptr, &object2, &object1);
-    if (oldptr != &object2) {
-        fprintf(stderr, "Failed\noldval =%p should be %p\n", oldptr, &object2);
-        return APR_EGENERAL;
-    }
-    printf("OK\n");
-
     printf("%-60s", "testing add");
     apr_atomic_set(&y, 23);
     apr_atomic_add(&y, 4);
@@ -169,8 +151,6 @@ int main(void)
 {
     apr_status_t rv;
 
-    apr_initialize();
-
     fprintf(stderr,
             "This program won't work fully on this platform because there is no "
             "support for threads.\n");
@@ -198,6 +178,7 @@ void * APR_THREAD_FUNC thread_func_atomic(apr_thread_t *thd, void *data);
 void * APR_THREAD_FUNC thread_func_none(apr_thread_t *thd, void *data);
 
 apr_thread_mutex_t *thread_lock;
+apr_thread_once_t *control = NULL;
 volatile long x = 0; /* mutex locks */
 volatile long z = 0; /* no locks */
 int value = 0;
@@ -205,9 +186,16 @@ apr_status_t exit_ret_val = 123; /* just some made up number to check on later *
 
 #define NUM_THREADS 50
 #define NUM_ITERATIONS 20000
+static void init_func(void)
+{
+    value++;
+}
+
 void * APR_THREAD_FUNC thread_func_mutex(apr_thread_t *thd, void *data)
 {
     int i;
+
+    apr_thread_once(control, init_func);
 
     for (i = 0; i < NUM_ITERATIONS; i++) {
         apr_thread_mutex_lock(thread_lock);
@@ -222,6 +210,8 @@ void * APR_THREAD_FUNC thread_func_atomic(apr_thread_t *thd, void *data)
 {
     int i;
 
+    apr_thread_once(control, init_func);
+
     for (i = 0; i < NUM_ITERATIONS ; i++) {
         apr_atomic_inc(&y);
         apr_atomic_add(&y, 2);
@@ -235,6 +225,8 @@ void * APR_THREAD_FUNC thread_func_atomic(apr_thread_t *thd, void *data)
 void * APR_THREAD_FUNC thread_func_none(apr_thread_t *thd, void *data)
 {
     int i;
+
+    apr_thread_once(control, init_func);
 
     for (i = 0; i < NUM_ITERATIONS ; i++) {
         z++;
@@ -265,7 +257,7 @@ int main(int argc, char**argv)
     }
 
     printf("APR Atomic Test\n===============\n\n");
-#if !(defined WIN32) && !(defined NETWARE) && !(defined __MVS__) && !(defined DARWIN)
+#if !(defined WIN32) && !(defined NETWARE) && !(defined __MVS__)
     pthread_setconcurrency(8);
 #endif
     printf("%-60s", "Initializing the context"); 
@@ -275,6 +267,8 @@ int main(int argc, char**argv)
         exit(-1);
     }
     printf("OK\n");
+
+    apr_thread_once_init(&control, context);
 
     if (mutex == 1) {
         printf("%-60s", "Initializing the lock"); 
@@ -372,7 +366,17 @@ int main(int argc, char**argv)
         printf("OK\n");
     }
 
+    printf("%-60s", "Checking if apr_thread_once worked");
+    if (value != 1) {
+        fflush(stdout);
+        fprintf(stderr, "Failed!\napr_thread_once must not have worked, "
+                "value is %d instead of 1\n", value);
+        exit(-1);
+    }
+    printf("OK\n");
+
     return 0;
 }
 
 #endif /* !APR_HAS_THREADS */
+#endif /* !(defined(__FreeBSD) && (__FreeBSD__ < 4)) */

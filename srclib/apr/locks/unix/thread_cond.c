@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,8 +56,8 @@
 
 #if APR_HAS_THREADS
 
-#include "apr_arch_thread_mutex.h"
-#include "apr_arch_thread_cond.h"
+#include "thread_mutex.h"
+#include "thread_cond.h"
 
 static apr_status_t thread_cond_cleanup(void *data)
 {

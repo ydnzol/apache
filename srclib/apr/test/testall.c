@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,64 +57,22 @@
 
 #include "test_apr.h"
 
-/* Top-level pool which can be used by tests. */
+#define NUM_TESTS 2
+
 apr_pool_t *p;
 
-void apr_assert_success(CuTest* tc, const char* context, apr_status_t rv)
-{
-    if (rv == APR_ENOTIMPL) {
-        CuNotImpl(tc, context);
-    }
+typedef CuSuite *(testfunc)(void);
 
-    if (rv != APR_SUCCESS) {
-        char buf[STRING_MAX], ebuf[128];
-        sprintf(buf, "%s (%d): %s\n", context, rv,
-                apr_strerror(rv, ebuf, sizeof ebuf));
-        CuFail(tc, buf);
-    }
-}
-
-static const struct testlist {
-    const char *testname;
-    CuSuite *(*func)(void);
-} tests[] = {
-    {"teststr", teststr},
-    {"testtime", testtime},
-    {"testvsn", testvsn},
-    {"testipsub", testipsub},
-    {"testmmap", testmmap},
-    {"testud", testud},
-    {"testtable", testtable},
-    {"testhash", testhash},
-    {"testsleep", testsleep},
-    {"testpool", testpool},
-    {"testfmt", testfmt},
-    {"testfile", testfile},
-    {"testfileinfo", testfileinfo},
-    {"testpipe", testpipe},
-    {"testdup", testdup},
-    {"testdir", testdir},
-    {"testrand", testrand},
-    {"testdso", testdso},
-    {"testoc", testoc},
-    {"testsockets", testsockets},
-    {"testsockopt", testsockopt},
-    {"testproc", testproc},
-    {"testpoll", testpoll},
-    {"testlock", testlock},
-    {"testthread", testthread},
-    {"testargs", testgetopt},
-    {"testnames", testnames},
-    {"testuser", testuser},
-    {"LastTest", NULL}
+testfunc *tests[NUM_TESTS] = {
+    teststr,
+    testtime
 };
 
 int main(int argc, char *argv[])
 {
-    CuSuiteList *alltests = NULL;
+    CuSuiteList *alltests = CuSuiteListNew("All APR Tests");
     CuString *output = CuStringNew();
     int i;
-    int partial = 0;
 
     apr_initialize();
     atexit(apr_terminate);
@@ -123,36 +81,14 @@ int main(int argc, char *argv[])
 
     apr_pool_create(&p, NULL);
 
-    /* build the list of tests to run */
-    for (i = 1; i < argc; i++) {
-        int j;
-        if (!strcmp(argv[i], "-v")) {
-            continue;
-        }
-        for (j = 0; tests[j].func != NULL; j++) {
-            if (!strcmp(argv[i], tests[j].testname)) {
-                if (!partial) {
-                    alltests = CuSuiteListNew("Partial APR Tests");
-                    partial = 1;
-                }
-
-                CuSuiteListAdd(alltests, tests[j].func());
-                break;
-            }
-        }
+    for (i = 0; i < NUM_TESTS; i++) {
+        CuSuiteListAdd(alltests, tests[i]());
     }
 
-    if (!partial) {
-        alltests = CuSuiteListNew("All APR Tests");
-        for (i = 0; tests[i].func != NULL; i++) {
-            CuSuiteListAdd(alltests, tests[i].func());
-        }
-    }
-
-    CuSuiteListRunWithSummary(alltests);
-    i = CuSuiteListDetails(alltests, output);
+    CuSuiteListRun(alltests);
+    CuSuiteListSummary(alltests, output);
+    CuSuiteListDetails(alltests, output);
     printf("%s\n", output->buffer);
-
-    return i > 0 ? 1 : 0;
+    return 0;
 }
 

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_dso.h"
+#include "dso.h"
 #include "apr_strings.h"
 #include "apr_portable.h"
 
@@ -119,7 +119,7 @@ APR_DECLARE(apr_status_t) apr_dso_load(apr_dso_handle_t **res_handle,
                                        const char *path, apr_pool_t *pool)
 {
 #if defined(DSO_USE_SHL)
-    shl_t os_handle = shl_load(path, BIND_IMMEDIATE|BIND_NOSTART, 0L);
+    shl_t os_handle = shl_load(path, BIND_IMMEDIATE|BIND_VERBOSE|BIND_NOSTART, 0L);
 
 #elif defined(DSO_USE_DYLD)
     NSObjectFileImage image;
@@ -182,7 +182,7 @@ APR_DECLARE(apr_status_t) apr_dso_load(apr_dso_handle_t **res_handle,
     if(os_handle == NULL) {
 #if defined(DSO_USE_SHL)
         (*res_handle)->errormsg = strerror(errno);
-        return APR_EDSOOPEN;
+        return errno;
 #elif defined(DSO_USE_DYLD)
         (*res_handle)->errormsg = (err_msg) ? err_msg : "link failed";
         return APR_EDSOOPEN;
@@ -219,7 +219,7 @@ APR_DECLARE(apr_status_t) apr_dso_sym(apr_dso_handle_sym_t *ressym,
     if (status == -1 && errno == 0) /* try TYPE_DATA instead */
         status = shl_findsym((shl_t *)&handle->handle, symname, TYPE_DATA, &symaddr);
     if (status == -1)
-        return APR_ESYMNOTFOUND;
+        return errno;
     *ressym = symaddr;
     return APR_SUCCESS;
 
@@ -241,12 +241,12 @@ APR_DECLARE(apr_status_t) apr_dso_sym(apr_dso_handle_sym_t *ressym,
     free(symname2);
     if (symbol == NULL) {
         handle->errormsg = "undefined symbol";
-	return APR_ESYMNOTFOUND;
+	return APR_EINIT;
     }
     retval = NSAddressOfSymbol(symbol);
     if (retval == NULL) {
         handle->errormsg = "cannot resolve symbol";
-	return APR_ESYMNOTFOUND;
+	return APR_EINIT;
     }
     *ressym = retval;
     return APR_SUCCESS;
@@ -266,7 +266,7 @@ APR_DECLARE(apr_status_t) apr_dso_sym(apr_dso_handle_sym_t *ressym,
 
     if (retval == NULL) {
         handle->errormsg = dlerror();
-        return APR_ESYMNOTFOUND;
+        return APR_EINIT;
     }
 
     *ressym = retval;

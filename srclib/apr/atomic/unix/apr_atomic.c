@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -158,7 +158,7 @@ int apr_atomic_dec(volatile apr_atomic_t *mem)
 }
 #endif /*!defined(apr_atomic_dec) && !defined(APR_OVERRIDE_ATOMIC_DEC) */
 
-#if !defined(apr_atomic_cas) && !defined(APR_OVERRIDE_ATOMIC_CAS)
+#if !defined(apr_atomic_cas) && !defined(APR_OVERRIDE_ATOMIC_CASE)
 apr_uint32_t apr_atomic_cas(volatile apr_uint32_t *mem, long with, long cmp)
 {
     long prev;
@@ -182,30 +182,4 @@ apr_uint32_t apr_atomic_cas(volatile apr_uint32_t *mem, long with, long cmp)
     return prev;
 #endif /* APR_HAS_THREADS */
 }
-#endif /*!defined(apr_atomic_cas) && !defined(APR_OVERRIDE_ATOMIC_CAS) */
-
-#if !defined(apr_atomic_casptr) && !defined(APR_OVERRIDE_ATOMIC_CASPTR)
-void *apr_atomic_casptr(volatile void **mem, void *with, const void *cmp)
-{
-    void *prev;
-#if APR_HAS_THREADS
-    apr_thread_mutex_t *lock = hash_mutex[ATOMIC_HASH(mem)];
-
-    if (apr_thread_mutex_lock(lock) == APR_SUCCESS) {
-        prev = *(void **)mem;
-        if (prev == cmp) {
-            *mem = with;
-        }
-        apr_thread_mutex_unlock(lock);
-        return prev;
-    }
-    return *(void **)mem;
-#else
-    prev = *(void **)mem;
-    if (prev == cmp) {
-        *mem = with;
-    }
-    return prev;
-#endif /* APR_HAS_THREADS */
-}
-#endif /*!defined(apr_atomic_cas) && !defined(APR_OVERRIDE_ATOMIC_CAS) */
+#endif /*!defined(apr_atomic_dec) && !defined(APR_OVERRIDE_ATOMIC_DEC) */

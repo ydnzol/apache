@@ -203,21 +203,12 @@ static int show_settings = 0;
 #define DBPRINT2(s,v1,v2)
 #endif
 
-/* volatile just in case */
-static int volatile shutdown_pending;
-static int volatile restart_pending;
-static int volatile is_graceful;
-static int volatile wait_to_finish=1;
-ap_generation_t volatile ap_my_generation=0;
-
 /* a clean exit from a child with proper cleanup */
 static void clean_child_exit(int code, int worker_num, apr_pool_t *ptrans, apr_bucket_alloc_t *bucket_alloc) __attribute__ ((noreturn));
 static void clean_child_exit(int code, int worker_num, apr_pool_t *ptrans, apr_bucket_alloc_t *bucket_alloc)
 {
-    if (!shutdown_pending) {
-        apr_bucket_alloc_destroy(bucket_alloc);
-        apr_pool_destroy(ptrans);
-    }
+    apr_bucket_alloc_destroy(bucket_alloc);
+    apr_pool_destroy(ptrans);
 
     atomic_dec (&worker_thread_count);
     if (worker_num >=0)
@@ -274,6 +265,13 @@ AP_DECLARE(apr_status_t) ap_mpm_query(int query_code, int *result)
  * Connection structures and accounting...
  */
 
+/* volatile just in case */
+static int volatile shutdown_pending;
+static int volatile restart_pending;
+static int volatile is_graceful;
+static int volatile wait_to_finish=1;
+ap_generation_t volatile ap_my_generation=0;
+
 static void mpm_term(void)
 {
     RemoveConsoleHandler();
@@ -318,14 +316,12 @@ static void set_signals(void)
     apr_signal(SIGABRT, sig_term);
 }
 
-int nlmUnloadSignaled(int wait)
+int nlmUnloadSignaled()
 {
     shutdown_pending = 1;
 
-    if (wait) {
-        while (wait_to_finish) {
-            NXThreadYield();
-        }
+    while (wait_to_finish) {
+        NXThreadYield();
     }
 
     return 0;
@@ -458,7 +454,7 @@ void worker_main(void *arg)
                         quick try to pull the next request from the listen 
                         queue.  Try a few more times then return to our idle
                         listen state. */
-                    if (!APR_STATUS_IS_EAGAIN(stat)) {
+                    if (APR_TO_NETOS_ERROR(stat) != WSAEWOULDBLOCK) {
                         break;
                     }
 
@@ -481,23 +477,22 @@ void worker_main(void *arg)
                 break;		/* We have a socket ready for reading */
             }
             else {
+                switch (APR_TO_NETOS_ERROR(stat)) {
+                    
+                    case WSAEWOULDBLOCK:
 #ifdef DBINFO_ON
-                if (APR_STATUS_IS_EAGAIN(stat)) {
                         would_block++;
                         retry_fail++;
-                }
-                else
-#else
-                if (APR_STATUS_IS_EAGAIN(stat) ||
+                        break;
 #endif
-                    APR_STATUS_IS_ECONNRESET(stat) ||
-                    APR_STATUS_IS_ETIMEDOUT(stat) ||
-                    APR_STATUS_IS_EHOSTUNREACH(stat) ||
-                    APR_STATUS_IS_ENETUNREACH(stat)) {
-                        ;
-                }
-                else if (APR_STATUS_IS_ENETDOWN(stat)) {
-                       /*
+                    case WSAECONNRESET:
+                    case WSAETIMEDOUT:
+                    case WSAEHOSTUNREACH:
+                    case WSAENETUNREACH:
+                        break;
+    
+                    case WSAENETDOWN:
+                        /*
                         * When the network layer has been shut down, there
                         * is not much use in simply exiting: the parent
                         * would simply re-create us (and we'd fail again).
@@ -514,8 +509,8 @@ void worker_main(void *arg)
                         ap_log_error(APLOG_MARK, APLOG_EMERG, stat, ap_server_conf,
                             "apr_accept: giving up.");
                         clean_child_exit(APEXIT_CHILDFATAL, my_worker_num, ptrans, bucket_alloc);
-                }
-                else {
+    
+                    default:
                         ap_log_error(APLOG_MARK, APLOG_ERR, stat, ap_server_conf,
                             "apr_accept: (client socket)");
                         clean_child_exit(1, my_worker_num, ptrans, bucket_alloc);
@@ -914,12 +909,8 @@ int ap_mpm_run(apr_pool_t *_pconf, apr_pool_t *plog, server_rec *s)
 
     startup_workers(ap_threads_to_start);
 
-     /* Allow the Apache screen to be closed normally on exit() only if it
-        has not been explicitly forced to close on exit(). (ie. the -E flag
-        was specified at startup) */
-    if (hold_screen_on_exit > 0) {
-        hold_screen_on_exit = 0;
-    }
+     /* Allow the Apache screen to be closed normally on exit()*/
+    hold_screen_on_exit = 0;
 
     ap_log_error(APLOG_MARK, APLOG_NOTICE, 0, ap_server_conf,
 		"%s configured -- resuming normal operations",
@@ -1060,9 +1051,6 @@ void netware_rewrite_args(process_rec *process)
             apr_getopt_init(&opt, process->pool, process->argc, (char**) process->argv);
             while (apr_getopt(opt, AP_SERVER_BASEARGS, optbuf + 1, &opt_arg) == APR_SUCCESS) {
                 switch (optbuf[1]) {
-				case 'E':
-					/* Don't need to hold the screen open if the output is going to a file */
-					hold_screen_on_exit = -1;
                 default:
                     *(const char **)apr_array_push(mpm_new_argv) =
                         apr_pstrdup(process->pool, optbuf);

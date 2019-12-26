@@ -4,62 +4,123 @@ VPATH = @srcdir@
 NONPORTABLE = \
 	testshm@EXEEXT@ \
 	testprocmutex@EXEEXT@ \
-	testglobalmutex@EXEEXT@
+	testglobalmutex@EXEEXT@ \
+	testregex@EXEEXT@
 
 PROGRAMS = \
+	client@EXEEXT@ \
+	sendfile@EXEEXT@ \
+	server@EXEEXT@ \
+	testfile@EXEEXT@ \
+	testdir@EXEEXT@ \
+	testnames@EXEEXT@ \
 	testflock@EXEEXT@ \
+	testfmt@EXEEXT@ \
+	testproc@EXEEXT@ \
 	testsock@EXEEXT@ \
+	testthread@EXEEXT@ \
+	testlock@EXEEXT@ \
 	testlockperf@EXEEXT@ \
+	testtime@EXEEXT@ \
+	testargs@EXEEXT@ \
+	testud@EXEEXT@ \
+	testmmap@EXEEXT@ \
 	testshmproducer@EXEEXT@ \
 	testshmconsumer@EXEEXT@ \
+	testpipe@EXEEXT@ \
+	testoc@EXEEXT@ \
+	testsockopt@EXEEXT@ \
+	testipsub@EXEEXT@ \
+	testpoll@EXEEXT@ \
+	testhash@EXEEXT@ \
+	occhild@EXEEXT@ \
+	teststr@EXEEXT@ \
+	testuser@EXEEXT@ \
+	testsockets@EXEEXT@ \
+	testvsn@EXEEXT@ \
+	testsleep@EXEEXT@ \
+	testrand@EXEEXT@ \
+	testdup@EXEEXT@ \
 	testatomic@EXEEXT@ \
+	testpools@EXEEXT@ \
 	testmutexscope@EXEEXT@ \
+	testtable@EXEEXT@ \
 	testall@EXEEXT@
 
 
-TARGETS = $(PROGRAMS) $(NONPORTABLE) client@EXEEXT@ sendfile@EXEEXT@ \
-	server@EXEEXT@ 
+TARGETS = $(PROGRAMS) $(NONPORTABLE)
 
 # bring in rules.mk for standard functionality
 @INCLUDE_RULES@
 
 LOCAL_LIBS=../lib@APR_LIBNAME@.la
 
-CLEAN_TARGETS = testfile.tmp mod_test.slo proc_child@EXEEXT@ occhild@EXEEXT@ \
-	        testprocmutex@EXEEXT@ testglobalmutex@EXEEXT@ testshm@EXEEXT@
+CLEAN_TARGETS = testfile.tmp testdso@EXEEXT@ mod_test.slo
 
 INCDIR=../include
 INCLUDES=-I$(INCDIR)
 
 CFLAGS=$(MY_CFLAGS)
 
-check: $(PROGRAMS) $(NONPORTABLE) testall
-	for prog in $(PROGRAMS) $(NONPORTABLE) testall; do \
+all: $(PROGRAMS) $(NONPORTABLE)
+
+check: $(PROGRAMS) $(NONPORTABLE)
+	for prog in $(PROGRAMS) $(NONPORTABLE); do \
 		./$$prog; \
-		if test $$? = 255; then \
+		if test $$i = 255; then \
 			echo "$$prog failed"; \
 			break; \
-		fi; \
+		fi \
 	done
+
+testfile@EXEEXT@: testfile.lo $(LOCAL_LIBS)
+	$(LINK) testfile.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testdir@EXEEXT@: testdir.lo $(LOCAL_LIBS)
+	$(LINK) testdir.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testnames@EXEEXT@: testnames.lo $(LOCAL_LIBS)
+	$(LINK) testnames.lo $(LOCAL_LIBS) $(ALL_LIBS)
 
 testflock@EXEEXT@: testflock.lo $(LOCAL_LIBS)
 	$(LINK) testflock.lo $(LOCAL_LIBS) $(ALL_LIBS)
 
+testfmt@EXEEXT@: testfmt.lo $(LOCAL_LIBS)
+	$(LINK) testfmt.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testdso@EXEEXT@: testdso.lo mod_test.la libmod_test.la $(LOCAL_LIBS)
+	$(LINK) testdso.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testoc@EXEEXT@: testoc.lo occhild@EXEEXT@ $(LOCAL_LIBS)
+	$(LINK) testoc.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
 occhild@EXEEXT@: occhild.lo $(LOCAL_LIBS)
 	$(LINK) occhild.lo $(LOCAL_LIBS) $(ALL_LIBS)
 
-proc_child@EXEEXT@: proc_child.lo $(LOCAL_LIBS)
-	$(LINK) proc_child.lo $(LOCAL_LIBS) $(ALL_LIBS)
-
 # FIXME: -prefer-pic is only supported with libtool-1.4+
-mod_test.slo: $(srcdir)/mod_test.c
-	$(LIBTOOL) --mode=compile $(COMPILE) -prefer-pic -c $(srcdir)/mod_test.c && touch $@
+mod_test.slo: mod_test.c
+	$(LIBTOOL) --mode=compile $(COMPILE) -prefer-pic -c $< && touch $@
 
 mod_test.la: mod_test.slo $(LOCAL_LIBS)
-	$(LINK) --mode=link $(COMPILE) -rpath `pwd` -avoid-version -module mod_test.lo $(LT_LDFLAGS) $(ALL_LDFLAGS) -o $@
+	$(LINK) --mode=link $(COMPILE) -rpath $(shell pwd) -avoid-version -module mod_test.lo $(LT_LDFLAGS) $(ALL_LDFLAGS) -o $@
 
 libmod_test.la: mod_test.slo $(LOCAL_LIBS)
-	$(LINK) --mode=link $(COMPILE) -rpath `pwd` -avoid-version mod_test.lo $(LT_LDFLAGS) $(ALL_LDFLAGS) -o $@
+	$(LINK) --mode=link $(COMPILE) -rpath $(shell pwd) -avoid-version mod_test.lo $(LT_LDFLAGS) $(ALL_LDFLAGS) -o $@
+
+testargs@EXEEXT@: testargs.lo $(LOCAL_LIBS)
+	$(LINK) testargs.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testud@EXEEXT@: testud.lo $(LOCAL_LIBS)
+	$(LINK) testud.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testproc@EXEEXT@: testproc.lo $(LOCAL_LIBS)
+	$(LINK) testproc.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testthread@EXEEXT@: testthread.lo $(LOCAL_LIBS)
+	$(LINK) testthread.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testlock@EXEEXT@: testlock.lo $(LOCAL_LIBS)
+	$(LINK) testlock.lo $(LOCAL_LIBS) $(ALL_LIBS)
 
 testlockperf@EXEEXT@: testlockperf.lo $(LOCAL_LIBS)
 	$(LINK) testlockperf.lo $(LOCAL_LIBS) $(ALL_LIBS)
@@ -76,6 +137,12 @@ server@EXEEXT@: server.lo $(LOCAL_LIBS)
 sendfile@EXEEXT@: sendfile.lo $(LOCAL_LIBS)
 	$(LINK) sendfile.lo $(LOCAL_LIBS) $(ALL_LIBS)
 
+testtime@EXEEXT@: testtime.lo CuTest.lo testapr.lo $(LOCAL_LIBS)
+	$(LINK) testtime.lo CuTest.lo testapr.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testmmap@EXEEXT@: testmmap.lo $(LOCAL_LIBS)
+	$(LINK) testmmap.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
 testshm@EXEEXT@: testshm.lo $(LOCAL_LIBS) testshmproducer@EXEEXT@ testshmconsumer@EXEEXT@
 	$(LINK) testshm.lo $(LOCAL_LIBS) $(ALL_LIBS)
 
@@ -85,28 +152,65 @@ testshmproducer@EXEEXT@: testshmproducer.lo $(LOCAL_LIBS)
 testshmconsumer@EXEEXT@: testshmconsumer.lo $(LOCAL_LIBS)
 	$(LINK) testshmconsumer.lo $(LOCAL_LIBS) $(ALL_LIBS)
 
+testpipe@EXEEXT@: testpipe.lo $(LOCAL_LIBS)
+	$(LINK) testpipe.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testsockopt@EXEEXT@: testsockopt.lo $(LOCAL_LIBS)
+	$(LINK) testsockopt.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testipsub@EXEEXT@: testipsub.lo $(LOCAL_LIBS)
+	$(LINK) testipsub.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testpoll@EXEEXT@: testpoll.lo $(LOCAL_LIBS)
+	$(LINK) testpoll.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testhash@EXEEXT@: testhash.lo $(LOCAL_LIBS)
+	$(LINK) testhash.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+teststr@EXEEXT@: teststr.lo CuTest.lo testapr.lo $(LOCAL_LIBS)
+	$(LINK) teststr.lo CuTest.lo testapr.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testsockets@EXEEXT@: testsockets.lo $(LOCAL_LIBS)
+	$(LINK) testsockets.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testuser@EXEEXT@: testuser.lo $(LOCAL_LIBS)
+	$(LINK) testuser.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
 testprocmutex@EXEEXT@: testprocmutex.lo $(LOCAL_LIBS)
 	$(LINK) testprocmutex.lo $(LOCAL_LIBS) $(ALL_LIBS)
 
 testglobalmutex@EXEEXT@: testglobalmutex.lo $(LOCAL_LIBS)
 	$(LINK) testglobalmutex.lo $(LOCAL_LIBS) $(ALL_LIBS)
 
+testvsn@EXEEXT@: testvsn.lo $(LOCAL_LIBS)
+	$(LINK) testvsn.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testsleep@EXEEXT@: testsleep.lo $(LOCAL_LIBS)
+	$(LINK) testsleep.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
 testatomic@EXEEXT@: testatomic.lo $(LOCAL_LIBS)
 	$(LINK) testatomic.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testregex@EXEEXT@: testregex.lo $(LOCAL_LIBS)
+	$(LINK) testregex.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testdup@EXEEXT@: testdup.lo $(LOCAL_LIBS)
+	$(LINK) testdup.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testrand@EXEEXT@: testrand.lo $(LOCAL_LIBS)
+	$(LINK) testrand.lo $(LOCAL_LIBS) $(ALL_LIBS)
+
+testpools@EXEEXT@: testpools.lo $(LOCAL_LIBS)
+	$(LINK) testpools.lo $(LOCAL_LIBS) $(ALL_LIBS)
 
 testmutexscope@EXEEXT@: testmutexscope.lo $(LOCAL_LIBS)
 	$(LINK) testmutexscope.lo $(LOCAL_LIBS) $(ALL_LIBS)
 
-TESTS = testall.lo testtime.lo teststr.lo testvsn.lo testipsub.lo \
-	testmmap.lo testud.lo testtable.lo testsleep.lo testpools.lo \
-	testfmt.lo testfile.lo testdir.lo testfileinfo.lo testrand.lo \
-	testdso.lo testoc.lo testdup.lo testsockets.lo testproc.lo \
-	testpoll.lo testlock.lo testsockopt.lo testpipe.lo testthread.lo \
-	testhash.lo testargs.lo testnames.lo testuser.lo
+testtable@EXEEXT@: testtable.lo $(LOCAL_LIBS)
+	$(LINK) testtable.lo $(LOCAL_LIBS) $(ALL_LIBS)
 
-testall: $(TESTS) mod_test.la libmod_test.la occhild@EXEEXT@ \
-	 CuTest.lo proc_child@EXEEXT@ $(LOCAL_LIBS)
-	$(LINK) $(TESTS) CuTest.lo $(LOCAL_LIBS) $(ALL_LIBS)
+testall: testall.lo testtime.lo teststr.lo CuTest.lo $(LOCAL_LIBS)
+	$(LINK) testall.lo testtime.lo teststr.lo CuTest.lo $(LOCAL_LIBS) $(ALL_LIBS)
 
 
 # DO NOT REMOVE

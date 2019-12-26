@@ -114,28 +114,27 @@ X509 *SSL_read_X509(char* filename, X509 **x509, int (*cb)(char*,int,int,void*))
     BIO *bioF;
 
     /* 1. try PEM (= DER+Base64+headers) */
-    if ((bioS=BIO_new_file(filename, "r")) == NULL)
-        return NULL;
-    rc = modssl_PEM_read_bio_X509 (bioS, x509, cb, NULL);
-    BIO_free(bioS);
+       if ((bioS=BIO_new_file(filename, "r")) == NULL)
+               return NULL;
+       rc=modssl_PEM_read_bio_X509 (bioS, x509, cb, NULL);
+       BIO_free(bioS);
 
     if (rc == NULL) {
         /* 2. try DER+Base64 */
-        if ((bioS=BIO_new_file(filename, "r")) == NULL)
-            return NULL;
+               if ((bioS=BIO_new_file(filename, "r")) == NULL)
+                       return NULL;
                       
-        if ((bioF = BIO_new(BIO_f_base64())) == NULL) {
+               if ((bioF = BIO_new(BIO_f_base64())) == NULL) {
             BIO_free(bioS);
             return NULL;
         }
         bioS = BIO_push(bioF, bioS);
         rc = d2i_X509_bio(bioS, NULL);
         BIO_free_all(bioS);
-
         if (rc == NULL) {
             /* 3. try plain DER */
-            if ((bioS=BIO_new_file(filename, "r")) == NULL)
-                return NULL;
+                       if ((bioS=BIO_new_file(filename, "r")) == NULL)
+                               return NULL;
             rc = d2i_X509_bio(bioS, NULL);
             BIO_free(bioS);
         }
@@ -165,28 +164,27 @@ EVP_PKEY *SSL_read_PrivateKey(char* filename, EVP_PKEY **key, int (*cb)(char*,in
     BIO *bioF;
 
     /* 1. try PEM (= DER+Base64+headers) */
-    if ((bioS=BIO_new_file(filename, "r")) == NULL)
-        return NULL;
-    rc = modssl_PEM_read_bio_PrivateKey(bioS, key, cb, s);
-    BIO_free(bioS);
+       if ((bioS=BIO_new_file(filename, "r")) == NULL)
+               return NULL;
+       rc = modssl_PEM_read_bio_PrivateKey(bioS, key, cb, s);
+       BIO_free(bioS);
 
     if (rc == NULL) {
         /* 2. try DER+Base64 */
-        if ((bioS = BIO_new_file(filename, "r")) == NULL)
-            return NULL;
+               if ( (bioS = BIO_new_file(filename, "r")) == NULL )
+                       return NULL;
 
-        if ((bioF = BIO_new(BIO_f_base64())) == NULL) {
+               if ((bioF = BIO_new(BIO_f_base64())) == NULL) {
             BIO_free(bioS);
             return NULL;
         }
         bioS = BIO_push(bioF, bioS);
         rc = d2i_PrivateKey_bio(bioS, NULL);
         BIO_free_all(bioS);
-
         if (rc == NULL) {
             /* 3. try plain DER */
-            if ((bioS = BIO_new_file(filename, "r")) == NULL)
-                return NULL;
+                       if ( (bioS = BIO_new_file(filename, "r")) == NULL )
+                               return NULL;
             rc = d2i_PrivateKey_bio(bioS, NULL);
             BIO_free(bioS);
         }
@@ -241,16 +239,14 @@ X509_STORE *SSL_X509_STORE_create(char *cpFile, char *cpPath)
     if ((pStore = X509_STORE_new()) == NULL)
         return NULL;
     if (cpFile != NULL) {
-        pLookup = X509_STORE_add_lookup(pStore, X509_LOOKUP_file());
-        if (pLookup == NULL) {
+        if ((pLookup = X509_STORE_add_lookup(pStore, X509_LOOKUP_file())) == NULL) {
             X509_STORE_free(pStore);
             return NULL;
         }
         X509_LOOKUP_load_file(pLookup, cpFile, X509_FILETYPE_PEM);
     }
     if (cpPath != NULL) {
-        pLookup = X509_STORE_add_lookup(pStore, X509_LOOKUP_hash_dir());
-        if (pLookup == NULL) {
+        if ((pLookup = X509_STORE_add_lookup(pStore, X509_LOOKUP_hash_dir())) == NULL) {
             X509_STORE_free(pStore);
             return NULL;
         }
@@ -454,7 +450,7 @@ BOOL SSL_X509_INFO_load_path(apr_pool_t *ptemp,
      */
     apr_dir_t *dir;
     apr_finfo_t dirent;
-    apr_int32_t finfo_flags = APR_FINFO_TYPE|APR_FINFO_NAME;
+    apr_int32_t finfo_flags = APR_FINFO_MIN|APR_FINFO_NAME;
     const char *fullname;
     BOOL ok = FALSE;
 
@@ -523,7 +519,11 @@ int SSL_CTX_use_certificate_chain(
     }
     /* create new extra chain by loading the certs */
     n = 0;
-    while ((x509 = modssl_PEM_read_bio_X509(bio, NULL, cb, NULL)) != NULL) {
+#if SSL_LIBRARY_VERSION < 0x00904000
+    while ((x509 = PEM_read_bio_X509(bio, NULL, cb)) != NULL) {
+#else
+    while ((x509 = PEM_read_bio_X509(bio, NULL, cb, NULL)) != NULL) {
+#endif
         if (!SSL_CTX_add_extra_chain_cert(ctx, x509)) { 
             X509_free(x509);
             BIO_free(bio);

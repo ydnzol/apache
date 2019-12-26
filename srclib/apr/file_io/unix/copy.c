@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2002-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 #include "apr_file_io.h"
 
 static apr_status_t apr_file_transfer_contents(const char *from_path,
@@ -71,7 +71,7 @@ static apr_status_t apr_file_transfer_contents(const char *from_path,
     if (status)
         return status;
 
-    /* Maybe get its permissions. */
+    /* Get its size. */
     if (to_perms == APR_FILE_SOURCE_PERMS) {
         status = apr_file_info_get(&finfo, APR_FINFO_PROT, s);
         if (status != APR_SUCCESS && status != APR_INCOMPLETE) {

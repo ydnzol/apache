@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,15 +52,15 @@
  * <http://www.apache.org/>.
  */
 
-#include "win32/apr_arch_file_io.h"
+#include "win32/fileio.h"
 #include "apr_file_io.h"
 #include "apr_general.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
 #include "apr_errno.h"
 #include <malloc.h>
-#include "apr_arch_atime.h"
-#include "apr_arch_misc.h"
+#include "atime.h"
+#include "misc.h"
 
 /*
  * read_with_timeout() 
@@ -303,43 +303,15 @@ APR_DECLARE(apr_status_t) apr_file_write(apr_file_t *thefile, const void *buf, a
         apr_thread_mutex_unlock(thefile->mutex);
         return rv;
     } else {
-        if (!thefile->pipe) {
-            apr_off_t offset = 0;
-            apr_status_t rc;
-            if (thefile->append) {
-                /* apr_file_lock will mutex the file across processes.
-                 * The call to apr_thread_mutex_lock is added to avoid
-                 * a race condition between LockFile and WriteFile 
-                 * that occasionally leads to deadlocked threads.
-                 */
-                apr_thread_mutex_lock(thefile->mutex);
-                rc = apr_file_lock(thefile, APR_FLOCK_EXCLUSIVE);
-                if (rc != APR_SUCCESS) {
-                    apr_thread_mutex_unlock(thefile->mutex);
-                    return rc;
-                }
-                rc = apr_file_seek(thefile, APR_END, &offset);
-                if (rc != APR_SUCCESS) {
-                    apr_thread_mutex_unlock(thefile->mutex);
-                    return rc;
-                }
-            }
-            if (thefile->pOverlapped) {
-                thefile->pOverlapped->Offset     = (DWORD)thefile->filePtr;
-                thefile->pOverlapped->OffsetHigh = (DWORD)(thefile->filePtr >> 32);
-            }
-            rv = WriteFile(thefile->filehand, buf, *nbytes, &bwrote,
-                           thefile->pOverlapped);
-            if (thefile->append) {
-                apr_file_unlock(thefile);
-                apr_thread_mutex_unlock(thefile->mutex);
-            }
+        if (thefile->pOverlapped && !thefile->pipe) {
+            thefile->pOverlapped->Offset     = (DWORD)thefile->filePtr;
+            thefile->pOverlapped->OffsetHigh = (DWORD)(thefile->filePtr >> 32);
         }
-        else {
-            rv = WriteFile(thefile->filehand, buf, *nbytes, &bwrote,
-                           thefile->pOverlapped);
+        else if (!thefile->pipe && thefile->append) {
+            SetFilePointer(thefile->filehand, 0, NULL, FILE_END);
         }
-        if (rv) {
+        if (WriteFile(thefile->filehand, buf, *nbytes, &bwrote, 
+                      thefile->pOverlapped)) {
             *nbytes = bwrote;
             rv = APR_SUCCESS;
         }

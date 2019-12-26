@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -106,7 +106,6 @@ extern "C" {
 /** a tab */
 #define APR_ASCII_TAB    '\011'
 
-/** signal numbers typedef */
 typedef int               apr_signum_t;
 
 /**
@@ -182,7 +181,6 @@ int strncasecmp(const char *a, const char *b, size_t n);
 #define APR_ALIGN(size, boundary) \
     (((size) + ((boundary) - 1)) & ~((boundary) - 1))
 
-/** Default alignment */
 #define APR_ALIGN_DEFAULT(size) APR_ALIGN(size, 8)
 
 
@@ -190,9 +188,7 @@ int strncasecmp(const char *a, const char *b, size_t n);
  * String and memory functions
  */
 
-/** Properly quote a value as a string in the C preprocessor */
 #define APR_STRINGIFY(n) APR_STRINGIFY_HELPER(n)
-/** Helper macro for APR_STRINGIFY */
 #define APR_STRINGIFY_HELPER(n) #n
 
 #if (!APR_HAVE_MEMMOVE)
@@ -260,19 +256,14 @@ APR_DECLARE(void) apr_terminate2(void);
 
 #if APR_HAS_RANDOM
 
-#ifdef APR_ENABLE_FOR_1_0
-APR_DECLARE(apr_status_t) apr_generate_random_bytes(unsigned char * buf, 
-                                                    apr_size_t length);
-#else
 /* TODO: I'm not sure this is the best place to put this prototype...*/
 /**
- * Generate random bytes.
- * @param buf Buffer to fill with random bytes
- * @param length Length of buffer in bytes (becomes apr_size_t in APR 1.0)
+ * Generate a string of random bytes.
+ * @param buf Random bytes go here
+ * @param length size of the buffer
  */
 APR_DECLARE(apr_status_t) apr_generate_random_bytes(unsigned char * buf, 
                                                     int length);
-#endif
 
 #endif
 /** @} */

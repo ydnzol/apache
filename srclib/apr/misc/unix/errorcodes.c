@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_misc.h"
+#include "misc.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
 #include "apr_dso.h"
@@ -325,7 +325,7 @@ static char *apr_os_strerror(char *buf, apr_size_t bufsize, apr_status_t errcode
 #else
 /* On Unix, apr_os_strerror() handles error codes from the resolver 
  * (h_errno). 
- */
+ e*/
 static char *apr_os_strerror(char* buf, apr_size_t bufsize, int err) 
 {
 #ifdef HAVE_HSTRERROR

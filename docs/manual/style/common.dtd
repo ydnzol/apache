@@ -1,32 +1,17 @@
 <?xml version='1.0' encoding='UTF-8' ?>
 
-<!-- Character mnemonic entities -->
-
-<!ENTITY % HTMLlat1 PUBLIC
-   "-//W3C//ENTITIES Latin 1 for XHTML//EN"
-   "http://www.w3.org/TR/xhtml1/DTD/xhtml-lat1.ent">
-%HTMLlat1;
-
-<!ENTITY % HTMLsymbol PUBLIC
-   "-//W3C//ENTITIES Symbols for XHTML//EN"
-   "http://www.w3.org/TR/xhtml1/DTD/xhtml-symbol.ent">
-%HTMLsymbol;
-
-<!ENTITY % HTMLspecial PUBLIC
-   "-//W3C//ENTITIES Special for XHTML//EN"
-   "http://www.w3.org/TR/xhtml1/DTD/xhtml-special.ent">
-%HTMLspecial;
-
-<!-- Generic tag entities -->
+<!ENTITY nbsp "&#160;">
 
 <!ENTITY % inlinetags "em | strong | code | a | br | directive | module | img
-| cite | q | dfn | var | transnote">
+| cite | q | dfn | var">
 
 <!ENTITY % blocktags "p | example | note | table | ul | ol | dl | pre
 | blockquote">
 
 <!ENTITY % Block "(%blocktags;)*">
+
 <!ENTITY % Inline "(#PCDATA | %inlinetags;)*">
+
 <!ENTITY % BlockOrInline "(#PCDATA | %inlinetags; | %blocktags;)*">
 
 <!ELEMENT title %Inline;>
@@ -50,36 +35,25 @@
 <!ELEMENT directivelist (directive)+>
 
 <!ELEMENT module (#PCDATA)>
-<!ATTLIST module status CDATA  #IMPLIED>
 
 <!ELEMENT directive (#PCDATA)>
 <!ATTLIST directive  module CDATA  #IMPLIED
-                     type   CDATA  #IMPLIED
-                     status CDATA  #IMPLIED >
+                     type   CDATA  #IMPLIED >
 
 <!ELEMENT p %Inline;>
 <!ATTLIST p class CDATA  #IMPLIED>
-
-<!-- the indent element is used to indent code examples. example/indent and
-     code/indent is now replacing pre. -->
-<!ELEMENT indent ( #PCDATA | indent | %inlinetags; )*>
 
 <!ELEMENT em %Inline;>
 
 <!ELEMENT strong %Inline;>
 
-<!ELEMENT code (#PCDATA | indent | %inlinetags;)*>
+<!ELEMENT code %Inline;>
 
 <!ELEMENT cite %Inline;>
 
 <!ELEMENT q %Inline;>
 
 <!ELEMENT dfn %Inline;>
-
-<!ELEMENT var %Inline;>
-
-<!-- translators note -->
-<!ELEMENT transnote %Inline;>
 
 <!ELEMENT a %Inline;>
 <!ATTLIST a  href CDATA #IMPLIED
@@ -89,9 +63,7 @@
 
 <!ELEMENT br EMPTY>
 
-<!-- Note: The example and note elements should not have more then one
-           title. -->
-<!ELEMENT example (#PCDATA | title | indent | %inlinetags; | %blocktags;)*>
+<!ELEMENT example (#PCDATA | title | %inlinetags; | %blocktags;)*>
 
 <!ELEMENT note (#PCDATA | title | %inlinetags; | %blocktags;)*>
 <!ATTLIST note type CDATA #IMPLIED>
@@ -124,7 +96,6 @@
 <!ATTLIST ol type CDATA  #IMPLIED>
 
 <!ELEMENT li %BlockOrInline;>
-<!ATTLIST li class    CDATA   #IMPLIED >
 
 <!ELEMENT dl (dd | dt)+>
 
@@ -142,5 +113,4 @@
   height      CDATA   #IMPLIED
   width       CDATA   #IMPLIED >
 
-<!ELEMENT blockquote %Block;>
-<!ATTLIST blockquote cite CDATA #IMPLIED >
+<!ELEMENT blockquote %BlockOrInline;>

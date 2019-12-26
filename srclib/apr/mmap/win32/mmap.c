@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@
 #include "apr_general.h"
 #include "apr_mmap.h"
 #include "apr_errno.h"
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 #include "apr_portable.h"
 #include "apr_strings.h"
 
@@ -66,17 +66,13 @@
 static apr_status_t mmap_cleanup(void *themmap)
 {
     apr_mmap_t *mm = themmap;
-    apr_mmap_t *next = APR_RING_NEXT(mm,link);
     apr_status_t rv = 0;
 
-    /* we no longer refer to the mmaped region */
-    APR_RING_REMOVE(mm,link);
-    APR_RING_NEXT(mm,link) = NULL;
-    APR_RING_PREV(mm,link) = NULL;
-
-    if (next != mm) {
-        /* more references exist, so we're done */
-        return APR_SUCCESS;
+    if (!mm->is_owner) {
+        return APR_EINVAL;
+    }
+    else if (!mm->mhandle) {
+        return APR_ENOENT;
     }
 
     if (mm->mv) {
@@ -167,7 +163,7 @@ APR_DECLARE(apr_status_t) apr_mmap_create(apr_mmap_t **new, apr_file_t *file,
     (*new)->mm = (char*)((*new)->mv) + (*new)->poffset;
     (*new)->size = size;
     (*new)->cntxt = cont;
-    APR_RING_ELEM_INIT(*new, link);
+    (*new)->is_owner = 1;
 
     /* register the cleanup... */
     apr_pool_cleanup_register((*new)->cntxt, (void*)(*new), mmap_cleanup,
@@ -183,10 +179,21 @@ APR_DECLARE(apr_status_t) apr_mmap_dup(apr_mmap_t **new_mmap,
     *new_mmap = (apr_mmap_t *)apr_pmemdup(p, old_mmap, sizeof(apr_mmap_t));
     (*new_mmap)->cntxt = p;
 
-    APR_RING_INSERT_AFTER(old_mmap, *new_mmap, link);
-
-    apr_pool_cleanup_register(p, *new_mmap, mmap_cleanup,
-                              apr_pool_cleanup_null);
+    /* The old_mmap can transfer ownership only if the old_mmap itself
+     * is an owner of the mmap'ed segment.
+     */
+    if (old_mmap->is_owner) {
+        if (transfer_ownership) {
+            (*new_mmap)->is_owner = 1;
+            old_mmap->is_owner = 0;
+            apr_pool_cleanup_kill(old_mmap->cntxt, old_mmap, mmap_cleanup);
+            apr_pool_cleanup_register(p, *new_mmap, mmap_cleanup,
+                                      apr_pool_cleanup_null);
+        }
+        else {
+            (*new_mmap)->is_owner = 0;
+        }
+    }
     return APR_SUCCESS;
 }
 

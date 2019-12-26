@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_shm.h"
+#include "shm.h"
 
 #include "apr_general.h"
 #include "apr_errno.h"
@@ -240,7 +240,7 @@ APR_DECLARE(apr_status_t) apr_shm_create(apr_shm_t **m,
         if (shmctl(new_m->shmid, IPC_STAT, &shmbuf) == -1) {
             return errno;
         }
-        apr_uid_current(&uid, &gid, pool);
+        apr_current_userid(&uid, &gid, pool);
         shmbuf.shm_perm.uid = uid;
         shmbuf.shm_perm.gid = gid;
         if (shmctl(new_m->shmid, IPC_SET, &shmbuf) == -1) {
@@ -387,7 +387,7 @@ APR_DECLARE(apr_status_t) apr_shm_create(apr_shm_t **m,
         if (shmctl(new_m->shmid, IPC_STAT, &shmbuf) == -1) {
             return errno;
         }
-        apr_uid_current(&uid, &gid, pool);
+        apr_current_userid(&uid, &gid, pool);
         shmbuf.shm_perm.uid = uid;
         shmbuf.shm_perm.gid = gid;
         if (shmctl(new_m->shmid, IPC_SET, &shmbuf) == -1) {

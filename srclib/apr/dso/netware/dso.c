@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_dso.h"
+#include "dso.h"
 #include "apr_strings.h"
 #include "apr_portable.h"
 
@@ -107,16 +107,7 @@ APR_DECLARE(apr_status_t) apr_dso_load(apr_dso_handle_t **res_handle,
                                        const char *path, apr_pool_t *pool)
 {
 
-    void *os_handle = NULL;
-    char *fullpath = NULL;
-    apr_status_t rv;
-
-    if ((rv = apr_filepath_merge(&fullpath, NULL, path, 
-                                 APR_FILEPATH_NATIVE, pool)) != APR_SUCCESS) {
-        return rv;
-    }
-
-    os_handle = dlopen(fullpath, RTLD_NOW | RTLD_LOCAL);
+    void *os_handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
 
     *res_handle = apr_pcalloc(pool, sizeof(**res_handle));
 
@@ -129,7 +120,7 @@ APR_DECLARE(apr_status_t) apr_dso_load(apr_dso_handle_t **res_handle,
     (*res_handle)->pool = pool;
     (*res_handle)->errormsg = NULL;
     (*res_handle)->symbols = NULL;
-    (*res_handle)->path = apr_pstrdup(pool, fullpath);
+    (*res_handle)->path = apr_pstrdup(pool, path);
 
     apr_pool_cleanup_register(pool, *res_handle, dso_cleanup, apr_pool_cleanup_null);
 
@@ -150,7 +141,7 @@ APR_DECLARE(apr_status_t) apr_dso_sym(apr_dso_handle_sym_t *ressym,
 
     if (retval == NULL) {
         handle->errormsg = dlerror();
-        return APR_ESYMNOTFOUND;
+        return APR_EINIT;
     }
 
     symbol = apr_pcalloc(handle->pool, sizeof(sym_list));

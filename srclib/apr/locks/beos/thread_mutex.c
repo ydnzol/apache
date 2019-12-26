@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@
  * Stephen Beaulieu <hippo@be.com>
  */
  
-#include "beos/apr_arch_thread_mutex.h"
+#include "beos/thread_mutex.h"
 #include "apr_strings.h"
 #include "apr_portable.h"
 

@@ -13,7 +13,6 @@
 #define AP_CORE_DECLARE_NONSTD  AP_CORE_DECLARE_NONSTD
 #define AP_DECLARE_HOOK         AP_DECLARE_HOOK
 #define AP_DECLARE_DATA         AP_DECLARE_DATA
-#undef  APACHE_OS_H
 
 #include "httpd.h"
 
@@ -22,7 +21,6 @@
 #include "ap_listen.h"
 #include "ap_mmn.h"
 #include "ap_mpm.h"
-#include "ap_provider.h"
 #include "ap_release.h"
 #include "http_config.h"
 #include "http_connection.h"

@@ -3,7 +3,6 @@
 <?xml-stylesheet type="text/xsl" href="../style/manual.en.xsl"?>
 <manualpage>
 <relativepath href=".."/>
-<parentdocument href="./">How-To / Tutorials</parentdocument>
 
   <title>Per-user web directories</title>
 
@@ -100,7 +99,7 @@
       UserDir enabled rbowen krietz
     </example>
 
-    <p>See <directive module="mod_userdir">UserDir</directive>
+    <p>See <directive module="userdir">UserDir</directive>
     documentation for additional examples.</p>
 
   </section>
@@ -117,7 +116,7 @@
       &lt;Directory /home/*/cgi-bin/&gt;<br />
        Options ExecCGI<br />
        SetHandler cgi-script<br />
-       &lt;/Directory&gt;
+       &lt;/DirectoryMatch&gt;
     </example>
 
     </section>

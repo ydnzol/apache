@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -74,21 +74,10 @@ extern "C" {
  * @{
  */
 
-/** 
- * Enumerated potential types for APR process locking methods
- * @warning Check APR_HAS_foo_SERIALIZE defines to see if the platform supports
- *          APR_LOCK_foo.  Only APR_LOCK_DEFAULT is portable.
- */
-typedef enum {
-    APR_LOCK_FCNTL,         /**< fcntl() */
-    APR_LOCK_FLOCK,         /**< flock() */
-    APR_LOCK_SYSVSEM,       /**< System V Semaphores */
-    APR_LOCK_PROC_PTHREAD,  /**< POSIX pthread process-based locking */
-    APR_LOCK_POSIXSEM,      /**< POSIX semaphore process-based locking */
-    APR_LOCK_DEFAULT        /**< Use the default process lock */
-} apr_lockmech_e;
+typedef enum {APR_LOCK_FCNTL, APR_LOCK_FLOCK, APR_LOCK_SYSVSEM,
+              APR_LOCK_PROC_PTHREAD, APR_LOCK_POSIXSEM,
+              APR_LOCK_DEFAULT} apr_lockmech_e;
 
-/** Opaque structure representing a process mutex. */
 typedef struct apr_proc_mutex_t apr_proc_mutex_t;
 
 /*   Function definitions */
@@ -110,7 +99,6 @@ typedef struct apr_proc_mutex_t apr_proc_mutex_t;
  *            APR_LOCK_DEFAULT     pick the default mechanism for the platform
  * </PRE>
  * @param pool the pool from which to allocate the mutex.
- * @see apr_lockmech_e
  * @warning Check APR_HAS_foo_SERIALIZE defines to see if the platform supports
  *          APR_LOCK_foo.  Only APR_LOCK_DEFAULT is portable.
  */
@@ -163,14 +151,6 @@ APR_DECLARE(apr_status_t) apr_proc_mutex_unlock(apr_proc_mutex_t *mutex);
 APR_DECLARE(apr_status_t) apr_proc_mutex_destroy(apr_proc_mutex_t *mutex);
 
 /**
- * Destroy the mutex and free the memory associated with the lock.
- * @param mutex the mutex to destroy.
- * @note This function is generally used to kill a cleanup on an already
- *       created mutex
- */
-APR_DECLARE(apr_status_t) apr_proc_mutex_cleanup(void *mutex);
-
-/**
  * Display the name of the mutex, as it relates to the actual method used.
  * This matches the valid options for Apache's AcceptMutex directive
  * @param mutex the name of the mutex
@@ -179,6 +159,7 @@ APR_DECLARE(const char *) apr_proc_mutex_name(apr_proc_mutex_t *mutex);
 
 /**
  * Display the name of the default mutex: APR_LOCK_DEFAULT
+ * @param mutex the name of the default mutex
  */
 APR_DECLARE(const char *) apr_proc_mutex_defname(void);
 

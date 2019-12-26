@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@
  */
 
 #include "apr_private.h"
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 #include "apr_file_io.h"
 #include "apr_general.h"
 #include "apr_strings.h"
@@ -67,8 +67,8 @@
 #if APR_HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-#include "apr_arch_misc.h"
-#include "apr_arch_inherit.h"
+#include "misc.h"
+#include "inherit.h"
 
 #if APR_HAS_UNICODE_FS
 apr_status_t utf8_to_unicode_path(apr_wchar_t* retstr, apr_size_t retlen, 
@@ -264,21 +264,6 @@ apr_status_t file_cleanup(void *thefile)
     apr_status_t flush_rv = APR_SUCCESS;
 
     if (file->filehand != INVALID_HANDLE_VALUE) {
-
-        /* In order to avoid later segfaults with handle 'reuse',
-         * we must protect against the case that a dup2'ed handle
-         * is being closed, and invalidate the corresponding StdHandle 
-         */
-        if (file->filehand == GetStdHandle(STD_ERROR_HANDLE)) {
-            SetStdHandle(STD_ERROR_HANDLE, INVALID_HANDLE_VALUE);
-        }
-        if (file->filehand == GetStdHandle(STD_OUTPUT_HANDLE)) {
-            SetStdHandle(STD_OUTPUT_HANDLE, INVALID_HANDLE_VALUE);
-        }
-        if (file->filehand == GetStdHandle(STD_INPUT_HANDLE)) {
-            SetStdHandle(STD_INPUT_HANDLE, INVALID_HANDLE_VALUE);
-        }
-
         if (file->buffered) {
             flush_rv = apr_file_flush((apr_file_t *)thefile);
         }
@@ -339,29 +324,15 @@ APR_DECLARE(apr_status_t) apr_file_open(apr_file_t **new, const char *fname,
     if (flag & APR_DELONCLOSE) {
         attributes |= FILE_FLAG_DELETE_ON_CLOSE;
     }
-
     if (flag & APR_OPENLINK) {
        attributes |= FILE_FLAG_OPEN_REPARSE_POINT;
     }
-
-    /* Without READ or WRITE, we fail unless apr called apr_file_open
-     * internally with the private APR_OPENINFO flag.
-     *
-     * With the APR_OPENINFO flag on NT, use the option flag
-     * FILE_FLAG_BACKUP_SEMANTICS to allow us to open directories.
-     * See the static resolve_ident() fn in file_io/win32/filestat.c
-     */
-    if (!(flag & (APR_READ | APR_WRITE))) {
-        if (flag & APR_OPENINFO) {
-            if (apr_os_level >= APR_WIN_NT) {
-                attributes |= FILE_FLAG_BACKUP_SEMANTICS;
-            }
-        }
-        else {
-            return APR_EACCES;
-        }
+    if (!(flag & (APR_READ | APR_WRITE)) && (apr_os_level >= APR_WIN_NT)) {
+        /* We once failed here, but this is how one opens 
+         * a directory as a file under winnt
+         */
+        attributes |= FILE_FLAG_BACKUP_SEMANTICS;
     }
-
     if (flag & APR_XTHREAD) {
         /* This win32 specific feature is required 
          * to allow multiple threads to work with the file.
@@ -373,15 +344,6 @@ APR_DECLARE(apr_status_t) apr_file_open(apr_file_t **new, const char *fname,
     IF_WIN_OS_IS_UNICODE
     {
         apr_wchar_t wfname[APR_PATH_MAX];
-
-        if (flag & APR_SENDFILE_ENABLED) {    
-            /* This feature is required to enable sendfile operations
-             * against the file on Win32. Also implies APR_XTHREAD.
-             */
-            flag |= APR_XTHREAD;
-            attributes |= FILE_FLAG_SEQUENTIAL_SCAN | FILE_FLAG_OVERLAPPED;
-        }
-
         if (rv = utf8_to_unicode_path(wfname, sizeof(wfname) 
                                                / sizeof(apr_wchar_t), fname))
             return rv;
@@ -390,16 +352,9 @@ APR_DECLARE(apr_status_t) apr_file_open(apr_file_t **new, const char *fname,
     }
 #endif
 #if APR_HAS_ANSI_FS
-    ELSE_WIN_OS_IS_ANSI {
+    ELSE_WIN_OS_IS_ANSI
         handle = CreateFileA(fname, oflags, sharemode,
                              NULL, createflags, attributes, 0);
-        if (flag & APR_SENDFILE_ENABLED) {    
-            /* This feature is not supported on this platform.
-             */
-            flag &= ~APR_SENDFILE_ENABLED;
-        }
-
-    }
 #endif
     if (handle == INVALID_HANDLE_VALUE) {
         return apr_get_os_error();
@@ -410,21 +365,21 @@ APR_DECLARE(apr_status_t) apr_file_open(apr_file_t **new, const char *fname,
     (*new)->filehand = handle;
     (*new)->fname = apr_pstrdup(pool, fname);
     (*new)->flags = flag;
-    (*new)->timeout = -1;
-    (*new)->ungetchar = -1;
 
     if (flag & APR_APPEND) {
         (*new)->append = 1;
         SetFilePointer((*new)->filehand, 0, NULL, FILE_END);
     }
+    else {
+        (*new)->append = 0;
+    }
+
     if (flag & APR_BUFFERED) {
         (*new)->buffered = 1;
         (*new)->buffer = apr_palloc(pool, APR_FILE_BUFSIZE);
-    }
-    /* Need the mutex to handled buffered and O_APPEND style file i/o */
-    if ((*new)->buffered || (*new)->append) {
-        rv = apr_thread_mutex_create(&(*new)->mutex, 
-                                     APR_THREAD_MUTEX_DEFAULT, pool);
+        rv = apr_thread_mutex_create(&(*new)->mutex, APR_THREAD_MUTEX_DEFAULT,
+                                     pool);
+
         if (rv) {
             if (file_cleanup(*new) == APR_SUCCESS) {
                 apr_pool_cleanup_kill(pool, *new, file_cleanup);
@@ -432,6 +387,22 @@ APR_DECLARE(apr_status_t) apr_file_open(apr_file_t **new, const char *fname,
             return rv;
         }
     }
+    else {
+        (*new)->buffered = 0;
+        (*new)->buffer = NULL;
+        (*new)->mutex = NULL;
+    }
+
+    (*new)->pipe = 0;
+    (*new)->timeout = -1;
+    (*new)->ungetchar = -1;
+    (*new)->eof_hit = 0;
+
+    /* Buffered mode fields not initialized above */
+    (*new)->bufpos = 0;
+    (*new)->dataRead = 0;
+    (*new)->direction = 0;
+    (*new)->filePtr = 0;
 
     if (!(flag & APR_FILE_NOCLEANUP)) {
         apr_pool_cleanup_register((*new)->pool, (void *)(*new), file_cleanup,
@@ -446,9 +417,8 @@ APR_DECLARE(apr_status_t) apr_file_close(apr_file_t *file)
     if ((stat = file_cleanup(file)) == APR_SUCCESS) {
         apr_pool_cleanup_kill(file->pool, file, file_cleanup);
 
-        if (file->mutex) {
+        if (file->buffered)
             apr_thread_mutex_destroy(file->mutex);
-        }
 
         return APR_SUCCESS;
     }
@@ -551,19 +521,17 @@ APR_DECLARE(apr_status_t) apr_os_file_put(apr_file_t **file,
     (*file)->ungetchar = -1; /* no char avail */
     (*file)->timeout = -1;
     (*file)->flags = flags;
-
-    if (flags & APR_APPEND) {
+    if (flags & APR_APPEND)
         (*file)->append = 1;
-    }
+
     if (flags & APR_BUFFERED) {
+        apr_status_t rv;
+
         (*file)->buffered = 1;
         (*file)->buffer = apr_palloc(pool, APR_FILE_BUFSIZE);
-    }
+        rv = apr_thread_mutex_create(&(*file)->mutex, APR_THREAD_MUTEX_DEFAULT,
+                                     pool);
 
-    if ((*file)->append || (*file)->buffered) {
-        apr_status_t rv;
-        rv = apr_thread_mutex_create(&(*file)->mutex, 
-                                     APR_THREAD_MUTEX_DEFAULT, pool);
         if (rv) {
             if (file_cleanup(*file) == APR_SUCCESS) {
                 apr_pool_cleanup_kill(pool, *file, file_cleanup);

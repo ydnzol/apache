@@ -296,10 +296,8 @@ static char *ssl_var_lookup_ssl(apr_pool_t *p, conn_rec *c, char *var)
         result = ssl_var_lookup_ssl_cert_verify(p, c);
     }
     else if (ssl != NULL && strlen(var) > 7 && strcEQn(var, "CLIENT_", 7)) {
-        if ((xs = SSL_get_peer_certificate(ssl)) != NULL) {
+        if ((xs = SSL_get_peer_certificate(ssl)) != NULL)
             result = ssl_var_lookup_ssl_cert(p, xs, var+7);
-            X509_free(xs);
-        }
     }
     else if (ssl != NULL && strlen(var) > 7 && strcEQn(var, "SERVER_", 7)) {
         if ((xs = SSL_get_certificate(ssl)) != NULL)
@@ -336,7 +334,7 @@ static char *ssl_var_lookup_ssl_cert(apr_pool_t *p, X509 *xs, char *var)
         xsname = X509_get_subject_name(xs);
         cp = X509_NAME_oneline(xsname, NULL, 0);
         result = apr_pstrdup(p, cp);
-        modssl_free(cp);
+        free(cp);
         resdup = FALSE;
     }
     else if (strlen(var) > 5 && strcEQn(var, "S_DN_", 5)) {
@@ -348,7 +346,7 @@ static char *ssl_var_lookup_ssl_cert(apr_pool_t *p, X509 *xs, char *var)
         xsname = X509_get_issuer_name(xs);
         cp = X509_NAME_oneline(xsname, NULL, 0);
         result = apr_pstrdup(p, cp);
-        modssl_free(cp);
+        free(cp);
         resdup = FALSE;
     }
     else if (strlen(var) > 5 && strcEQn(var, "I_DN_", 5)) {
@@ -538,9 +536,6 @@ static char *ssl_var_lookup_ssl_cert_verify(apr_pool_t *p, conn_rec *c)
     else
         /* client verification failed */
         result = apr_psprintf(p, "FAILED:%s", verr);
-
-    if (xs)
-        X509_free(xs);
     return result;
 }
 

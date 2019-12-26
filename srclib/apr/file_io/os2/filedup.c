@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,12 +52,12 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 #include "apr_file_io.h"
 #include "apr_lib.h"
 #include "apr_strings.h"
 #include <string.h>
-#include "apr_arch_inherit.h"
+#include "inherit.h"
 
 static apr_status_t file_dup(apr_file_t **new_file, apr_file_t *old_file, apr_pool_t *p)
 {
@@ -80,7 +80,7 @@ static apr_status_t file_dup(apr_file_t **new_file, apr_file_t *old_file, apr_po
     rv = DosDupHandle(old_file->filedes, &dup_file->filedes);
 
     if (rv) {
-        return APR_FROM_OS_ERROR(rv);
+        return APR_OS2_STATUS(rv);
     }
 
     dup_file->fname = apr_pstrdup(dup_file->pool, old_file->fname);

@@ -30,12 +30,6 @@ q, em, var {
     font-style: italic;
 }
 
-span.transnote {
-    background-color: inherit;
-    color: #888;
-    font-size: 90%;
-}
-
 /* fixup IE & Opera
  * otherwise they forget to inherit
  * the computed font-size value
@@ -185,7 +179,7 @@ div.example h3,
 div.note h3,
 div.warning h3 {
     margin: 0 0 0.5em 0;
-    text-align: left;
+    text-align: center;
     font-size: 11pt;
 }
 
@@ -465,14 +459,12 @@ div#quickview li img {
     display: none;
 }
 
-#module-index div#quickview ul#toc,
 #manual-page div#quickview ul#toc,
 div#quickview #topics,
 div#quickview .seealso {
     padding-left: 0;
 }
 
-#module-index div#quickview ul#toc li,
 #manual-page div#quickview ul#toc li,
 div#quickview #topics li,
 div#quickview .seealso li {

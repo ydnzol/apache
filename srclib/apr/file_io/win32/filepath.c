@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@
  */
 
 #include "apr.h"
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 #include "apr_strings.h"
 #include "apr_lib.h"
 #include <string.h>
@@ -61,7 +61,6 @@
 
 #ifdef NETWARE
 #include <unistd.h>
-#include <fsio.h>
 #endif
 
  /* WinNT accepts several odd forms of a 'root' path.  Under Unicode
@@ -105,8 +104,13 @@ APR_DECLARE(apr_status_t) apr_filepath_root(const char **rootpath,
         the path since we won't use the deconstructed information anyway.
     */
     if (volsep) {
-        /* Split the inpath into its separate parts. */
-        deconstruct(testpath, server, volume, path, file, NULL, &elements, PATH_UNDEF);
+        /* Split the inpath into its separate parts. If it fails then
+            we know we have a bad path.
+        */
+        if (deconstruct(testpath, server, volume, path, file, NULL, &elements, PATH_UNDEF)) {
+            if (errno == EINVAL)
+                return APR_EBADPATH;
+        }
     
         /* If we got a volume part then continue splitting out the root.
             Otherwise we either have an incomplete or relative path
@@ -150,8 +154,7 @@ APR_DECLARE(apr_status_t) apr_filepath_root(const char **rootpath,
 
     return APR_EINCOMPLETE;
 
-#else /* ndef(NETWARE) */
-
+#else
     char seperator[2] = { (flags & APR_FILEPATH_NATIVE) ? '\\' : '/', 0};
     const char *delim1;
     const char *delim2;
@@ -357,8 +360,7 @@ APR_DECLARE(apr_status_t) apr_filepath_root(const char **rootpath,
 
     /* Nothing interesting */
     return APR_ERELATIVE;
-
-#endif /* ndef(NETWARE) */
+#endif
 }
 
 
@@ -829,7 +831,7 @@ APR_DECLARE(apr_status_t) apr_filepath_merge(char **newpath,
      * is still within given basepath.  Note that the root path 
      * segment is thoroughly tested prior to path parsing.
      */
-    if (flags & APR_FILEPATH_NOTABOVEROOT) {
+    if (flags & APR_FILEPATH_NOTABOVEROOT && (keptlen - rootlen) < baselen) {
         if (memcmp(basepath, path + rootlen, baselen))
             return APR_EABOVEROOT;
 
@@ -867,17 +869,16 @@ APR_DECLARE(apr_status_t) apr_filepath_merge(char **newpath,
             }
             /* Null term for stat! */
             path[keptlen + seglen] = '\0';
-            if ((rv = apr_lstat(&finfo, path, 
-                                APR_FINFO_TYPE | APR_FINFO_NAME, p))
-                == APR_SUCCESS) {
+            if ((rv = apr_lstat(&finfo, path, APR_FINFO_TYPE | APR_FINFO_NAME, p))
+                    == APR_SUCCESS) {
                 apr_size_t namelen = strlen(finfo.name);
 
-#if defined(OS2) /* only has case folding, never aliases that change the length */
+#if defined(OS2) || defined(NETWARE) /* only has case folding, never aliases that change the length */
 
                 if (memcmp(finfo.name, path + keptlen, seglen) != 0) {
                     memcpy(path + keptlen, finfo.name, namelen);
                 }
-#else /* WIN32 || NETWARE; here there be aliases that gire and gimble and change length */
+#else /* WIN32; here there be aliases that gire and gimble and change length */
 
                 if ((namelen != seglen) || 
                     (memcmp(finfo.name, path + keptlen, seglen) != 0)) 
@@ -947,16 +948,9 @@ APR_DECLARE(apr_status_t) apr_filepath_merge(char **newpath,
             if (rv != APR_SUCCESS) {
                 if (APR_STATUS_IS_ENOENT(rv))
                     break;
-                if (APR_STATUS_IS_EPATHWILD(rv))
-                    /* This path included wildcards.  The path elements
-                     * that did not contain wildcards are canonicalized,
-                     * so we will return the path, although later elements
-                     * don't necessarily exist, and aren't canonical.
-                     */
-                    break;
                 else if (APR_STATUS_IS_ENOTDIR(rv))
                     /* This is a little more serious, we just added a name
-                     * onto a filename (think http's PATH_INFO)
+                     * onto a filename (think http's CGI MORE_INFO)
                      * If the caller is foolish enough to do this, we expect
                      * the've already canonicalized the root) that they knew
                      * what they are doing :(
@@ -970,20 +964,5 @@ APR_DECLARE(apr_status_t) apr_filepath_merge(char **newpath,
 
     *newpath = apr_pmemdup(p, path, pathlen + 1);
     (*newpath)[pathlen] = '\0';
-    return APR_SUCCESS;
-}
-
-
-APR_DECLARE(apr_status_t) apr_filepath_encoding(int *style, apr_pool_t *p)
-{
-#if APR_HAS_UNICODE_FS
-    IF_WIN_OS_IS_UNICODE
-    {
-        *style = APR_FILEPATH_ENCODING_UTF8;
-        return APR_SUCCESS;
-    }
-#endif
-
-    *style = APR_FILEPATH_ENCODING_LOCALE;
     return APR_SUCCESS;
 }

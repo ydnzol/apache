@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,16 +56,6 @@
 #include <stdlib.h>
 #include "apr_reslist.h"
 #include "apr_thread_proc.h"
-
-#if !APR_HAS_THREADS
-
-int main(void)
-{
-    fprintf(stderr, "this program requires APR thread support\n");
-    return 0;
-}
-
-#else
 
 #define RESLIST_MIN   3
 #define RESLIST_SMAX 10
@@ -267,4 +257,3 @@ int main(void)
     return 0;
 }
 
-#endif /* APR_HAS_THREADS */

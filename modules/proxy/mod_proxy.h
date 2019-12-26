@@ -195,12 +195,6 @@ typedef struct {
     int preserve_host_set;
     apr_interval_time_t timeout;
     apr_interval_time_t timeout_set;
-    enum {
-      bad_error,
-      bad_ignore,
-      bad_body
-    } badopt;                   /* how to deal with bad headers */
-    char badopt_set;
 
 } proxy_server_conf;
 
@@ -289,8 +283,5 @@ PROXY_DECLARE(void) ap_proxy_table_unmerge(apr_pool_t *p, apr_table_t *t, char *
 PROXY_DECLARE(int) ap_proxy_connect_to_backend(apr_socket_t **, const char *, apr_sockaddr_t *, const char *, proxy_server_conf *, server_rec *, apr_pool_t *);
 PROXY_DECLARE(int) ap_proxy_ssl_enable(conn_rec *c);
 PROXY_DECLARE(int) ap_proxy_ssl_disable(conn_rec *c);
-
-/* For proxy_util */
-extern module AP_MODULE_DECLARE_DATA proxy_module;
 
 #endif /*MOD_PROXY_H*/

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@
  */
 
 #include "apr_portable.h"
-#include "apr_arch_threadproc.h"
+#include "threadproc.h"
 
 apr_status_t apr_threadkey_private_create(apr_threadkey_t **key, 
                                         void (*dest)(void *), apr_pool_t *pool) 

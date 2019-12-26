@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -223,17 +223,15 @@ APU_DECLARE(apr_bucket *) apr_bucket_file_create(apr_file_t *fd,
     return apr_bucket_file_make(b, fd, offset, len, p);
 }
 
+#if APR_HAS_MMAP
 APU_DECLARE(apr_status_t) apr_bucket_file_enable_mmap(apr_bucket *e,
                                                       int enabled)
 {
-#if APR_HAS_MMAP
     apr_bucket_file *a = e->data;
     a->can_mmap = enabled;
     return APR_SUCCESS;
-#else
-    return APR_ENOTIMPL;
-#endif /* APR_HAS_MMAP */
 }
+#endif /* APR_HAS_MMAP */
 
 
 static apr_status_t file_bucket_setaside(apr_bucket *data, apr_pool_t *reqpool)

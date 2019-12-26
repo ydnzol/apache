@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,14 +66,12 @@
 #include <unistd.h> /* for _POSIX_THREAD_SAFE_FUNCTIONS */
 #endif
 
-APR_DECLARE(apr_status_t) apr_gid_name_get(char **groupname, apr_gid_t groupid,
-                                           apr_pool_t *p)
+APR_DECLARE(apr_status_t) apr_group_name_get(char **groupname, apr_gid_t groupid, apr_pool_t *p)
 {
     return APR_ENOTIMPL;
 }
   
-APR_DECLARE(apr_status_t) apr_gid_get(apr_gid_t *groupid, 
-                                      const char *groupname, apr_pool_t *p)
+APR_DECLARE(apr_status_t) apr_get_groupid(apr_gid_t *groupid, const char *groupname, apr_pool_t *p)
 {
     return APR_ENOTIMPL;
 }
@@ -82,17 +80,5 @@ APR_DECLARE(apr_status_t) apr_gid_get(apr_gid_t *groupid,
 APR_DECLARE(apr_status_t) apr_get_groupname(char **groupname, 
                                             apr_gid_t groupid, apr_pool_t *p)
 {
-    return apr_gid_name_get(groupname, groupid, p);
-}
-
-APR_DECLARE(apr_status_t) apr_group_name_get(char **groupname, 
-                                             apr_gid_t groupid, apr_pool_t *p)
-{
-    return apr_gid_name_get(groupname, groupid, p);
-}
-
-APR_DECLARE(apr_status_t) apr_get_groupid(apr_gid_t *groupid, 
-                                          const char *groupname, apr_pool_t *p)
-{
-    return apr_gid_get(groupid, groupname, p);
+    return apr_group_name_get(groupname, groupid, p);
 }

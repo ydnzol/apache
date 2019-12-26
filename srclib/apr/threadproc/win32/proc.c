@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,8 +52,8 @@
  * <http://www.apache.org/>.
  */
 
-#include "win32/apr_arch_threadproc.h"
-#include "win32/apr_arch_file_io.h"
+#include "win32/threadproc.h"
+#include "win32/fileio.h"
 
 #include "apr_thread_proc.h"
 #include "apr_file_io.h"

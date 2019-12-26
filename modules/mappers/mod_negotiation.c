@@ -809,11 +809,7 @@ static apr_off_t get_body(char *buffer, apr_size_t *len, const char *tag,
         return -1;
     }
 
-    /* put a copy of the tag *after* the data read from the file
-     * so that strstr() will find something with no reliance on
-     * terminating '\0'
-     */
-    memcpy(buffer + *len, tag, taglen);
+    strncpy(buffer + *len, tag, taglen);
     endbody = strstr(buffer, tag);
     if (endbody == buffer + *len) {
         return -1;
@@ -2844,34 +2840,7 @@ static int handle_map_file(request_rec *r)
          * ap_set_etag(r);
          */
         apr_table_setn(r->headers_out, "Accept-Ranges", "bytes");
-        ap_set_content_length(r, best->bytes);
-
-        /* set MIME type and charset as negotiated */
-        if (best->mime_type && *best->mime_type) {
-            if (best->content_charset && *best->content_charset) {
-                ap_set_content_type(r, apr_pstrcat(r->pool,
-                                                   best->mime_type,
-                                                   "; charset=",
-                                                   best->content_charset,
-                                                   NULL));
-            }
-            else {
-                ap_set_content_type(r, apr_pstrdup(r->pool, best->mime_type));
-            }
-        }
-
-        /* set Content-language(s) as negotiated */
-        if (best->content_languages && best->content_languages->nelts) {
-            r->content_languages = apr_array_copy(r->pool,
-                                                  best->content_languages);
-        }
-
-        /* set Content-Encoding as negotiated */
-        if (best->content_encoding && *best->content_encoding) {
-            r->content_encoding = apr_pstrdup(r->pool,
-                                              best->content_encoding);
-        }
-
+        ap_set_content_length(r, best->bytes); 
         if ((res = ap_meets_conditions(r)) != OK) {
             return res;
         }

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,31 +58,38 @@
 #include <stdlib.h>
 #include "test_apr.h"
 
-static void rand_exists(CuTest *tc)
-{
 #if !APR_HAS_RANDOM
-    CuNotImpl(tc, "apr_generate_random_bytes");
-#else
+#error Random support is not available.  Go punt.
+#endif
+
+int main(void)
+{
+    apr_pool_t *p;
     apr_status_t rv;
     unsigned char c[2048];
     int i;
 
-    /* There must be a better way to test random-ness, but I don't know
-     * what it is right now.
-     */
-    for (i = 1; i <= 8; i++) {
-        rv = apr_generate_random_bytes(c, i * 255);
-        apr_assert_success(tc, "apr_generate_random_bytes failed", rv);
+    apr_initialize();
+
+    printf("Testing apr_generate_random_bytes()\n===================\n\n");
+
+    if (apr_pool_create(&p, NULL) != APR_SUCCESS) {
+        exit(-1);
     }
-#endif
+
+    for (i = 1; i <= 8; i++) {
+        printf("%-5d %-55s", i * 255, "bytes");
+        rv = apr_generate_random_bytes(c, i * 255);
+        if (rv != APR_SUCCESS) {
+            char msgbuf[120];
+
+            printf("Failed: %d %s\n", rv, apr_strerror(rv, msgbuf, sizeof msgbuf));
+        }
+        else {
+            printf("OK\n");
+        }
+    }
+
+    return 0;
 }    
-
-CuSuite *testrand(void)
-{
-    CuSuite *suite = CuSuiteNew("Random");
-
-    SUITE_ADD_TEST(suite, rand_exists);
-
-    return suite;
-}
 

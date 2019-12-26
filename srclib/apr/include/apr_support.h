@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,7 @@
 #ifndef APR_SUPPORT_H
 #define APR_SUPPORT_H
 /**
- * @file apr_support.h
+ * @file apr_file_io.h
  * @brief APR Support functions
  */
 /**
@@ -72,11 +72,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
-/**
- * Wait for IO to occur or timeout.
- */
 apr_status_t apr_wait_for_io_or_timeout(apr_file_t *f, apr_socket_t *s,
-                                        int for_read);
+                                           int for_read);
 
 #ifdef __cplusplus
 }

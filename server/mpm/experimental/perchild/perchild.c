@@ -580,7 +580,7 @@ static void process_socket(apr_pool_t *p, apr_socket_t *sock, long conn_id,
     }
 }
 
-static int perchild_process_connection(conn_rec *c)
+static perchild_process_connection(conn_rec *c)
 {
     ap_filter_t *f;
     apr_bucket_brigade *bb;
@@ -679,24 +679,27 @@ static apr_status_t receive_from_other_child(void **csd, ap_listen_rec *lr,
 {
     struct msghdr msg;
     struct cmsghdr *cmsg;
-    char buffer[HUGE_STRING_LEN * 2], *headers, *body;
-    int headerslen, bodylen;
-    struct iovec iov;
+    char headers[HUGE_STRING_LEN];
+    char request_body[HUGE_STRING_LEN];
+    struct iovec iov[2];
     int ret, dp;
     apr_os_sock_t sd;
+    apr_socket_t *unix_sd = NULL;
     apr_bucket_alloc_t *alloc = apr_bucket_alloc_create(ptrans);
     apr_bucket_brigade *bb = apr_brigade_create(ptrans, alloc);
     apr_bucket *bucket;
 
     apr_os_sock_get(&sd, lr->sd);
 
-    iov.iov_base = buffer;
-    iov.iov_len = sizeof(buffer);
+    iov[0].iov_base = headers;
+    iov[0].iov_len = HUGE_STRING_LEN;
+    iov[0].iov_base = request_body;
+    iov[0].iov_len = HUGE_STRING_LEN;
 
     msg.msg_name = NULL;
     msg.msg_namelen = 0;
-    msg.msg_iov = &iov;
-    msg.msg_iovlen = 1;
+    msg.msg_iov = iov;
+    msg.msg_iovlen = 2;
 
     cmsg = apr_palloc(ptrans, sizeof(*cmsg) + sizeof(sd));
     cmsg->cmsg_len = sizeof(*cmsg) + sizeof(sd);
@@ -707,32 +710,20 @@ static apr_status_t receive_from_other_child(void **csd, ap_listen_rec *lr,
 
     memcpy(&dp, CMSG_DATA(cmsg), sizeof(dp));
 
-    *csd = NULL; /* tell apr_os_sock_put() to allocate new apr_socket_t */
     apr_os_sock_put((apr_socket_t **)csd, &dp, ptrans);
 
     bucket = apr_bucket_eos_create(alloc);
     APR_BRIGADE_INSERT_HEAD(bb, bucket);
     bucket = apr_bucket_socket_create(*csd, alloc);
     APR_BRIGADE_INSERT_HEAD(bb, bucket);
-
-    body = strchr(iov.iov_base, 0);
-    if (!body) {
-        return 1;
-    }
-
-    body++;
-    bodylen = strlen(body);
-
-    headers = iov.iov_base;
-    headerslen = body - headers;
-
-    bucket = apr_bucket_heap_create(body, bodylen, NULL, alloc);
+    bucket = apr_bucket_heap_create(iov[1].iov_base, 
+                                    iov[1].iov_len, NULL, alloc);
     APR_BRIGADE_INSERT_HEAD(bb, bucket);
-    bucket = apr_bucket_heap_create(headers, headerslen, NULL, alloc);
+    bucket = apr_bucket_heap_create(iov[0].iov_base, 
+                                    iov[0].iov_len, NULL, alloc);
     APR_BRIGADE_INSERT_HEAD(bb, bucket);
 
     apr_pool_userdata_set(bb, "PERCHILD_SOCKETS", NULL, ptrans);
-
     return 0;
 }
 
@@ -740,7 +731,7 @@ static apr_status_t receive_from_other_child(void **csd, ap_listen_rec *lr,
 
 static void *worker_thread(apr_thread_t *thd, void *arg)
 {
-    void *csd;
+    void *csd = NULL;
     apr_pool_t *tpool;      /* Pool for this thread           */
     apr_pool_t *ptrans;     /* Pool for per-transaction stuff */
     volatile int thread_just_started = 1;
@@ -1338,14 +1329,6 @@ int ap_mpm_run(apr_pool_t *_pconf, apr_pool_t *plog, server_rec *s)
 
     ap_server_conf = s;
 
-    if ((ap_accept_lock_mech == APR_LOCK_SYSVSEM) || 
-        (ap_accept_lock_mech == APR_LOCK_POSIXSEM)) {
-        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
-                     "Server configured for an accept lock mechanism that "
-                     "cannot be used with perchild.  Falling back to FCNTL.");
-        ap_accept_lock_mech = APR_LOCK_FCNTL;
-    }
-
     /* Initialize cross-process accept lock */
     ap_lock_fname = apr_psprintf(_pconf, "%s.%u",
                                  ap_server_root_relative(_pconf, ap_lock_fname),
@@ -1645,7 +1628,8 @@ static int pass_request(request_rec *r)
     apr_bucket_brigade *bb = apr_brigade_create(r->pool, c->bucket_alloc);
     apr_bucket_brigade *sockbb;
     char request_body[HUGE_STRING_LEN] = "\0";
-    apr_size_t l = sizeof(request_body);
+    apr_off_t len = 0;
+    apr_size_t l = 0;
     perchild_header h;
     apr_bucket *sockbuck;
     perchild_server_conf *sconf = (perchild_server_conf *)
@@ -1656,7 +1640,7 @@ static int pass_request(request_rec *r)
                  "passing request to another child.  Vhost: %s, child %d %d",
                  apr_table_get(r->headers_in, "Host"), child_num, sconf->output);
     ap_get_brigade(r->connection->input_filters, bb, AP_MODE_EXHAUSTIVE, APR_NONBLOCK_READ,
-                   0);
+                   len);
 
     for (sockbuck = APR_BRIGADE_FIRST(bb); sockbuck != APR_BRIGADE_SENTINEL(bb);
          sockbuck = APR_BUCKET_NEXT(sockbuck)) {
@@ -1680,14 +1664,15 @@ static int pass_request(request_rec *r)
     h.p = r->pool;
     h.headers = apr_pstrcat(h.p, r->the_request, CRLF, "Host: ", r->hostname, 
                             CRLF, NULL);
+/* XXX  This REALLY needs to be uncommented, but it is causing problems.
     apr_table_do((int (*) (void *, const char *, const char *))
-                 perchild_header_field, (void *) &h, r->headers_in, NULL); 
+                 perchild_header_field, (void *) &h, r->headers_in, NULL); */
     h.headers = apr_pstrcat(h.p, h.headers, CRLF, NULL);
 
     iov[0].iov_base = h.headers;
     iov[0].iov_len = strlen(h.headers) + 1;
     iov[1].iov_base = request_body;
-    iov[1].iov_len = l + 1;
+    iov[1].iov_len = len + 1;
 
     msg.msg_name = NULL;
     msg.msg_namelen = 0;
@@ -1959,6 +1944,8 @@ static const char *set_child_per_uid(cmd_parms *cmd, void *dummy, const char *u,
     
 
     for (i = curr_child_num; i < max_this_time; i++, curr_child_num++) {
+        int uid = 0, gid = 0;
+
         if (i > num_daemons) {
             return "Trying to use more child ID's than NumServers.  Increase "
                    "NumServers in your config file.";

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,8 +57,8 @@
 #include "apr_general.h"
 #include "apr_strings.h"
 #include "apr_portable.h"
-#include "apr_arch_proc_mutex.h"
-#include "apr_arch_misc.h"
+#include "proc_mutex.h"
+#include "misc.h"
 
 static apr_status_t proc_mutex_cleanup(void *mutex_)
 {

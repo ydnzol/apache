@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,121 +52,67 @@
  * <http://www.apache.org/>.
  */
 
-#include "test_apr.h"
+#include <stdio.h>
 #include "apr_file_io.h"
 #include "apr_errno.h"
 #include "apr_general.h"
 #include "apr_lib.h"
+#include <stdlib.h>
+#ifdef BEOS
+#include <unistd.h>
+#endif
 
-static apr_file_t *readp = NULL;
-static apr_file_t *writep = NULL;
-
-static void create_pipe(CuTest *tc)
+int main(void)
 {
-    apr_status_t rv;
-
-    rv = apr_file_pipe_create(&readp, &writep, p);
-    CuAssertIntEquals(tc, APR_SUCCESS, rv);
-    CuAssertPtrNotNull(tc, readp);
-    CuAssertPtrNotNull(tc, writep);
-}   
-
-static void close_pipe(CuTest *tc)
-{
-    apr_status_t rv;
-    apr_size_t nbytes = 256;
-    char buf[256];
-
-    rv = apr_file_close(readp);
-    rv = apr_file_close(writep);
-    CuAssertIntEquals(tc, APR_SUCCESS, rv);
-
-    rv = apr_file_read(readp, buf, &nbytes);
-    CuAssertIntEquals(tc, 1, APR_STATUS_IS_EBADF(rv));
-}   
-
-static void set_timeout(CuTest *tc)
-{
-    apr_status_t rv;
+    apr_pool_t *context;
     apr_file_t *readp = NULL;
     apr_file_t *writep = NULL;
-    apr_interval_time_t timeout;
-
-    rv = apr_file_pipe_create(&readp, &writep, p);
-    CuAssertIntEquals(tc, APR_SUCCESS, rv);
-    CuAssertPtrNotNull(tc, readp);
-    CuAssertPtrNotNull(tc, writep);
-
-    rv = apr_file_pipe_timeout_get(readp, &timeout);
-    CuAssertIntEquals(tc, APR_SUCCESS, rv);
-    CuAssertIntEquals(tc, -1, timeout);
-
-    rv = apr_file_pipe_timeout_set(readp, apr_time_from_sec(1));
-    CuAssertIntEquals(tc, APR_SUCCESS, rv);
-
-    rv = apr_file_pipe_timeout_get(readp, &timeout);
-    CuAssertIntEquals(tc, APR_SUCCESS, rv);
-    CuAssertIntEquals(tc, apr_time_from_sec(1), timeout);
-}
-
-static void read_write(CuTest *tc)
-{
+    apr_size_t nbytes;
     apr_status_t rv;
     char *buf;
-    apr_size_t nbytes;
+    char msgbuf[120];
+
+    if (apr_initialize() != APR_SUCCESS) {
+        fprintf(stderr, "Couldn't initialize.");
+        exit(-1);
+    }
+    atexit(apr_terminate);
+    if (apr_pool_create(&context, NULL) != APR_SUCCESS) {
+        fprintf(stderr, "Couldn't allocate context.");
+        exit(-1);
+    }
+
+    fprintf(stdout, "Testing pipe functions.\n");
+
+    fprintf(stdout, "\tCreating pipes.......");
+    if ((rv = apr_file_pipe_create(&readp, &writep, context)) != APR_SUCCESS) {
+        fprintf(stderr, "apr_file_pipe_create()->%d/%s\n",
+                rv, apr_strerror(rv, msgbuf, sizeof msgbuf));
+        exit(-1);
+    }
+    else {
+        fprintf(stdout, "OK\n");
+    }
     
+    fprintf(stdout, "\tSetting pipe timeout.......");
+    if ((rv = apr_file_pipe_timeout_set(readp, apr_time_from_sec(1))) != APR_SUCCESS) {
+        fprintf(stderr, "apr_file_pipe_timeout_set()->%d/%s\n",
+                rv, apr_strerror(rv, msgbuf, sizeof msgbuf));
+        exit(-1);
+    } else {
+        fprintf(stdout, "OK\n");
+    }        
+
+    fprintf(stdout, "\tReading from the pipe.......");
     nbytes = strlen("this is a test");
-    buf = (char *)apr_palloc(p, nbytes + 1);
+    buf = (char *)apr_palloc(context, nbytes + 1);
+    if (apr_file_read(readp, buf, &nbytes) == APR_TIMEUP) {
+        fprintf(stdout, "OK\n");
+    }
+    else {
+        fprintf(stdout, "The timeout didn't work  :-(\n");
+        exit(-1);
+    }
 
-    rv = apr_file_pipe_create(&readp, &writep, p);
-    CuAssertIntEquals(tc, APR_SUCCESS, rv);
-    CuAssertPtrNotNull(tc, readp);
-    CuAssertPtrNotNull(tc, writep);
-
-    rv = apr_file_pipe_timeout_set(readp, apr_time_from_sec(1));
-    CuAssertIntEquals(tc, APR_SUCCESS, rv);
-
-    rv = apr_file_read(readp, buf, &nbytes);
-    CuAssertIntEquals(tc, 1, APR_STATUS_IS_TIMEUP(rv));
-    CuAssertIntEquals(tc, 0, nbytes);
+    return 0;
 }
-
-static void read_write_notimeout(CuTest *tc)
-{
-    apr_status_t rv;
-    char *buf = "this is a test";
-    char *input;
-    apr_size_t nbytes;
-    
-    nbytes = strlen("this is a test");
-
-    rv = apr_file_pipe_create(&readp, &writep, p);
-    CuAssertIntEquals(tc, APR_SUCCESS, rv);
-    CuAssertPtrNotNull(tc, readp);
-    CuAssertPtrNotNull(tc, writep);
-
-    rv = apr_file_write(writep, buf, &nbytes);
-    CuAssertIntEquals(tc, strlen("this is a test"), nbytes);
-    CuAssertIntEquals(tc, APR_SUCCESS, rv);
-
-    nbytes = 256;
-    input = apr_pcalloc(p, nbytes + 1);
-    rv = apr_file_read(readp, input, &nbytes);
-    CuAssertIntEquals(tc, APR_SUCCESS, rv);
-    CuAssertIntEquals(tc, strlen("this is a test"), nbytes);
-    CuAssertStrEquals(tc, "this is a test", input);
-}
-
-CuSuite *testpipe(void)
-{
-    CuSuite *suite = CuSuiteNew("Pipes");
-
-    SUITE_ADD_TEST(suite, create_pipe);
-    SUITE_ADD_TEST(suite, close_pipe);
-    SUITE_ADD_TEST(suite, set_timeout);
-    SUITE_ADD_TEST(suite, read_write);
-    SUITE_ADD_TEST(suite, read_write_notimeout);
-
-    return suite;
-}
-

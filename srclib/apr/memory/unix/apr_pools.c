@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -86,15 +86,6 @@
 #define BOUNDARY_INDEX 12
 #define BOUNDARY_SIZE (1 << BOUNDARY_INDEX)
 
-/* 
- * Timing constants for killing subprocesses
- * There is a total 3-second delay between sending a SIGINT 
- * and sending of the final SIGKILL.
- * TIMEOUT_INTERVAL should be set to TIMEOUT_USECS / 64
- * for the exponetial timeout alogrithm.
- */
-#define TIMEOUT_USECS    3000000
-#define TIMEOUT_INTERVAL   46875
 
 /*
  * Allocator
@@ -523,8 +514,8 @@ static apr_file_t *file_stderr = NULL;
  * Local functions
  */
 
-static void run_cleanups(cleanup_t **c);
-static void run_child_cleanups(cleanup_t **c);
+static void run_cleanups(cleanup_t *c);
+static void run_child_cleanups(cleanup_t *c);
 static void free_proc_chain(struct process_chain *procs);
 
 
@@ -621,7 +612,7 @@ APR_DECLARE(void *) apr_palloc(apr_pool_t *pool, apr_size_t size)
     active = pool->active;
 
     /* If the active node has enough bytes left, use it. */
-    if (size < (apr_size_t)(active->endp - active->first_avail)) {
+    if (size < active->endp - active->first_avail) {
         mem = active->first_avail;
         active->first_avail += size;
 
@@ -629,7 +620,7 @@ APR_DECLARE(void *) apr_palloc(apr_pool_t *pool, apr_size_t size)
     }
 
     node = active->next;
-    if (size < (apr_size_t)(node->endp - node->first_avail)) {
+    if (size < node->endp - node->first_avail) {
         *node->ref = node->next;
         node->next->ref = node->ref;
     }
@@ -715,7 +706,7 @@ APR_DECLARE(void) apr_pool_clear(apr_pool_t *pool)
         apr_pool_destroy(pool->child);
 
     /* Run cleanups */
-    run_cleanups(&pool->cleanups);
+    run_cleanups(pool->cleanups);
     pool->cleanups = NULL;
 
     /* Free subprocesses */
@@ -752,7 +743,7 @@ APR_DECLARE(void) apr_pool_destroy(apr_pool_t *pool)
         apr_pool_destroy(pool->child);
 
     /* Run cleanups */
-    run_cleanups(&pool->cleanups);
+    run_cleanups(pool->cleanups);
 
     /* Free subprocesses */
     free_proc_chain(pool->subprocesses);
@@ -934,8 +925,7 @@ static int psprintf_flush(apr_vformatter_buff_t *vbuff)
         size = APR_PSPRINTF_MIN_STRINGSIZE;
 
     node = active->next;
-    if (!ps->got_a_new_node
-        && size < (apr_size_t)(node->endp - node->first_avail)) {
+    if (!ps->got_a_new_node && size < node->endp - node->first_avail) {
         *node->ref = node->next;
         node->next->ref = node->ref;
 
@@ -1389,7 +1379,7 @@ static void pool_clear_debug(apr_pool_t *pool, const char *file_line)
         apr_pool_destroy_debug(pool->child, file_line);
 
     /* Run cleanups */
-    run_cleanups(&pool->cleanups);
+    run_cleanups(pool->cleanups);
     pool->cleanups = NULL;
 
     /* Free subprocesses */
@@ -1869,12 +1859,10 @@ APR_DECLARE(apr_status_t) apr_pool_userdata_get(void **data, const char *key,
     apr_pool_check_integrity(pool);
 #endif /* APR_POOL_DEBUG */
 
-    if (pool->user_data == NULL) {
+    if (pool->user_data == NULL)
         *data = NULL;
-    }
-    else {
+    else
         *data = apr_hash_get(pool->user_data, key, APR_HASH_KEY_STRING);
-    }
 
     return APR_SUCCESS;
 }
@@ -1967,31 +1955,26 @@ APR_DECLARE(apr_status_t) apr_pool_cleanup_run(apr_pool_t *p, void *data,
     return (*cleanup_fn)(data);
 }
 
-static void run_cleanups(cleanup_t **cref)
+static void run_cleanups(cleanup_t *c)
 {
-    cleanup_t *c = *cref;
-
     while (c) {
-        *cref = c->next;
         (*c->plain_cleanup_fn)((void *)c->data);
-        c = *cref;
+        c = c->next;
     }
 }
 
-static void run_child_cleanups(cleanup_t **cref)
+static void run_child_cleanups(cleanup_t *c)
 {
-    cleanup_t *c = *cref;
-
     while (c) {
-        *cref = c->next;
         (*c->child_cleanup_fn)((void *)c->data);
-        c = *cref;
+        c = c->next;
     }
 }
 
 static void cleanup_pool_for_exec(apr_pool_t *p)
 {
-    run_child_cleanups(&p->cleanups);
+    run_child_cleanups(p->cleanups);
+    p->cleanups = NULL;
 
     for (p = p->child; p; p = p->sibling)
         cleanup_pool_for_exec(p);
@@ -2045,7 +2028,6 @@ static void free_proc_chain(struct process_chain *procs)
      */
     struct process_chain *pc;
     int need_timeout = 0;
-    apr_time_t timeout_interval;
 
     if (!procs)
         return; /* No work.  Whew! */
@@ -2086,34 +2068,9 @@ static void free_proc_chain(struct process_chain *procs)
         }
     }
 
-    /* Sleep only if we have to. The sleep algorithm grows
-     * by a factor of two on each iteration. TIMEOUT_INTERVAL
-     * is equal to TIMEOUT_USECS / 64.
-     */
-    if (need_timeout) {
-        timeout_interval = TIMEOUT_INTERVAL;
-        apr_sleep(timeout_interval);
-
-        do {
-            /* check the status of the subprocesses */
-            need_timeout = 0;
-            for (pc = procs; pc; pc = pc->next) {
-                if (pc->kill_how == APR_KILL_AFTER_TIMEOUT) {
-                    if (apr_proc_wait(pc->pid, NULL, NULL, APR_NOWAIT) == APR_CHILD_NOTDONE)
-                        need_timeout = 1;		/* subprocess is still active */
-                    else
-                        pc->kill_how = APR_KILL_NEVER;	/* subprocess has exited */
-                }
-            }
-            if (need_timeout) {
-                if (timeout_interval >= TIMEOUT_USECS) {
-                    break;
-                }
-                apr_sleep(timeout_interval);
-                timeout_interval *= 2;
-            }
-        } while (need_timeout);
-    }
+    /* Sleep only if we have to... */
+    if (need_timeout)
+        apr_sleep(apr_time_from_sec(3));
 
     /* OK, the scripts we just timed out for have had a chance to clean up
      * --- now, just get rid of them, and also clean up the system accounting

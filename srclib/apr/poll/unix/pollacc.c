@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,8 +54,8 @@
 
 #include "apr.h"
 #include "apr_poll.h"
-#include "apr_arch_networkio.h"
-#include "apr_arch_file_io.h"
+#include "networkio.h"
+#include "fileio.h"
 #if HAVE_POLL_H
 #include <poll.h>
 #endif
@@ -169,7 +169,6 @@ APR_DECLARE(apr_status_t) apr_poll_socket_clear(apr_pollfd_t *aprset, apr_int16_
         if (curr->reqevents & events) {
             curr->reqevents &= ~events;
         }
-        curr++;
     }
     return APR_SUCCESS;
 }

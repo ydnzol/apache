@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
  * <http://www.apache.org/>.
  */
 
-#include "time.h"
+#include "apr_time.h"
 #include "apr_thread_proc.h"
 #include "apr_errno.h"
 #include "apr_general.h"
@@ -62,31 +62,73 @@
 #include <stdlib.h>
 #include "test_apr.h"
 
-#define SLEEP_INTERVAL 5
 
-static void sleep_one(CuTest *tc)
+static void do_sleep(int howlong)
 {
-    time_t pretime = time(NULL);
-    time_t posttime;
-    time_t timediff;
+    apr_time_t then, now, diff;
+    apr_time_t interval = apr_time_from_sec(howlong);
 
-    apr_sleep(apr_time_from_sec(SLEEP_INTERVAL));
-    posttime = time(NULL);
+    printf("    I'm about to go to sleep!\n");
 
-    /* normalize the timediff.  We should have slept for SLEEP_INTERVAL, so
-     * we should just subtract that out.
-     */
-    timediff = posttime - pretime - SLEEP_INTERVAL;
-    CuAssertTrue(tc, timediff >= 0);
-    CuAssertTrue(tc, timediff <= 1);
+    then = apr_time_now();
+    apr_sleep(interval);
+    now = apr_time_now();
+
+    diff = now - then;
+
+    printf("%-60s","    Just woken up, checking how long I've been asleep");
+    if (diff < interval * 0.99 || diff > interval * 1.01) {
+        printf("Failed!\n\t(actual: %" APR_TIME_T_FMT
+               ", wanted: %" APR_TIME_T_FMT")\n", diff, interval);
+    } else {
+        printf("OK\n");
+    }
 }
 
-CuSuite *testsleep(void)
+#if APR_HAS_THREADS
+static void * APR_THREAD_FUNC time_a_thread(apr_thread_t *thd, void *data)
 {
-    CuSuite *suite = CuSuiteNew("Sleep");
+    do_sleep(15);
 
-    SUITE_ADD_TEST(suite, sleep_one);
-
-    return suite;
+    return NULL;
 }
+#define OUTPUT_LINES 8
+#else
+#define OUTPUT_LINES 2
+#endif /* APR_HAS_THREADS */
+
+int main(void)
+{
+    apr_pool_t *p;
+#if APR_HAS_THREADS
+    apr_thread_t *t1, *t2, *t3;
+    apr_status_t rv;
+#endif
+
+    apr_initialize();
+
+    printf("Testing apr_sleep()\n===================\n\n");
+
+    STD_TEST_NEQ("Creating a pool to use", apr_pool_create(&p, NULL))
+
+#if APR_HAS_THREADS
+    printf("\nI will now start 3 threads, each of which should sleep for\n"
+           "15 seconds, then exit.\n");
+#endif
+
+    printf("The main app will sleep for 45 seconds then wake up.\n");
+    printf("All tests will check how long they've been in the land of nod.\n\n");
+    printf("If all is working you should see %d lines below within 45 seconds.\n\n",
+           OUTPUT_LINES);
+
+#if APR_HAS_THREADS
+    rv = apr_thread_create(&t1, NULL, time_a_thread, NULL, p);
+    rv = apr_thread_create(&t2, NULL, time_a_thread, NULL, p);
+    rv = apr_thread_create(&t3, NULL, time_a_thread, NULL, p);
+#endif
+
+    do_sleep(45);
+
+    return 0;
+}    
 

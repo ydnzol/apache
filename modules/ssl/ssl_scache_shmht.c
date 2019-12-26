@@ -138,7 +138,7 @@ void ssl_scache_shmht_init(server_rec *s, apr_pool_t *p)
         ssl_die();
     }
     ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                 "initialize MM %pp RMM %pp",
+                 "initialize MM %p RMM %p",
                  mc->pSessionCacheDataMM, mc->pSessionCacheDataRMM);
 
     /*

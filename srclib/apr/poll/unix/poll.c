@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,8 +56,8 @@
 #include "apr_poll.h"
 #include "apr_time.h"
 #include "apr_portable.h"
-#include "apr_arch_networkio.h"
-#include "apr_arch_file_io.h"
+#include "networkio.h"
+#include "fileio.h"
 #if HAVE_POLL_H
 #include <poll.h>
 #endif
@@ -217,8 +217,6 @@ APR_DECLARE(apr_status_t) apr_poll(apr_pollfd_t *aprset, int num, apr_int32_t *n
     for (i = 0; i < num; i++) {
         apr_os_sock_t fd;
 
-        aprset[i].rtnevents = 0;
-
         if (aprset[i].desc_type == APR_POLL_SOCKET) {
 #ifdef NETWARE
             if (HAS_PIPES(set_type)) {
@@ -301,6 +299,7 @@ APR_DECLARE(apr_status_t) apr_poll(apr_pollfd_t *aprset, int num, apr_int32_t *n
         else {
             break;
         }
+        aprset[i].rtnevents = 0;
         if (FD_ISSET(fd, &readset)) {
             aprset[i].rtnevents |= APR_POLLIN;
         }

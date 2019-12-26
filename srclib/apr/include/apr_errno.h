@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -94,7 +94,7 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
  * @def APR_FROM_OS_ERROR(os_err_type syserr)
  * Fold a platform specific error into an apr_status_t code.
  * @return apr_status_t
- * @param e The platform os error code.
+ * @param syserr The platform os error code.
  * @warning  macro implementation; the syserr argument may be evaluated
  *      multiple times.
  */
@@ -104,7 +104,7 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
  * @def APR_TO_OS_ERROR(apr_status_t statcode)
  * @return os_err_type
  * Fold an apr_status_t code back to the native platform defined error.
- * @param e The apr_status_t folded platform os error code.
+ * @param syserr The apr_status_t folded platform os error code.
  * @warning  macro implementation; the statcode argument may be evaluated
  *      multiple times.  If the statcode was not created by apr_get_os_error 
  *      or APR_FROM_OS_ERROR, the results are undefined.
@@ -113,14 +113,24 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
 
 /**
  * @def apr_get_os_error()
- * @return apr_status_t the last platform error, folded into apr_status_t, on most platforms
+ * @return apr_status_t the last platform error, folded into apr_status_t, on some platforms
  * @remark This retrieves errno, or calls a GetLastError() style function, and
  *      folds it with APR_FROM_OS_ERROR.  Some platforms (such as OS2) have no
- *      such mechanism, so this call may be unsupported.  Do NOT use this
- *      call for socket errors from socket, send, recv etc!
+ *      such mechanism, so this call may be unsupported.  Some platforms
+ *      require the alternate apr_get_netos_error() to retrieve the last
+ *      socket error.
  */
-#define apr_get_os_error()
+#define apr_get_os_error()   (APR_FROM_OS_ERROR(GetLastError()))
 
+/**
+ * Return the last socket error, folded into apr_status_t, on some platforms
+ * @deffunc apr_status_t apr_get_netos_error()
+ * @tip This retrieves errno, h_errno, or calls a GetLastSocketError() style
+ *      function, and folds it with APR_FROM_OS_ERROR.  Some platforms (such
+ *      as OS2) have no such mechanism, so this call may be unsupported.
+ */
+
+#define apr_get_netos_error()   (APR_FROM_OS_ERROR(WSAGetLastError()))
 /**
  * Reset the last platform error, unfolded from an apr_status_t, on some platforms
  * @param statcode The OS error folded in a prior call to APR_FROM_OS_ERROR()
@@ -132,30 +142,8 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
  *      with APR_TO_OS_ERROR.  Some platforms (such as OS2) have no such
  *      mechanism, so this call may be unsupported.
  */
-#define apr_set_os_error(statcode)
-
-/**
- * Return the last socket error, folded into apr_status_t, on all platforms
- * @deffunc apr_status_t apr_get_netos_error()
- * @tip This retrieves errno or calls a GetLastSocketError() style function,
- *      and folds it with APR_FROM_OS_ERROR.
- */
-#define apr_get_netos_error()
-
-/**
- * Reset the last socket error, unfolded from an apr_status_t
- * @param socketcode The socket error folded in a prior call to APR_FROM_OS_ERROR()
- * @deffunc void apr_set_os_error(apr_status_t statcode)
- * @tip Warning: macro implementation; the statcode argument may be evaluated
- *      multiple times.  If the statcode was not created by apr_get_os_error
- *      or APR_FROM_OS_ERROR, the results are undefined.  This macro sets
- *      errno, or calls a WSASetLastError() style function, unfolding 
- *      socketcode with APR_TO_OS_ERROR.
- */
-#define apr_set_netos_error(socketcode)
-
-#endif /* defined(DOXYGEN) */
-
+#define apr_set_os_error()   (APR_FROM_OS_ERROR(WSAGetLastError()))
+#endif
 /**
  * APR_OS_START_ERROR is where the APR specific error values start.
  */
@@ -226,7 +214,6 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
  * APR_EGENERAL     General failure (specific information not available)
  * APR_EBADIP       The specified IP address is invalid
  * APR_EBADMASK     The specified netmask is invalid
- * APR_ESYMNOTFOUND Could not find the requested symbol
  * </PRE>
  *
  * <PRE>
@@ -308,10 +295,6 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
 #define APR_EABOVEROOT     (APR_OS_START_ERROR + 23)
 /** @see APR_STATUS_IS_EBADPATH */
 #define APR_EBADPATH       (APR_OS_START_ERROR + 24)
-/** @see APR_STATUS_IS_EPATHWILD */
-#define APR_EPATHWILD      (APR_OS_START_ERROR + 25)
-/** @see APR_STATUS_IS_ESYMNOTFOUND */
-#define APR_ESYMNOTFOUND   (APR_OS_START_ERROR + 26)
 
 /* APR ERROR VALUE TESTS */
 /** 
@@ -369,12 +352,7 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
  * APR was unable to open the dso object.  
  * For more information call apr_dso_error().
  */
-#if defined(WIN32)
-#define APR_STATUS_IS_EDSOOPEN(s)       ((s) == APR_EDSOOPEN \
-                       || APR_TO_OS_ERROR(s) == ERROR_MOD_NOT_FOUND)
-#else
 #define APR_STATUS_IS_EDSOOPEN(s)       ((s) == APR_EDSOOPEN)
-#endif
 /** The given path was absolute. */
 #define APR_STATUS_IS_EABSOLUTE(s)      ((s) == APR_EABSOLUTE)
 /** The given path was relative. */
@@ -385,17 +363,6 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
 #define APR_STATUS_IS_EABOVEROOT(s)     ((s) == APR_EABOVEROOT)
 /** The given path was bad. */
 #define APR_STATUS_IS_EBADPATH(s)       ((s) == APR_EBADPATH)
-/** The given path contained wildcards. */
-#define APR_STATUS_IS_EPATHWILD(s)      ((s) == APR_EPATHWILD)
-/** Could not find the requested symbol.
- * For more information call apr_dso_error().
- */
-#if defined(WIN32)
-#define APR_STATUS_IS_ESYMNOTFOUND(s)   ((s) == APR_ESYMNOTFOUND \
-                       || APR_TO_OS_ERROR(s) == ERROR_PROC_NOT_FOUND)
-#else
-#define APR_STATUS_IS_ESYMNOTFOUND(s)   ((s) == APR_ESYMNOTFOUND)
-#endif
 
 /* APR STATUS VALUES */
 /** @see APR_STATUS_IS_INCHILD */
@@ -803,21 +770,6 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
 
 #define INCL_DOSERRORS
 #define INCL_DOS
-
-/* Leave these undefined.
- * OS2 doesn't rely on the errno concept.
- * The API calls always return a result codes which
- * should be filtered through APR_FROM_OS_ERROR().
- *
- * #define apr_get_os_error()   (APR_FROM_OS_ERROR(GetLastError()))
- * #define apr_set_os_error(e)  (SetLastError(APR_TO_OS_ERROR(e)))
- */
-
-/* A special case, only socket calls require this;
- */
-#define apr_get_netos_error()   (APR_FROM_OS_ERROR(errno))
-#define apr_set_netos_error(e)  (errno = APR_TO_OS_ERROR(e))
-
 /* And this needs to be greped away for good:
  */
 #define APR_OS2_STATUS(e) (APR_FROM_OS_ERROR(e))
@@ -877,11 +829,7 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
 #define APR_STATUS_IS_EACCES(s)         ((s) == APR_EACCES \
                 || (s) == APR_OS_START_SYSERR + ERROR_ACCESS_DENIED \
                 || (s) == APR_OS_START_SYSERR + ERROR_SHARING_VIOLATION)
-#define APR_STATUS_IS_EEXIST(s)         ((s) == APR_EEXIST \
-                || (s) == APR_OS_START_SYSERR + ERROR_OPEN_FAILED \
-                || (s) == APR_OS_START_SYSERR + ERROR_FILE_EXISTS \
-                || (s) == APR_OS_START_SYSERR + ERROR_ALREADY_EXISTS \
-                || (s) == APR_OS_START_SYSERR + ERROR_ACCESS_DENIED)
+#define APR_STATUS_IS_EEXIST(s)         ((s) == APR_EEXIST)
 #define APR_STATUS_IS_ENAMETOOLONG(s)   ((s) == APR_ENAMETOOLONG \
                 || (s) == APR_OS_START_SYSERR + ERROR_FILENAME_EXCED_RANGE \
                 || (s) == APR_OS_START_SYSERR + SOCENAMETOOLONG)
@@ -933,8 +881,7 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
 #define APR_STATUS_IS_EXDEV(s)          ((s) == APR_EXDEV \
                 || (s) == APR_OS_START_SYSERR + ERROR_NOT_SAME_DEVICE)
 #define APR_STATUS_IS_ENOTEMPTY(s)      ((s) == APR_ENOTEMPTY \
-                || (s) == APR_OS_START_SYSERR + ERROR_DIR_NOT_EMPTY \
-                || (s) == APR_OS_START_SYSERR + ERROR_ACCESS_DENIED)
+                || (s) == APR_OS_START_SYSERR + ERROR_DIR_NOT_EMPTY)
 
 /*
     Sorry, too tired to wrap this up for OS2... feel free to
@@ -977,7 +924,6 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
 /* A special case, only socket calls require this:
  */
 #define apr_get_netos_error()   (APR_FROM_OS_ERROR(WSAGetLastError()))
-#define apr_set_netos_error(e)   (WSASetLastError(APR_TO_OS_ERROR(e)))
 
 #define APR_STATUS_IS_SUCCESS(s)           ((s) == APR_SUCCESS \
                 || (s) == APR_OS_START_SYSERR + ERROR_SUCCESS)
@@ -1040,7 +986,6 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
                 || (s) == APR_OS_START_SYSERR + ERROR_NO_PROC_SLOTS \
                 || (s) == APR_OS_START_SYSERR + ERROR_NESTING_NOT_ALLOWED \
                 || (s) == APR_OS_START_SYSERR + ERROR_MAX_THRDS_REACHED \
-                || (s) == APR_OS_START_SYSERR + ERROR_LOCK_VIOLATION \
                 || (s) == APR_OS_START_SYSERR + WSAEWOULDBLOCK)
 #define APR_STATUS_IS_EINTR(s)          ((s) == APR_EINTR \
                 || (s) == APR_OS_START_SYSERR + WSAEINTR)
@@ -1081,12 +1026,12 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
 
 #define APR_FROM_OS_ERROR(e)  (e)
 #define APR_TO_OS_ERROR(e)    (e)
+#define APR_TO_NETOS_ERROR(e)    (e-APR_OS_START_SYSERR)
 
 #define apr_get_os_error()    (errno)
 #define apr_set_os_error(e)   (errno = (e))
 
 #define apr_get_netos_error()   (WSAGetLastError()+APR_OS_START_SYSERR)
-#define apr_set_netos_error(e)   (WSASetLastError((e)-APR_OS_START_SYSERR))
 
 #define APR_STATUS_IS_SUCCESS(s)           ((s) == APR_SUCCESS)
 
@@ -1144,9 +1089,10 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
 #define apr_set_os_error(e)   (errno = (e))
 
 /* A special case, only socket calls require this:
+ * [Note: platforms using h_errno should replace this macro,
+ * although watch out for thread saftey issues with h_errno.]
  */
 #define apr_get_netos_error() (errno)
-#define apr_set_netos_error(e) (errno = (e))
 
 /** no error */
 #define APR_STATUS_IS_SUCCESS(s)           ((s) == APR_SUCCESS)
@@ -1229,8 +1175,7 @@ APR_DECLARE(char *) apr_strerror(apr_status_t statcode, char *buf,
 /** cross device link */
 #define APR_STATUS_IS_EXDEV(s)           ((s) == APR_EXDEV)
 /** Directory Not Empty */
-#define APR_STATUS_IS_ENOTEMPTY(s)       ((s) == APR_ENOTEMPTY || \
-                                          (s) == APR_EEXIST)
+#define APR_STATUS_IS_ENOTEMPTY(s)       ((s) == APR_ENOTEMPTY)
 
 #endif /* !def OS2 || WIN32 */
 

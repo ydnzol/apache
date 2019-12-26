@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,9 +58,9 @@
 #include "apr_signal.h"
 #include "ShellAPI.h"
 
-#include "apr_arch_misc.h"       /* for WSAHighByte / WSALowByte */
+#include "misc.h"       /* for WSAHighByte / WSALowByte */
 #include "wchar.h"
-#include "apr_arch_file_io.h"
+#include "fileio.h"
 #include "crtdbg.h"
 #include "assert.h"
 
@@ -195,9 +195,6 @@ APR_DECLARE(apr_status_t) apr_app_initialize(int *argc,
 
 static int initialized = 0;
 
-/* Provide to win32/thread.c */
-extern DWORD tls_apr_thread;
-
 APR_DECLARE(apr_status_t) apr_initialize(void)
 {
     apr_pool_t *pool;
@@ -216,7 +213,6 @@ APR_DECLARE(apr_status_t) apr_initialize(void)
         return APR_EEXIST;
     }
     
-    tls_apr_thread = TlsAlloc();
     if ((status = apr_pool_initialize()) != APR_SUCCESS)
         return status;
     
@@ -251,8 +247,6 @@ APR_DECLARE_NONSTD(void) apr_terminate(void)
     apr_pool_terminate();
     
     WSACleanup();
-
-    TlsFree(tls_apr_thread);
 }
 
 APR_DECLARE(void) apr_terminate2(void)

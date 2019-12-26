@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2001 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,17 +81,15 @@ typedef struct apr_allocator_t apr_allocator_t;
 /** the structure which holds information about the allocation */
 typedef struct apr_memnode_t apr_memnode_t;
 
-/** basic memory node structure */
 struct apr_memnode_t {
-    apr_memnode_t *next;            /**< next memnode */
-    apr_memnode_t **ref;            /**< reference to self */
-    apr_uint32_t   index;           /**< size */
-    apr_uint32_t   free_index;      /**< how much free */
-    char          *first_avail;     /**< pointer to first free memory */
-    char          *endp;            /**< pointer to end of free memory */
+    apr_memnode_t *next;
+    apr_memnode_t **ref;
+    apr_uint32_t   index;
+    apr_uint32_t   free_index;
+    char          *first_avail;
+    char          *endp;
 };
 
-/** The base size of a memory node - aligned.  */
 #define APR_MEMNODE_T_SIZE APR_ALIGN_DEFAULT(sizeof(apr_memnode_t))
 
 /** Symbolic constants */
@@ -118,6 +116,9 @@ APR_DECLARE(void) apr_allocator_destroy(apr_allocator_t *allocator);
  * @param size The size of the mem to allocate (excluding the
  *        memnode structure)
  */
+/*
+ * XXX: Move this to a private header file
+ */
 APR_DECLARE(apr_memnode_t *) apr_allocator_alloc(apr_allocator_t *allocator,
                                                  apr_size_t size);
 
@@ -125,6 +126,9 @@ APR_DECLARE(apr_memnode_t *) apr_allocator_alloc(apr_allocator_t *allocator,
  * Free a block of mem, giving it back to the allocator
  * @param allocator The allocator to give the mem back to
  * @param memnode The memory node to return
+ */
+/*
+ * XXX: Move this to a private header file
  */
 APR_DECLARE(void) apr_allocator_free(apr_allocator_t *allocator,
                                      apr_memnode_t *memnode);

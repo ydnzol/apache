@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -175,11 +175,6 @@ int thread_ready(void);
 #if !APR_HAVE_ERRNO_H
 APR_DECLARE_DATA int errno;
 #define ENOSPC 1
-#endif
-
-#if APR_HAVE_IPV6
-#define HAVE_GETADDRINFO 1
-#define HAVE_GETNAMEINFO 1
 #endif
 
 #endif  /*APR_PRIVATE_H*/

@@ -108,7 +108,6 @@
 	".\include\util_filter.h"\
 	".\srclib\apr-util\include\apr_buckets.h"\
 	".\srclib\apr-util\include\apr_hooks.h"\
-	".\srclib\apr-util\include\apr_optional.h"\
 	".\srclib\apr-util\include\apr_optional_hooks.h"\
 	".\srclib\apr-util\include\apr_uri.h"\
 	".\srclib\apr-util\include\apu.h"\
@@ -223,7 +222,6 @@
 	".\modules\http\mod_core.h"\
 	".\srclib\apr-util\include\apr_buckets.h"\
 	".\srclib\apr-util\include\apr_hooks.h"\
-	".\srclib\apr-util\include\apr_optional.h"\
 	".\srclib\apr-util\include\apr_optional_hooks.h"\
 	".\srclib\apr-util\include\apr_uri.h"\
 	".\srclib\apr-util\include\apr_xlate.h"\
@@ -527,7 +525,6 @@
 	".\include\util_filter.h"\
 	".\srclib\apr-util\include\apr_buckets.h"\
 	".\srclib\apr-util\include\apr_hooks.h"\
-	".\srclib\apr-util\include\apr_optional.h"\
 	".\srclib\apr-util\include\apr_optional_hooks.h"\
 	".\srclib\apr-util\include\apr_uri.h"\
 	".\srclib\apr-util\include\apu.h"\
@@ -1024,10 +1021,10 @@
 	".\srclib\apr\include\apr_time.h"\
 	".\srclib\apr\include\apr_user.h"\
 	".\srclib\apr\include\apr_want.h"\
-	".\srclib\apr\include\arch\win32\apr_arch_file_io.h"\
-	".\srclib\apr\include\arch\win32\apr_arch_misc.h"\
-	".\srclib\apr\include\arch\win32\apr_arch_utf8.h"\
 	".\srclib\apr\include\arch\win32\apr_private.h"\
+	".\srclib\apr\include\arch\win32\fileio.h"\
+	".\srclib\apr\include\arch\win32\misc.h"\
+	".\srclib\apr\include\arch\win32\utf8.h"\
 	
 
 .\server\util_xml.c : \
@@ -1044,7 +1041,6 @@
 	".\include\util_xml.h"\
 	".\srclib\apr-util\include\apr_buckets.h"\
 	".\srclib\apr-util\include\apr_hooks.h"\
-	".\srclib\apr-util\include\apr_optional.h"\
 	".\srclib\apr-util\include\apr_optional_hooks.h"\
 	".\srclib\apr-util\include\apr_uri.h"\
 	".\srclib\apr-util\include\apr_xml.h"\
@@ -1103,10 +1099,10 @@
 	".\srclib\apr\include\apr_time.h"\
 	".\srclib\apr\include\apr_user.h"\
 	".\srclib\apr\include\apr_want.h"\
-	".\srclib\apr\include\arch\win32\apr_arch_file_io.h"\
-	".\srclib\apr\include\arch\win32\apr_arch_misc.h"\
-	".\srclib\apr\include\arch\win32\apr_arch_utf8.h"\
 	".\srclib\apr\include\arch\win32\apr_private.h"\
+	".\srclib\apr\include\arch\win32\fileio.h"\
+	".\srclib\apr\include\arch\win32\misc.h"\
+	".\srclib\apr\include\arch\win32\utf8.h"\
 	
 
 .\server\mpm\winnt\child.c : \
@@ -1363,24 +1359,6 @@
 	".\srclib\apr\include\apr_thread_proc.h"\
 	".\srclib\apr\include\apr_time.h"\
 	".\srclib\apr\include\apr_user.h"\
-	".\srclib\apr\include\apr_want.h"\
-	
-
-.\server\provider.c : \
-	".\include\ap_config.h"\
-	".\include\ap_provider.h"\
-	".\include\os.h"\
-	".\srclib\apr-util\include\apr_hooks.h"\
-	".\srclib\apr-util\include\apr_optional_hooks.h"\
-	".\srclib\apr-util\include\apu.h"\
-	".\srclib\apr\include\apr.h"\
-	".\srclib\apr\include\apr_allocator.h"\
-	".\srclib\apr\include\apr_errno.h"\
-	".\srclib\apr\include\apr_general.h"\
-	".\srclib\apr\include\apr_hash.h"\
-	".\srclib\apr\include\apr_pools.h"\
-	".\srclib\apr\include\apr_tables.h"\
-	".\srclib\apr\include\apr_thread_mutex.h"\
 	".\srclib\apr\include\apr_want.h"\
 	
 

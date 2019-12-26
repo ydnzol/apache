@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -154,7 +154,7 @@
 #endif
 #endif
 
-#define APU_HAVE_APR_ICONV     1
+#define APU_HAVE_APR_ICONV     0
 #define APU_HAVE_ICONV         0
 #define APR_HAS_XLATE          (APU_HAVE_APR_ICONV || APU_HAVE_ICONV)
 

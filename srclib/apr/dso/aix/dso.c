@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -87,7 +87,7 @@
 #include <sys/types.h>
 #include <sys/ldr.h>
 #include <a.out.h>
-#include "apr_arch_dso.h"
+#include "dso.h"
 #include "apr_portable.h"
 
 #if APR_HAS_DSO
@@ -197,7 +197,7 @@ APR_DECLARE(apr_status_t) apr_dso_sym(apr_dso_handle_sym_t *ressym,
 
     if (retval == NULL) {
         handle->errormsg = dlerror();
-        return APR_ESYMNOTFOUND;
+        return APR_EINIT;
     }
 
     *ressym = retval;

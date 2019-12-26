@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,7 +81,7 @@ extern "C" {
 
 /* ### these will need to move at some point to a more logical spot */
 
-/** @see apr_text */
+/* simple strutures to keep a linked list of pieces of text */
 typedef struct apr_text apr_text;
 
 /** Structure to keep a linked list of pieces of text */
@@ -93,7 +93,6 @@ struct apr_text {
     struct apr_text *next;
 };
 
-/** @see apr_text_header */
 typedef struct apr_text_header apr_text_header;
 
 /** A list of pieces of text */
@@ -166,18 +165,15 @@ APU_DECLARE(void) apr_text_append(apr_pool_t *p, apr_text_header *hdr,
 **     left within the XML tree), so the APR_XML_NS_NONE value won't ever
 **     really apply to these values.
 */
-#define APR_XML_NS_DAV_ID	0	/**< namespace ID for "DAV:" */
-#define APR_XML_NS_NONE		-10	/**< no namespace for this elem/attr */
+#define APR_XML_NS_DAV_ID	0	/* namespace ID for "DAV:" */
+#define APR_XML_NS_NONE		-10	/* no namespace for this elem/attr */
 
-#define APR_XML_NS_ERROR_BASE	-100	/**< used only during processing */
-/** Is this namespace an error? */
+#define APR_XML_NS_ERROR_BASE	-100	/* used only during processing */
 #define APR_XML_NS_IS_ERROR(e)	((e) <= APR_XML_NS_ERROR_BASE)
 
-/** @see apr_xml_attr */
+
 typedef struct apr_xml_attr apr_xml_attr;
-/** @see apr_xml_elem */
 typedef struct apr_xml_elem apr_xml_elem;
-/** @see apr_xml_doc */
 typedef struct apr_xml_doc apr_xml_doc;
 
 /** apr_xml_attr: holds a parsed XML attribute */
@@ -235,7 +231,6 @@ struct apr_xml_elem {
     void *priv;
 };
 
-/** Is this XML element empty? */
 #define APR_XML_ELEM_IS_EMPTY(e) ((e)->first_child == NULL && \
                                   (e)->first_cdata.first == NULL)
 
@@ -247,7 +242,7 @@ struct apr_xml_doc {
     apr_array_header_t *namespaces;
 };
 
-/** Opaque XML parser structure */
+
 typedef struct apr_xml_parser apr_xml_parser;
 
 /**
@@ -352,8 +347,6 @@ APU_DECLARE(const char *) apr_xml_empty_elem(apr_pool_t *p,
  * @param s The string to quote
  * @param quotes If quotes is true, then replace '"' with '&quot;'.
  * @return The quoted string
- * @note If the string does not contain special characters, it is not
- * duplicated into the pool and the original string is returned.
  */
 APU_DECLARE(const char *) apr_xml_quote_string(apr_pool_t *p, const char *s,
                                                int quotes);
@@ -375,8 +368,6 @@ APU_DECLARE(void) apr_xml_quote_elem(apr_pool_t *p, apr_xml_elem *elem);
  */
 APU_DECLARE(int) apr_xml_insert_uri(apr_array_header_t *uri_array,
                                     const char *uri);
-
-/** Get the URI item for this XML element */
 #define APR_XML_GET_URI_ITEM(ary, i) (((const char * const *)(ary)->elts)[i])
 
 #ifdef __cplusplus

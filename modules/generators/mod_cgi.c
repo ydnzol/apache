@@ -514,6 +514,7 @@ static apr_status_t default_build_command(const char **cmd, const char ***argv,
 
     if (e_info->process_cgi) {
         *cmd = r->filename;
+        args = r->args;
         /* Do not process r->args if they contain an '=' assignment 
          */
         if (r->args && r->args[0] && !ap_strchr_c(r->args, '=')) {
@@ -784,18 +785,9 @@ static int cgi_handler(request_rec *r)
             return HTTP_MOVED_TEMPORARILY;
         }
 
-        rv = ap_pass_brigade(r->output_filters, bb);
+        ap_pass_brigade(r->output_filters, bb);
 
-        /* don't soak up script output if errors occurred
-         * writing it out...  otherwise, we prolong the
-         * life of the script when the connection drops
-         * or we stopped sending output for some other
-         * reason
-         */
-        if (rv == APR_SUCCESS && !r->connection->aborted) {
-            log_script_err(r, script_err);
-        }
-
+        log_script_err(r, script_err);
         apr_file_close(script_err);
     }
 

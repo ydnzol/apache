@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_networkio.h"
+#include "networkio.h"
 #include "apr_network_io.h"
 #include "apr_general.h"
 #include "apr_strings.h"
@@ -157,7 +157,7 @@ APR_DECLARE(apr_status_t) apr_socket_opt_set(apr_socket_t *sock,
         }
         break;
     case APR_SO_REUSEADDR:
-        if (on != apr_is_option_set(sock->netmask, APR_SO_REUSEADDR)) {
+        if (on != apr_is_option_set(sock->netmask, APR_SO_REUSEADDR)){
             if (setsockopt(sock->socketdes, SOL_SOCKET, SO_REUSEADDR, 
                            (void *)&one, sizeof(int)) == -1) {
                 return apr_get_netos_error();
@@ -166,7 +166,7 @@ APR_DECLARE(apr_status_t) apr_socket_opt_set(apr_socket_t *sock,
         }
         break;
     case APR_SO_NONBLOCK:
-        if (apr_is_option_set(sock->netmask, APR_SO_NONBLOCK) != on) {
+        if (apr_is_option_set(sock->netmask, APR_SO_NONBLOCK) != on){
             if (on) {
                 if ((stat = sononblock(sock->socketdes)) != APR_SUCCESS) 
                     return stat;
@@ -180,7 +180,7 @@ APR_DECLARE(apr_status_t) apr_socket_opt_set(apr_socket_t *sock,
         break;
     case APR_SO_LINGER:
     {
-        if (apr_is_option_set(sock->netmask, APR_SO_LINGER) != on) {
+        if (apr_is_option_set(sock->netmask, APR_SO_LINGER) != on){
             struct linger li;
             li.l_onoff = on;
             li.l_linger = MAX_SECS_TO_LINGER;
@@ -193,36 +193,13 @@ APR_DECLARE(apr_status_t) apr_socket_opt_set(apr_socket_t *sock,
         break;
     }
     case APR_TCP_NODELAY:
-        if (apr_is_option_set(sock->netmask, APR_TCP_NODELAY) != on) {
-            int optlevel = IPPROTO_TCP;
-            int optname = TCP_NODELAY;
-
-#if APR_HAVE_SCTP
-            if (sock->protocol == IPPROTO_SCTP) {
-                optlevel = IPPROTO_SCTP;
-                optname = SCTP_NODELAY;
-            }
-#endif
-            if (setsockopt(sock->socketdes, optlevel, optname,
+        if (apr_is_option_set(sock->netmask, APR_TCP_NODELAY) != on){
+            if (setsockopt(sock->socketdes, IPPROTO_TCP, TCP_NODELAY, 
                            (void *)&on, sizeof(int)) == -1) {
                 return apr_get_netos_error();
             }
             apr_set_option(&sock->netmask, APR_TCP_NODELAY, on);
         }
-        break;
-    case APR_IPV6_V6ONLY:
-#if APR_HAVE_IPV6 && defined(IPV6_V6ONLY)
-        /* we don't know the initial setting of this option,
-         * so don't check/set sock->netmask since that optimization
-         * won't work
-         */
-        if (setsockopt(sock->socketdes, IPPROTO_IPV6, IPV6_V6ONLY,
-                       (void *)&on, sizeof(int)) == -1) {
-            return apr_get_netos_error();
-        }
-#else
-        return APR_ENOTIMPL;
-#endif
         break;
     default:
         return APR_EINVAL;
@@ -289,4 +266,5 @@ APR_DECLARE(apr_status_t) apr_gethostname(char *buf, int len,
     }
     return APR_SUCCESS;
 }
+
 

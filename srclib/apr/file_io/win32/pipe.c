@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@
  * <http://www.apache.org/>.
  */
 
-#include "win32/apr_arch_file_io.h"
+#include "win32/fileio.h"
 #include "apr_file_io.h"
 #include "apr_general.h"
 #include "apr_strings.h"
@@ -67,7 +67,7 @@
 #if APR_HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-#include "apr_arch_misc.h"
+#include "misc.h"
 
 APR_DECLARE(apr_status_t) apr_file_pipe_timeout_set(apr_file_t *thepipe, apr_interval_time_t timeout)
 {
@@ -89,11 +89,53 @@ APR_DECLARE(apr_status_t) apr_file_pipe_timeout_get(apr_file_t *thepipe, apr_int
 
 APR_DECLARE(apr_status_t) apr_file_pipe_create(apr_file_t **in, apr_file_t **out, apr_pool_t *p)
 {
-    return apr_create_nt_pipe(in, out, TRUE, TRUE, p);
+#ifdef _WIN32_WCE
+    return APR_ENOTIMPL;
+#else
+    SECURITY_ATTRIBUTES sa;
+
+    sa.nLength = sizeof(sa);
+    sa.bInheritHandle = TRUE;
+    sa.lpSecurityDescriptor = NULL;
+
+    (*in) = (apr_file_t *)apr_pcalloc(p, sizeof(apr_file_t));
+    (*in)->pool = p;
+    (*in)->fname = NULL;
+    (*in)->pipe = 1;
+    (*in)->timeout = -1;
+    (*in)->ungetchar = -1;
+    (*in)->eof_hit = 0;
+    (*in)->filePtr = 0;
+    (*in)->bufpos = 0;
+    (*in)->dataRead = 0;
+    (*in)->direction = 0;
+
+    (*out) = (apr_file_t *)apr_pcalloc(p, sizeof(apr_file_t));
+    (*out)->pool = p;
+    (*in)->fname = NULL;
+    (*out)->pipe = 1;
+    (*out)->timeout = -1;
+    (*out)->ungetchar = -1;
+    (*out)->eof_hit = 0;
+    (*out)->filePtr = 0;
+    (*out)->bufpos = 0;
+    (*out)->dataRead = 0;
+    (*out)->direction = 0;
+
+    if (!CreatePipe(&(*in)->filehand, &(*out)->filehand, &sa, 65536)) {
+        return apr_get_os_error();
+    }
+
+    apr_pool_cleanup_register((*in)->pool, (void *)(*in), file_cleanup,
+                        apr_pool_cleanup_null);
+    apr_pool_cleanup_register((*out)->pool, (void *)(*out), file_cleanup,
+                        apr_pool_cleanup_null);
+    return APR_SUCCESS;
+#endif
 }
 
 /* apr_create_nt_pipe()
- * An internal (for now) APR function used by apr_proc_create() 
+ * An internal (for now) APR function created for use by apr_proc_create() 
  * when setting up pipes to communicate with the child process. 
  * apr_create_nt_pipe() allows setting the blocking mode of each end of 
  * the pipe when the pipe is created (rather than after the pipe is created). 
@@ -108,7 +150,9 @@ APR_DECLARE(apr_status_t) apr_file_pipe_create(apr_file_t **in, apr_file_t **out
  * non-blocking? On NT, even though you can set a pipe non-blocking, 
  * there is no clean way to set event driven non-zero timeouts (e.g select(),
  * WaitForSinglelObject, et. al. will not detect pipe i/o). On NT, you 
- * have to poll the pipe to detect i/o on a non-blocking pipe.
+ * have to poll the pipe to detech i/o on a non-blocking pipe.
+ *
+ * wgs
  */
 apr_status_t apr_create_nt_pipe(apr_file_t **in, apr_file_t **out, 
                                 BOOLEAN bAsyncRead, BOOLEAN bAsyncWrite, 

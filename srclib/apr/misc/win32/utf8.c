@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,7 @@
 #include "apr.h"
 #include "apr_private.h"
 #include "apr_errno.h"
-#include "apr_arch_utf8.h"
+#include "utf8.h"
 
 /* Implement the design principal specified by RFC 2718 2.2.5 
  * Guidelines for new URL Schemes - within the APR.

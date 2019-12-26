@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -78,32 +78,15 @@ extern "C" {
  * @{
  */
 
-/* Many applications use the type member to determine the
- * existance of a file or initialization of the file info,
- * so the APR_NOFILE value must be distinct from APR_UNKFILE.
- */
-
-/** apr_filetype_e values for the filetype member of the 
- * apr_file_info_t structure
- * @warning: Not all of the filetypes below can be determined.
- * For example, a given platform might not correctly report 
- * a socket descriptor as APR_SOCK if that type isn't 
- * well-identified on that platform.  In such cases where
- * a filetype exists but cannot be described by the recognized
- * flags below, the filetype will be APR_UNKFILE.  If the
- * filetype member is not determined, the type will be APR_NOFILE.
- */
-
 typedef enum {
-    APR_NOFILE = 0,     /**< no file type determined */
+    APR_NOFILE = 0,     /**< the file exists, but APR doesn't know its type */
     APR_REG,            /**< a regular file */
     APR_DIR,            /**< a directory */
     APR_CHR,            /**< a character device */
     APR_BLK,            /**< a block device */
     APR_PIPE,           /**< a FIFO / pipe */
     APR_LNK,            /**< a symbolic link */
-    APR_SOCK,           /**< a [unix domain] socket */
-    APR_UNKFILE = 127   /**< a file of some other unknown type */
+    APR_SOCK            /**< a [unix domain] socket */
 } apr_filetype_e; 
 
 /**
@@ -164,7 +147,6 @@ typedef dev_t                     apr_dev_t;
  * @defgroup APR_File_Info Stat Functions
  * @{
  */
-/** file info structure */
 typedef struct apr_finfo_t        apr_finfo_t;
 
 #define APR_FINFO_LINK   0x00000001 /**< Stat the link not the file itself if it is a link */
@@ -173,24 +155,24 @@ typedef struct apr_finfo_t        apr_finfo_t;
 #define APR_FINFO_ATIME  0x00000040 /**< Access Time */
 #define APR_FINFO_SIZE   0x00000100 /**< Size of the file */
 #define APR_FINFO_CSIZE  0x00000200 /**< Storage size consumed by the file */
-#define APR_FINFO_DEV    0x00001000 /**< Device */
-#define APR_FINFO_INODE  0x00002000 /**< Inode */
-#define APR_FINFO_NLINK  0x00004000 /**< Number of links */
-#define APR_FINFO_TYPE   0x00008000 /**< Type */
-#define APR_FINFO_USER   0x00010000 /**< User */
-#define APR_FINFO_GROUP  0x00020000 /**< Group */
-#define APR_FINFO_UPROT  0x00100000 /**< User protection bits */
-#define APR_FINFO_GPROT  0x00200000 /**< Group protection bits */
-#define APR_FINFO_WPROT  0x00400000 /**< World protection bits */
-#define APR_FINFO_ICASE  0x01000000 /**< if dev is case insensitive */
-#define APR_FINFO_NAME   0x02000000 /**< ->name in proper case */
+#define APR_FINFO_DEV    0x00001000
+#define APR_FINFO_INODE  0x00002000
+#define APR_FINFO_NLINK  0x00004000
+#define APR_FINFO_TYPE   0x00008000
+#define APR_FINFO_USER   0x00010000 
+#define APR_FINFO_GROUP  0x00020000 
+#define APR_FINFO_UPROT  0x00100000 
+#define APR_FINFO_GPROT  0x00200000
+#define APR_FINFO_WPROT  0x00400000
+#define APR_FINFO_ICASE  0x01000000  /**<  if dev is case insensitive */
+#define APR_FINFO_NAME   0x02000000  /**<  ->name in proper case */
 
-#define APR_FINFO_MIN    0x00008170 /**< type, mtime, ctime, atime, size */
-#define APR_FINFO_IDENT  0x00003000 /**< dev and inode */
-#define APR_FINFO_OWNER  0x00030000 /**< user and group */
-#define APR_FINFO_PROT   0x00700000 /**<  all protections */
-#define APR_FINFO_NORM   0x0073b170 /**<  an atomic unix apr_stat() */
-#define APR_FINFO_DIRENT 0x02000000 /**<  an atomic unix apr_dir_read() */
+#define APR_FINFO_MIN    0x00008170  /**<  type, mtime, ctime, atime, size */
+#define APR_FINFO_IDENT  0x00003000  /**<  dev and inode */
+#define APR_FINFO_OWNER  0x00030000  /**<  user and group */
+#define APR_FINFO_PROT   0x00700000  /**<  all protections */
+#define APR_FINFO_NORM   0x0073b170  /**<  an atomic unix apr_stat() */
+#define APR_FINFO_DIRENT 0x02000000  /**<  an atomic unix apr_dir_read() */
 
 /**
  * The file information structure.  This is analogous to the POSIX
@@ -204,9 +186,8 @@ struct apr_finfo_t {
     apr_int32_t valid;
     /** The access permissions of the file.  Mimics Unix access rights. */
     apr_fileperms_t protection;
-    /** The type of file.  One of APR_REG, APR_DIR, APR_CHR, APR_BLK, APR_PIPE, 
-     * APR_LNK or APR_SOCK.  If the type is undetermined, the value is APR_NOFILE.
-     * If the type cannot be determined, the value is APR_UNKFILE.
+    /** The type of file.  One of APR_NOFILE, APR_REG, APR_DIR, APR_CHR, 
+     *  APR_BLK, APR_PIPE, APR_LNK, APR_SOCK 
      */
     apr_filetype_e filetype;
     /** The user id that owns the file */
@@ -373,11 +354,6 @@ APR_DECLARE(apr_status_t) apr_filepath_root(const char **rootpath,
  * @param flags the desired APR_FILEPATH_ rules to apply when merging
  * @param p the pool to allocate the new path string from
  * @deffunc apr_status_t apr_filepath_merge(char **newpath, const char *rootpath, const char *addpath, apr_int32_t flags, apr_pool_t *p)
- * @remark if the flag APR_FILEPATH_TRUENAME is given, and the addpath 
- * contains wildcard characters ('*', '?') on platforms that don't support 
- * such characters within filenames, the paths will be merged, but the 
- * result code will be APR_EPATHWILD, and all further segments will not
- * reflect the true filenames including the wildcard and following segments.
  */                        
 APR_DECLARE(apr_status_t) apr_filepath_merge(char **newpath, 
                                              const char *rootpath,
@@ -405,32 +381,6 @@ APR_DECLARE(apr_status_t) apr_filepath_get(char **path, apr_int32_t flags,
  * @deffunc apr_status_t apr_filepath_get(char **defpath, apr_pool_t *p)
  */
 APR_DECLARE(apr_status_t) apr_filepath_set(const char *path, apr_pool_t *p);
-
-/**
- * @defgroup apr_filepath_encoding FilePath Character encoding
- * @{
- */
-
-/** The FilePath character encoding is unknown */
-#define APR_FILEPATH_ENCODING_UNKNOWN  0
-
-/** The FilePath character encoding is locale-dependent */
-#define APR_FILEPATH_ENCODING_LOCALE   1
-
-/** The FilePath character encoding is UTF-8 */
-#define APR_FILEPATH_ENCODING_UTF8     2
-/** @} */
-/**
- * Determine the encoding used internally by the FilePath functions
- * @ingroup apr_filepath_encoding
- * @param style points to a variable which receives the encoding style flag
- * @param p the pool to allocate any working storage
- * @deffunc apr_status_t apr_filepath_encoding(int *style, apr_pool_t *p)
- * @remark Use @c apr_os_locale_encoding and/or @c apr_os_default_encoding
- * to get the name of the path encoding if it's not UTF-8.
- */
-APR_DECLARE(apr_status_t) apr_filepath_encoding(int *style, apr_pool_t *p);
-
 
 /** @} */
 

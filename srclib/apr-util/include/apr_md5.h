@@ -31,7 +31,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -102,10 +102,8 @@ extern "C" {
  * @{
  */
 
-/** The MD5 digest size */
 #define MD5_DIGESTSIZE 16
 
-/** @see apr_md5_ctx_t */
 typedef struct apr_md5_ctx_t apr_md5_ctx_t;
 
 /** MD5 context. */

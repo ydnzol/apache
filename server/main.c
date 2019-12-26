@@ -317,7 +317,7 @@ static void usage(process_rec *process)
                  pad);
 #endif
     ap_log_error(APLOG_MARK, APLOG_STARTUP, 0, NULL,
-                 "       %s [-v] [-V] [-h] [-l] [-L] [-t] [-S]", pad);
+                 "       %s [-v] [-V] [-h] [-l] [-L] [-t]", pad);
     ap_log_error(APLOG_MARK, APLOG_STARTUP, 0, NULL,
                  "Options:");
 
@@ -384,8 +384,6 @@ static void usage(process_rec *process)
     ap_log_error(APLOG_MARK, APLOG_STARTUP, 0, NULL,
                  "  -t -D DUMP_VHOSTS : show parsed settings (currently only "
                  "vhost settings)");
-    ap_log_error(APLOG_MARK, APLOG_STARTUP, 0, NULL,
-                 "  -S                : a synonym for -t -D DUMP_VHOSTS");   
     ap_log_error(APLOG_MARK, APLOG_STARTUP, 0, NULL,
                  "  -t                : run syntax check for config files");
 
@@ -529,13 +527,7 @@ int main(int argc, const char * const argv[])
         case 't':
             configtestonly = 1;
             break;
-        
-        case 'S':
-            configtestonly = 1;
-            new = (char **)apr_array_push(ap_server_config_defines);
-            *new = "DUMP_VHOSTS";
-            break;
-            
+
         case 'h':
         case '?':
             usage(process);
@@ -572,7 +564,7 @@ int main(int argc, const char * const argv[])
     ap_process_config_tree(server_conf, ap_conftree, process->pconf, ptemp);
     ap_fixup_virtual_hosts(pconf, server_conf);
     ap_fini_vhost_config(pconf, server_conf);
-    apr_hook_sort_all();
+    apr_sort_hooks();
     if (configtestonly) {
         ap_log_error(APLOG_MARK, APLOG_STARTUP, 0, NULL, "Syntax OK");
         destroy_and_exit_process(process, 0);
@@ -629,7 +621,7 @@ int main(int argc, const char * const argv[])
         ap_process_config_tree(server_conf, ap_conftree, process->pconf, ptemp);
         ap_fixup_virtual_hosts(pconf, server_conf);
         ap_fini_vhost_config(pconf, server_conf);
-        apr_hook_sort_all();
+        apr_sort_hooks();
         apr_pool_clear(plog);
         if (ap_run_open_logs(pconf, plog, ptemp, server_conf) != OK) {
             ap_log_error(APLOG_MARK, APLOG_STARTUP |APLOG_ERR,

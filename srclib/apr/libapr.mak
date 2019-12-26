@@ -49,7 +49,6 @@ CLEAN :
 	-@erase "$(INTDIR)\apr_strnatcmp.obj"
 	-@erase "$(INTDIR)\apr_strtok.obj"
 	-@erase "$(INTDIR)\apr_tables.obj"
-	-@erase "$(INTDIR)\charset.obj"
 	-@erase "$(INTDIR)\common.obj"
 	-@erase "$(INTDIR)\copy.obj"
 	-@erase "$(INTDIR)\dir.obj"
@@ -148,7 +147,7 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\libapr.bsc"
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib advapi32.lib ws2_32.lib mswsock.lib ole32.lib shell32.lib rpcrt4.lib /nologo /base:"0x6EEC0000" /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\libapr.pdb" /map:"$(INTDIR)\libapr.map" /machine:I386 /out:"$(OUTDIR)\libapr.dll" /implib:"$(OUTDIR)\libapr.lib" /OPT:NOREF 
+LINK32_FLAGS=kernel32.lib advapi32.lib ws2_32.lib mswsock.lib ole32.lib shell32.lib rpcrt4.lib /nologo /base:"0x6EE00000" /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\libapr.pdb" /map:"$(INTDIR)\libapr.map" /machine:I386 /out:"$(OUTDIR)\libapr.dll" /implib:"$(OUTDIR)\libapr.lib" /OPT:NOREF 
 LINK32_OBJS= \
 	"$(INTDIR)\dso.obj" \
 	"$(INTDIR)\copy.obj" \
@@ -170,7 +169,6 @@ LINK32_OBJS= \
 	"$(INTDIR)\thread_mutex.obj" \
 	"$(INTDIR)\thread_rwlock.obj" \
 	"$(INTDIR)\apr_pools.obj" \
-	"$(INTDIR)\charset.obj" \
 	"$(INTDIR)\errorcodes.obj" \
 	"$(INTDIR)\getopt.obj" \
 	"$(INTDIR)\internal.obj" \
@@ -241,7 +239,6 @@ CLEAN :
 	-@erase "$(INTDIR)\apr_strnatcmp.obj"
 	-@erase "$(INTDIR)\apr_strtok.obj"
 	-@erase "$(INTDIR)\apr_tables.obj"
-	-@erase "$(INTDIR)\charset.obj"
 	-@erase "$(INTDIR)\common.obj"
 	-@erase "$(INTDIR)\copy.obj"
 	-@erase "$(INTDIR)\dir.obj"
@@ -342,7 +339,7 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\libapr.bsc"
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib advapi32.lib ws2_32.lib mswsock.lib ole32.lib shell32.lib rpcrt4.lib /nologo /base:"0x6EEC0000" /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\libapr.pdb" /map:"$(INTDIR)\libapr.map" /debug /machine:I386 /out:"$(OUTDIR)\libapr.dll" /implib:"$(OUTDIR)\libapr.lib" /OPT:NOREF 
+LINK32_FLAGS=kernel32.lib advapi32.lib ws2_32.lib mswsock.lib ole32.lib shell32.lib rpcrt4.lib /nologo /base:"0x6EE00000" /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\libapr.pdb" /map:"$(INTDIR)\libapr.map" /debug /machine:I386 /out:"$(OUTDIR)\libapr.dll" /implib:"$(OUTDIR)\libapr.lib" /OPT:NOREF 
 LINK32_OBJS= \
 	"$(INTDIR)\dso.obj" \
 	"$(INTDIR)\copy.obj" \
@@ -364,7 +361,6 @@ LINK32_OBJS= \
 	"$(INTDIR)\thread_mutex.obj" \
 	"$(INTDIR)\thread_rwlock.obj" \
 	"$(INTDIR)\apr_pools.obj" \
-	"$(INTDIR)\charset.obj" \
 	"$(INTDIR)\errorcodes.obj" \
 	"$(INTDIR)\getopt.obj" \
 	"$(INTDIR)\internal.obj" \
@@ -544,12 +540,6 @@ SOURCE=.\memory\unix\apr_pools.c
 
 
 SOURCE=.\misc\win32\apr_app.c
-SOURCE=.\misc\win32\charset.c
-
-"$(INTDIR)\charset.obj" : $(SOURCE) "$(INTDIR)" ".\include\apr.h"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
 SOURCE=.\misc\unix\errorcodes.c
 
 "$(INTDIR)\errorcodes.obj" : $(SOURCE) "$(INTDIR)" ".\include\apr.h"
@@ -640,13 +630,14 @@ SOURCE=.\poll\unix\pollacc.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+SOURCE=.\network_io\unix\sa_common.c
 SOURCE=.\network_io\win32\sendrecv.c
 
 "$(INTDIR)\sendrecv.obj" : $(SOURCE) "$(INTDIR)" ".\include\apr.h"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-SOURCE=.\network_io\unix\sockaddr.c
+SOURCE=.\network_io\win32\sockaddr.c
 
 "$(INTDIR)\sockaddr.obj" : $(SOURCE) "$(INTDIR)" ".\include\apr.h"
 	$(CPP) $(CPP_PROJ) $(SOURCE)

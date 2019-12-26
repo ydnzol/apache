@@ -49,7 +49,6 @@ CLEAN :
 	-@erase "$(INTDIR)\apr_strnatcmp.obj"
 	-@erase "$(INTDIR)\apr_strtok.obj"
 	-@erase "$(INTDIR)\apr_tables.obj"
-	-@erase "$(INTDIR)\charset.obj"
 	-@erase "$(INTDIR)\common.obj"
 	-@erase "$(INTDIR)\copy.obj"
 	-@erase "$(INTDIR)\dir.obj"
@@ -163,7 +162,6 @@ LIB32_OBJS= \
 	"$(INTDIR)\thread_mutex.obj" \
 	"$(INTDIR)\thread_rwlock.obj" \
 	"$(INTDIR)\apr_pools.obj" \
-	"$(INTDIR)\charset.obj" \
 	"$(INTDIR)\errorcodes.obj" \
 	"$(INTDIR)\getopt.obj" \
 	"$(INTDIR)\internal.obj" \
@@ -233,7 +231,6 @@ CLEAN :
 	-@erase "$(INTDIR)\apr_strnatcmp.obj"
 	-@erase "$(INTDIR)\apr_strtok.obj"
 	-@erase "$(INTDIR)\apr_tables.obj"
-	-@erase "$(INTDIR)\charset.obj"
 	-@erase "$(INTDIR)\common.obj"
 	-@erase "$(INTDIR)\copy.obj"
 	-@erase "$(INTDIR)\dir.obj"
@@ -348,7 +345,6 @@ LIB32_OBJS= \
 	"$(INTDIR)\thread_mutex.obj" \
 	"$(INTDIR)\thread_rwlock.obj" \
 	"$(INTDIR)\apr_pools.obj" \
-	"$(INTDIR)\charset.obj" \
 	"$(INTDIR)\errorcodes.obj" \
 	"$(INTDIR)\getopt.obj" \
 	"$(INTDIR)\internal.obj" \
@@ -527,12 +523,6 @@ SOURCE=.\memory\unix\apr_pools.c
 
 
 SOURCE=.\misc\win32\apr_app.c
-SOURCE=.\misc\win32\charset.c
-
-"$(INTDIR)\charset.obj" : $(SOURCE) "$(INTDIR)" ".\include\apr.h"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
-
-
 SOURCE=.\misc\unix\errorcodes.c
 
 "$(INTDIR)\errorcodes.obj" : $(SOURCE) "$(INTDIR)" ".\include\apr.h"
@@ -623,13 +613,14 @@ SOURCE=.\poll\unix\pollacc.c
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+SOURCE=.\network_io\unix\sa_common.c
 SOURCE=.\network_io\win32\sendrecv.c
 
 "$(INTDIR)\sendrecv.obj" : $(SOURCE) "$(INTDIR)" ".\include\apr.h"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
-SOURCE=.\network_io\unix\sockaddr.c
+SOURCE=.\network_io\win32\sockaddr.c
 
 "$(INTDIR)\sockaddr.obj" : $(SOURCE) "$(INTDIR)" ".\include\apr.h"
 	$(CPP) $(CPP_PROJ) $(SOURCE)

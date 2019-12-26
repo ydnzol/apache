@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,11 +52,11 @@
  * <http://www.apache.org/>.
  */
 
-#include "apr_arch_dso.h"
+#include "dso.h"
 #include "apr_strings.h"
 #include "apr_private.h"
-#include "apr_arch_file_io.h"
-#include "apr_arch_utf8.h"
+#include "fileio.h"
+#include "utf8.h"
 
 #if APR_HAS_DSO
 

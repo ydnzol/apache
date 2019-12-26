@@ -101,7 +101,7 @@ NLM_NAME		= proxyhtp
 # This is used by the link '-desc ' directive. 
 # If left blank, NLM_NAME will be used.
 #
-NLM_DESCRIPTION	= Apache $(VERSION_STR) Proxy HTTP Sub-Module
+NLM_DESCRIPTION	= Proxy HTTP Module
 
 #
 # This is used by the '-threadname' directive.  If left blank,
@@ -211,7 +211,6 @@ FILES_nlm_Ximports = \
 	@$(NWOS)/httpd.imp \
 	@libc.imp \
 	@ws2nlm.imp \
-	proxy_module \
 	proxy_hook_scheme_handler \
 	proxy_hook_canon_handler \
 	proxy_run_fixups \

@@ -37,7 +37,7 @@
 <page href="handler.html">Apache's Handler Use</page>
 <page href="filter.html">Filters</page>
 <page href="suexec.html">suEXEC Support</page>
-<page href="misc/perf-tuning.html">Performance Hints</page>
+<page href="misc/perf-tuning.html">Performance Hintes</page>
 <page href="misc/rewriteguide.html">URL Rewriting Guide</page>
 </category>
 
@@ -66,11 +66,11 @@
 <page href="ssl/ssl_compat.html">SSL/TLS Encryption: Compatibility</page>
 <page href="ssl/ssl_howto.html">SSL/TLS Encryption: How-To</page>
 <page href="ssl/ssl_faq.html">SSL/TLS Encryption: FAQ</page>
+<page href="ssl/ssl_glossary.html">SSL/TLS Encryption: Glossary</page>
 </category>
 
 <category id="howto">
 <title>Guides, Tutorials, and HowTos</title>
-<page separate="yes" href="howto/">Overview</page>
 <page href="howto/auth.html">Authentication</page>
 <page href="howto/cgi.html">Dynamic Content with CGI</page>
 <page href="howto/ssi.html">Introduction to Server Side Includes</page>
@@ -81,15 +81,16 @@
 
 <category id="platform">
 <title>Platform-specific Notes</title>
-<page separate="yes" href="platform/">Overview</page>
 <page href="platform/windows.html">Using Apache with Microsoft
 Windows</page>
 <page href="platform/win_compiling.html">Compiling Apache for
 Microsoft Windows</page>
+<page href="platform/win_service.html">Running Apache for Windows as
+a Service</page>
 <page href="platform/netware.html">Using Apache with Novell NetWare</page>
 <page href="platform/perf-hp.html">Running a High-Performance Web
 Server on HPUX</page>
-<page href="platform/ebcdic.html">The Apache EBCDIC Port</page>
+<page href="ebcdic.html">The Apache EBCDIC Port</page>
 </category>
 
 <category id="programs">
@@ -125,10 +126,10 @@ Server on HPUX</page>
 <page href="mod/quickreference.html">Directive Quick-Reference</page>
 <modulefilelist>
   <modulefile>core.xml</modulefile>
+  <modulefile>mod_access.xml</modulefile>
   <modulefile>mod_actions.xml</modulefile>
   <modulefile>mod_alias.xml</modulefile>
   <modulefile>mod_asis.xml</modulefile>
-  <modulefile>mod_access.xml</modulefile>
   <modulefile>mod_auth.xml</modulefile>
   <modulefile>mod_auth_anon.xml</modulefile>
   <modulefile>mod_auth_dbm.xml</modulefile>
@@ -141,10 +142,8 @@ Server on HPUX</page>
   <modulefile>mod_cgid.xml</modulefile>
   <modulefile>mod_charset_lite.xml</modulefile>
   <modulefile>mod_dav.xml</modulefile>
-  <modulefile>mod_dav_fs.xml</modulefile>
   <modulefile>mod_deflate.xml</modulefile>
   <modulefile>mod_dir.xml</modulefile>
-  <modulefile>mod_disk_cache.xml</modulefile>
   <modulefile>mod_echo.xml</modulefile>
   <modulefile>mod_env.xml</modulefile>
   <modulefile>mod_example.xml</modulefile>
@@ -159,14 +158,10 @@ Server on HPUX</page>
   <modulefile>mod_ldap.xml</modulefile>
   <modulefile>mod_log_config.xml</modulefile>
   <modulefile>mod_logio.xml</modulefile>
-  <modulefile>mod_mem_cache.xml</modulefile>
   <modulefile>mod_mime.xml</modulefile>
   <modulefile>mod_mime_magic.xml</modulefile>
   <modulefile>mod_negotiation.xml</modulefile>
   <modulefile>mod_proxy.xml</modulefile>
-  <modulefile>mod_proxy_connect.xml</modulefile>
-  <modulefile>mod_proxy_ftp.xml</modulefile>
-  <modulefile>mod_proxy_http.xml</modulefile>
   <modulefile>mod_rewrite.xml</modulefile>
   <modulefile>mod_setenvif.xml</modulefile>
   <modulefile>mod_so.xml</modulefile>
@@ -178,17 +173,12 @@ Server on HPUX</page>
   <modulefile>mod_userdir.xml</modulefile>
   <modulefile>mod_usertrack.xml</modulefile>
   <modulefile>mod_vhost_alias.xml</modulefile>
-
   <modulefile>mpm_common.xml</modulefile>
-  <modulefile>beos.xml</modulefile>
   <modulefile>mpm_netware.xml</modulefile>
   <modulefile>mpm_winnt.xml</modulefile>
-  <modulefile>mpmt_os2.xml</modulefile>
   <modulefile>perchild.xml</modulefile>
   <modulefile>prefork.xml</modulefile>
   <modulefile>worker.xml</modulefile>
-  <modulefile>leader.xml</modulefile>
-  <modulefile>threadpool.xml</modulefile>
 </modulefilelist>
 </category>
 

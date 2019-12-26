@@ -2,7 +2,7 @@
 # ====================================================================
 # The Apache Software License, Version 1.1
 #
-# Copyright (c) 2001-2003 The Apache Software Foundation.  All rights
+# Copyright (c) 2001-2002 The Apache Software Foundation.  All rights
 # reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,7 @@ LIBS="@APRUTIL_EXPORT_LIBS@"
 INCLUDES="@APRUTIL_INCLUDES@"
 LDFLAGS="@APRUTIL_LDFLAGS@"
 
-APRUTIL_LIBNAME="@APRUTIL_LIBNAME@"
+APRUTIL_LIBNAME="lib@APRUTIL_LIBNAME@.la"
 
 APU_SOURCE_DIR="@top_srcdir@"
 APU_BUILD_DIR="@top_builddir@"
@@ -81,7 +81,6 @@ Usage: apu-config [OPTION]
 
 Known values for OPTION are:
   --prefix[=DIR]    change prefix to DIR
-  --bindir          print location where binaries are installed
   --includes        print include information
   --ldflags         print linker flags
   --libs            print library information
@@ -90,7 +89,6 @@ Known values for OPTION are:
   --link-libtool    print the libtool inputs for linking to APR-util
   --apu-la-file     print the path to the .la file, if available
   --old-expat       indicate if APR-util was built against an old expat
-  --version         print APR-util's version as a dotted triple
   --help            print this help
 
 When linking with libtool, an application should do something like:
@@ -110,32 +108,23 @@ fi
 
 thisdir="`dirname $0`"
 thisdir="`cd $thisdir && pwd`"
-# If we have the realpath program, use it to resolve symlinks.
-# Otherwise, being in a symlinked dir may result in incorrect output.
-if test -x "`which realpath 2>/dev/null`"; then
-    thisdir="`realpath $thisdir`"
-fi
 if test -d $bindir; then
-    tmpbindir="`cd $bindir && pwd`"
+  tmpbindir="`cd $bindir && pwd`"
 else
-    tmpbindir=""
+  tmpbindir=""
 fi
 if test "$tmpbindir" = "$thisdir"; then
-    location=installed
+  location=installed
 elif test "$APU_SOURCE_DIR" = "$thisdir"; then
-    location=source
+  location=source
 else
-    location=build
+  location=build
 fi
 
 if test "$location" = "installed"; then
-    LA_FILE="$libdir/lib${APRUTIL_LIBNAME}.la"
-
-    LIBS=`echo "$LIBS" | sed -e "s $APU_BUILD_DIR/xml/expat $prefix g" -e "s $prefix/lib/libexpat.la -lexpat g"`
-    LDFLAGS=`echo "$LDFLAGS" | sed -e "s $APU_BUILD_DIR/xml/expat $prefix g"`
-    INCLUDES=`echo "$INCLUDES" | sed -e "s $APU_BUILD_DIR/xml/expat $prefix g" -e "s -I$prefix/lib  g"`
+    LA_FILE="$libdir/$APRUTIL_LIBNAME"
 else
-    LA_FILE="$thisdir/lib${APRUTIL_LIBNAME}.la"
+    LA_FILE="$thisdir/$APRUTIL_LIBNAME"
 fi
 
 flags=""
@@ -156,11 +145,12 @@ while test $# -gt 0; do
     echo $prefix
     exit 0
     ;;
-    --bindir)
-    echo $bindir
-    exit 0
-    ;;
     --libs)
+    if test "$location" = "installed" && test -f $PREFIX/lib/libexpat.la; then
+      TMP_BUILDDIR=`echo "$APU_BUILD_DIR/xml/expat" | sed 's/\\//\\\\\\//g'`
+      TMP_PREFIX=`echo $prefix | sed 's/\\//\\\\\\//g'`
+      LIBS=`echo "$LIBS" | sed "s/$TMP_BUILDDIR/$TMP_PREFIX/g"`
+    fi
     flags="$flags $LIBS"
     ;;
     --includes)
@@ -169,7 +159,6 @@ while test $# -gt 0; do
     elif test "$location" = "source"; then
         flags="$flags -I$APU_SOURCE_DIR/include $INCLUDES"
     else
-        # this is for VPATH builds
         flags="$flags -I$thisdir/include -I$APU_SOURCE_DIR/include $INCLUDES"
     fi
     ;;
@@ -180,16 +169,12 @@ while test $# -gt 0; do
     echo $APU_SOURCE_DIR
     exit 0
     ;;
-    --version)
-    echo $APRUTIL_DOTTED_VERSION
-    exit 0
-    ;;
     --link-ld)
     if test "$location" = "installed"; then
         ### avoid using -L if libdir is a "standard" location like /usr/lib
-        flags="$flags -L$libdir -l$APRUTIL_LIBNAME"
+        flags="$flags -L$libdir -laprutil"
     else
-        flags="$flags -L$thisdir -l$APRUTIL_LIBNAME"
+        flags="$flags -L$thisdir -l@APRUTIL_LIBNAME@"
     fi
     ;;
     --link-libtool)
@@ -201,7 +186,7 @@ while test $# -gt 0; do
         flags="$flags $LA_FILE"
     elif test "$location" = "installed"; then
         ### avoid using -L if libdir is a "standard" location like /usr/lib
-        flags="$flags -L$libdir -l$APRUTIL_LIBNAME"
+        flags="$flags -L$libdir -l@APRUTIL_LIBNAME@"
     else
         flags="$flags $LA_FILE"
     fi

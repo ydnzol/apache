@@ -178,7 +178,7 @@ int util_ldap_handler(request_rec *r)
  * util_ldap_connection_find() is called this connection will be
  * available for reuse.
  */
-LDAP_DECLARE(void) util_ldap_connection_close(util_ldap_connection_t *ldc)
+void util_ldap_connection_close(util_ldap_connection_t *ldc)
 {
 
     /*
@@ -205,7 +205,7 @@ LDAP_DECLARE(void) util_ldap_connection_close(util_ldap_connection_t *ldc)
  * with the pool cleanup function - causing the LDAP connections to be
  * shut down cleanly on graceful restart.
  */
-LDAP_DECLARE_NONSTD(apr_status_t) util_ldap_connection_destroy(void *param)
+apr_status_t util_ldap_connection_destroy(void *param)
 {
     util_ldap_connection_t *ldc = param;
 
@@ -238,7 +238,7 @@ LDAP_DECLARE_NONSTD(apr_status_t) util_ldap_connection_destroy(void *param)
  *
  * Returns LDAP_SUCCESS on success; and an error code on failure
  */
-LDAP_DECLARE(int) util_ldap_connection_open(util_ldap_connection_t *ldc)
+int util_ldap_connection_open(util_ldap_connection_t *ldc)
 {
     int result = 0;
     int failures = 0;
@@ -376,7 +376,7 @@ start_over:
  * and returned to the caller. If found in the cache, a pointer to the existing
  * ldc structure will be returned.
  */
-LDAP_DECLARE(util_ldap_connection_t *)util_ldap_connection_find(request_rec *r, const char *host, int port,
+util_ldap_connection_t *util_ldap_connection_find(request_rec *r, const char *host, int port,
                                               const char *binddn, const char *bindpw, deref_options deref,
                                               int netscapessl, int starttls)
 {
@@ -505,7 +505,7 @@ LDAP_DECLARE(util_ldap_connection_t *)util_ldap_connection_find(request_rec *r, 
  *
  * The lock for the ldap cache should already be acquired.
  */
-LDAP_DECLARE(int) util_ldap_cache_comparedn(request_rec *r, util_ldap_connection_t *ldc, 
+int util_ldap_cache_comparedn(request_rec *r, util_ldap_connection_t *ldc, 
                             const char *url, const char *dn, const char *reqdn, 
                             int compare_dn_on_server)
 {
@@ -623,7 +623,7 @@ start_over:
  * require user cache is owned by the 
  *
  */
-LDAP_DECLARE(int) util_ldap_cache_compare(request_rec *r, util_ldap_connection_t *ldc,
+int util_ldap_cache_compare(request_rec *r, util_ldap_connection_t *ldc,
                           const char *url, const char *dn,
                           const char *attrib, const char *value)
 {
@@ -738,7 +738,7 @@ start_over:
     return result;
 }
 
-LDAP_DECLARE(int) util_ldap_cache_checkuserid(request_rec *r, util_ldap_connection_t *ldc,
+int util_ldap_cache_checkuserid(request_rec *r, util_ldap_connection_t *ldc,
                               const char *url, const char *basedn, int scope, char **attrs,
                               const char *filter, const char *bindpw, const char **binddn,
                               const char ***retvals)
@@ -1011,7 +1011,7 @@ static const char *util_ldap_set_opcache_entries(cmd_parms *cmd, void *dummy, co
     return NULL;
 }
 
-#ifdef APU_HAS_LDAP_NETSCAPE_SSL
+#ifdef APU_HAS_LDAPSSL_CLIENT_INIT
 static const char *util_ldap_set_certdbpath(cmd_parms *cmd, void *dummy, const char *path)
 {
     util_ldap_state_t *st = 
@@ -1092,7 +1092,7 @@ command_rec util_ldap_cmds[] = {
                   "Sets the maximum time (in seconds) that an item is cached in the LDAP "
                   "operation cache. Zero means no limit. Defaults to 600 seconds (10 minutes)."),
 
-#ifdef APU_HAS_LDAP_NETSCAPE_SSL
+#ifdef APU_HAS_LDAPSSL_CLIENT_INIT
     AP_INIT_TAKE1("LDAPCertDBPath", util_ldap_set_certdbpath, NULL, RSRC_CONF,
                   "Specifies the file containing Certificate Authority certificates "
                   "for validating secure LDAP server certificates. This file must be the "

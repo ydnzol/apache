@@ -163,12 +163,7 @@ static const char * const status_lines[RESPONSE_CODES] =
     "422 Unprocessable Entity",
     "423 Locked",
     "424 Failed Dependency",
-    /* This is a hack, but it is required for ap_index_of_response
-     * to work with 426.
-     */
-    "425 No code",
-    "426 Upgrade Required",
-#define LEVEL_500 46
+#define LEVEL_500 44
     "500 Internal Server Error",
     "501 Method Not Implemented",
     "502 Bad Gateway",
@@ -1156,49 +1151,6 @@ static int form_header_field(header_struct *h,
     return 1;
 }
 
-/* Send a request's HTTP response headers to the client.
- */
-static apr_status_t send_all_header_fields(header_struct *h,
-                                           const request_rec *r)
-{
-    const apr_array_header_t *elts;
-    const apr_table_entry_t *t_elt;
-    const apr_table_entry_t *t_end;
-    struct iovec *vec;
-    struct iovec *vec_next;
-
-    elts = apr_table_elts(r->headers_out);
-    if (elts->nelts == 0) {
-        return APR_SUCCESS;
-    }
-    t_elt = (const apr_table_entry_t *)(elts->elts);
-    t_end = t_elt + elts->nelts;
-    vec = (struct iovec *)apr_palloc(h->pool, 4 * elts->nelts *
-                                     sizeof(struct iovec));
-    vec_next = vec;
-
-    /* For each field, generate
-     *    name ": " value CRLF
-     */
-    do {
-        vec_next->iov_base = (void*)(t_elt->key);
-        vec_next->iov_len = strlen(t_elt->key);
-        vec_next++;
-        vec_next->iov_base = ": ";
-        vec_next->iov_len = sizeof(": ") - 1;
-        vec_next++;
-        vec_next->iov_base = (void*)(t_elt->val);
-        vec_next->iov_len = strlen(t_elt->val);
-        vec_next++;
-        vec_next->iov_base = CRLF;
-        vec_next->iov_len = sizeof(CRLF) - 1;
-        vec_next++;
-        t_elt++;
-    } while (t_elt < t_end);
-
-    return apr_brigade_writev(h->bb, NULL, NULL, vec, vec_next - vec);
-}
-
 /*
  * Determine the protocol to use for the response. Potentially downgrade
  * to HTTP/1.0 in some situations and/or turn off keepalives.
@@ -1685,7 +1637,8 @@ AP_CORE_DECLARE_NONSTD(apr_status_t) ap_http_header_filter(ap_filter_t *f,
                      NULL);
     }
     else {
-        send_all_header_fields(&h, r);
+        apr_table_do((int (*) (void *, const char *, const char *)) form_header_field,
+                     (void *) &h, r->headers_out, NULL);
     }
 
     terminate_header(b2);
@@ -2195,12 +2148,6 @@ static const char *get_canned_error_string(int status,
         return("<p>The method could not be performed on the resource\n"
                "because the requested action depended on another\n"
                "action and that other action failed.</p>\n");
-    case HTTP_UPGRADE_REQUIRED:
-        return("<p>The requested resource can only be retrieved\n"
-               "using SSL.  The server is willing to upgrade the current\n"
-               "connection to SSL, but your client doesn't support it.\n"
-               "Either upgrade your client, or try requesting the page\n"
-               "using https://\n");
     case HTTP_INSUFFICIENT_STORAGE:
         return("<p>The method could not be performed on the resource\n"
                "because the server is unable to store the\n"
@@ -3062,7 +3009,7 @@ static int ap_set_byterange(request_rec *r)
         range = apr_table_get(r->headers_in, "Request-Range");
     }
 
-    if (!range || strncasecmp(range, "bytes=", 6) || r->status != HTTP_OK) {
+    if (!range || strncasecmp(range, "bytes=", 6)) {
         return 0;
     }
 

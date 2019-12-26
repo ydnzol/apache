@@ -94,23 +94,22 @@ module AP_MODULE_DECLARE_DATA autoindex_module;
  * Handling configuration directives...
  */
 
-#define NO_OPTIONS          (1 <<  0)  /* Indexing options */
-#define ICONS_ARE_LINKS     (1 <<  1)
-#define SCAN_HTML_TITLES    (1 <<  2)
-#define SUPPRESS_ICON       (1 <<  3)
-#define SUPPRESS_LAST_MOD   (1 <<  4)
-#define SUPPRESS_SIZE       (1 <<  5)
-#define SUPPRESS_DESC       (1 <<  6)
-#define SUPPRESS_PREAMBLE   (1 <<  7)
-#define SUPPRESS_COLSORT    (1 <<  8)
-#define SUPPRESS_RULES      (1 <<  9)
-#define FOLDERS_FIRST       (1 << 10)
-#define VERSION_SORT        (1 << 11)
-#define TRACK_MODIFIED      (1 << 12)
-#define FANCY_INDEXING      (1 << 13)
-#define TABLE_INDEXING      (1 << 14)
-#define IGNORE_CLIENT       (1 << 15)
-#define IGNORE_CASE         (1 << 16)
+#define NO_OPTIONS          0x0001  /* Indexing options */
+#define ICONS_ARE_LINKS     0x0002
+#define SCAN_HTML_TITLES    0x0004
+#define SUPPRESS_ICON       0x0008
+#define SUPPRESS_LAST_MOD   0x0010
+#define SUPPRESS_SIZE       0x0020
+#define SUPPRESS_DESC       0x0040
+#define SUPPRESS_PREAMBLE   0x0080
+#define SUPPRESS_COLSORT    0x0100
+#define SUPPRESS_RULES      0x0200
+#define FOLDERS_FIRST       0x0400
+#define VERSION_SORT        0x0800
+#define TRACK_MODIFIED      0x1000
+#define FANCY_INDEXING      0x2000
+#define TABLE_INDEXING      0x4000
+#define IGNORE_CLIENT       0x8000
 
 #define K_NOADJUST 0
 #define K_ADJUST 1
@@ -374,9 +373,6 @@ static const char *add_opts(cmd_parms *cmd, void *d, const char *optstr)
         }
         else if (!strcasecmp(w, "IconsAreLinks")) {
             option = ICONS_ARE_LINKS;
-        }
-        else if (!strcasecmp(w, "IgnoreCase")) {
-            option = IGNORE_CASE;
         }
         else if (!strcasecmp(w, "IgnoreClient")) {
             option = IGNORE_CLIENT;
@@ -728,7 +724,7 @@ struct ent {
     apr_off_t size;
     apr_time_t lm;
     struct ent *next;
-    int ascending, ignore_case, version_sort;
+    int ascending, version_sort;
     char key;
     int isdir;
 };
@@ -1325,14 +1321,6 @@ static struct ent *make_autoindex_entry(const apr_finfo_t *dirent,
         return (NULL);
     }
 
-    if (rr->finfo.filetype == APR_DIR) {
-        /* ap_sub_req_lookup_dirent() adds '/' to end of any directory,
-         * but that messes up our attempt to find relevant
-         * AddDescription directives.
-         */
-        rr->filename[strlen(rr->filename) - 1] = '\0';
-    }
-
     p = (struct ent *) apr_pcalloc(r->pool, sizeof(struct ent));
     if (dirent->filetype == APR_DIR) {
         p->name = apr_pstrcat(r->pool, dirent->name, "/", NULL);
@@ -1349,7 +1337,6 @@ static struct ent *make_autoindex_entry(const apr_finfo_t *dirent,
     p->key = apr_toupper(keyid);
     p->ascending = (apr_toupper(direction) == D_ASCENDING);
     p->version_sort = !!(autoindex_opts & VERSION_SORT);
-    p->ignore_case = !!(autoindex_opts & IGNORE_CASE);
 
     if (autoindex_opts & (FANCY_INDEXING | TABLE_INDEXING)) {
         p->lm = rr->finfo.mtime;
@@ -1536,7 +1523,7 @@ static void output_directories(struct ent **ar, int n,
         int cols = 1;
         ap_rputs("<table><tr>", r);
         if (!(autoindex_opts & SUPPRESS_ICON)) {
-            ap_rputs("<th>", r);
+            ap_rputs("<th title=\"Icon\">", r);
             if ((tp = find_default_icon(d, "^^BLANKICON^^"))) {
                 ap_rvputs(r, "<img src=\"", ap_escape_html(scratch, tp),
                              "\" alt=\"[ICO]\"", NULL);
@@ -1902,36 +1889,12 @@ static int dsortf(struct ent **e1, struct ent **e2)
         }
         break;
     }
-
-    /* names may identical when treated case-insensitively,
-     * so always fall back on strcmp() flavors to put entries
-     * in deterministic order.  This means that 'ABC' and 'abc'
-     * will always appear in the same order, rather than
-     * variably between 'ABC abc' and 'abc ABC' order.
-     */
-
     if (c1->version_sort) {
-        if (c1->ignore_case) {
-            result = apr_strnatcasecmp (c1->name, c2->name);
-        }
-        if (!result) {
-            result = apr_strnatcmp(c1->name, c2->name);
-        }
+        return apr_strnatcmp(c1->name, c2->name);
     }
-
-    /* The names may be identical in respects other other than
-     * filename case when strnatcmp is used above, so fall back 
-     * to strcmp on conflicts so that fn1.01.zzz and fn1.1.zzz 
-     * are also sorted in a deterministic order.
-     */
-
-    if (!result && c1->ignore_case) {
-        result = strcasecmp (c1->name, c2->name);
+    else {
+        return strcmp(c1->name, c2->name);
     }
-    if (!result) {
-        result = strcmp (c1->name, c2->name);
-    }
-    return result;
 }
 
 

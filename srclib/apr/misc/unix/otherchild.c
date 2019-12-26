@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,9 +56,9 @@
 
 #if APR_HAS_OTHER_CHILD
 
-#include "apr_arch_misc.h"
-#include "apr_arch_threadproc.h"
-#include "apr_arch_file_io.h"
+#include "misc.h"
+#include "threadproc.h"
+#include "fileio.h"
 #ifdef HAVE_TIME_H
 #include <sys/time.h>
 #endif
@@ -163,7 +163,7 @@ APR_DECLARE(apr_status_t) apr_proc_other_child_read(apr_proc_t *pid, int status)
 APR_DECLARE(void) apr_proc_other_child_check(void)
 {
     apr_other_child_rec_t *ocr, *nocr;
-    DWORD status;
+    apr_status_t rv;
 
     /* Todo: 
      * Implement code to detect if a pipe is still alive on Windows.
@@ -176,27 +176,13 @@ APR_DECLARE(void) apr_proc_other_child_check(void)
         if (ocr->proc == NULL)
             continue;
 
-        if (!ocr->proc->hproc) {
-            /* Already mopped up, perhaps we apr_proc_kill'ed it */
-            (*ocr->maintenance) (APR_OC_REASON_DEATH, ocr->data, -1);
-        }
-        else if (!GetExitCodeProcess(ocr->proc->hproc, &status)) {
-            CloseHandle(ocr->proc->hproc);
-            ocr->proc = NULL;
+        rv = WaitForSingleObject(ocr->proc->hproc, 0);
+        if (rv != WAIT_TIMEOUT) {
             (*ocr->maintenance) (APR_OC_REASON_LOST, ocr->data, -1);
-        }
-        else if (status == STILL_ACTIVE) {
-            (*ocr->maintenance) (APR_OC_REASON_RESTART, ocr->data, -1);
-        }
-        else {
-            CloseHandle(ocr->proc->hproc);
-            ocr->proc->hproc = NULL;
-            ocr->proc = NULL;
-            (*ocr->maintenance) (APR_OC_REASON_DEATH, ocr->data, status);
         }
     }
 }
-#else /* ndef Win32 */
+#else /* Win32 */
 APR_DECLARE(void) apr_proc_other_child_check(void)
 {
     apr_other_child_rec_t *ocr, *nocr;

@@ -235,33 +235,33 @@ AC_DEFUN(APR_CHECK_DEFINE_FILES,[
     for curhdr in $2
     do
       AC_EGREP_CPP(YES_IS_DEFINED, [
-#include <$curhdr>
-#ifdef $1
-YES_IS_DEFINED
-#endif
+      #include <$curhdr>
+      #ifdef $1
+      YES_IS_DEFINED
+      #endif
       ], ac_cv_define_$1=yes)
     done
   ])
   if test "$ac_cv_define_$1" = "yes"; then
-    AC_DEFINE(HAVE_$1, 1, [Define if $1 is defined])
+    AC_DEFINE(HAVE_$1)
   fi
 ])
 
 
 dnl
-dnl APR_CHECK_DEFINE(symbol, header_file)
+dnl APR_CHECK_DEFINE( symbol, header_file [, description ])
 dnl
 AC_DEFUN(APR_CHECK_DEFINE,[
   AC_CACHE_CHECK([for $1 in $2],ac_cv_define_$1,[
     AC_EGREP_CPP(YES_IS_DEFINED, [
-#include <$2>
-#ifdef $1
-YES_IS_DEFINED
-#endif
+    #include <$2>
+    #ifdef $1
+    YES_IS_DEFINED
+    #endif
     ], ac_cv_define_$1=yes, ac_cv_define_$1=no)
   ])
   if test "$ac_cv_define_$1" = "yes"; then
-    AC_DEFINE(HAVE_$1, 1, [Define if $1 is defined in $2])
+    AC_DEFINE(HAVE_$1, 1, [$3])
   fi
 ])
 
@@ -270,24 +270,30 @@ dnl APR_CHECK_APR_DEFINE( symbol, path_to_apr )
 dnl
 AC_DEFUN(APR_CHECK_APR_DEFINE,[
     AC_EGREP_CPP(YES_IS_DEFINED, [
-#include "$2/include/apr.h"
-#if $1
-YES_IS_DEFINED
-#endif
+    #include "$2/include/apr.h"
+    #if $1
+    YES_IS_DEFINED
+    #endif
     ], ac_cv_define_$1=yes, ac_cv_define_$1=no)
 ])
 
-dnl APR_CHECK_FILE(filename); set ac_cv_file_filename to
-dnl "yes" if 'filename' is readable, else "no".
-AC_DEFUN([APR_CHECK_FILE], [
-dnl Pick a safe variable name
-define([apr_cvname], ac_cv_file_[]translit([$1], [./+-], [__p_]))
-AC_CACHE_CHECK([for $1], [apr_cvname],
-[if test -r $1; then
-   apr_cvname=yes
- else
-   apr_cvname=no
- fi])
+define(APR_CHECK_FILE,[
+ac_safe=`echo "$1" | sed 'y%./+-%__p_%'`
+AC_MSG_CHECKING([for $1])
+AC_CACHE_VAL(ac_cv_file_$ac_safe, [
+  if test -r $1; then
+    eval "ac_cv_file_$ac_safe=yes"
+  else
+    eval "ac_cv_file_$ac_safe=no"
+  fi
+])dnl
+if eval "test \"`echo '$ac_cv_file_'$ac_safe`\" = yes"; then
+  AC_MSG_RESULT(yes)
+  ifelse([$2], , :, [$2])
+else
+  AC_MSG_RESULT(no)
+ifelse([$3], , , [$3])
+fi
 ])
 
 define(APR_IFALLYES,[dnl
@@ -398,7 +404,7 @@ main()
 }], AC_CV_NAME=`cat conftestval`, AC_CV_NAME=0, ifelse([$3],,,
 AC_CV_NAME=$3))])dnl
 AC_MSG_RESULT($AC_CV_NAME)
-AC_DEFINE_UNQUOTED(AC_TYPE_NAME, $AC_CV_NAME, [The size of ]$2)
+AC_DEFINE_UNQUOTED(AC_TYPE_NAME, $AC_CV_NAME)
 undefine([AC_TYPE_NAME])dnl
 undefine([AC_CV_NAME])dnl
 ])
@@ -454,7 +460,6 @@ AC_DEFUN(APR_CHECK_STRERROR_R_RC,[
 AC_MSG_CHECKING(for type of return code from strerror_r)
 AC_TRY_RUN([
 #include <errno.h>
-#include <string.h>
 #include <stdio.h>
 main()
 {
@@ -470,7 +475,7 @@ main()
     ac_cv_strerror_r_rc_int=no ], [
     ac_cv_strerror_r_rc_int=no ] )
 if test "x$ac_cv_strerror_r_rc_int" = xyes; then
-  AC_DEFINE(STRERROR_R_RC_INT, 1, [Define if strerror returns int])
+  AC_DEFINE(STRERROR_R_RC_INT)
   msg="int"
 else
   msg="pointer"
@@ -519,8 +524,8 @@ dnl
 if test "$ac_cv_crypt_r_style" = "cryptd"; then
     AC_DEFINE(CRYPT_R_CRYPTD, 1, [Define if crypt_r has uses CRYPTD])
 fi
-# if we don't combine these conditions, CRYPT_R_STRUCT_CRYPT_DATA
-# will end up defined twice
+dnl if we don't combine these conditions, CRYPT_R_STRUCT_CRYPT_DATA
+dnl will end up defined twice
 if test "$ac_cv_crypt_r_style" = "struct_crypt_data" -o \
    "$ac_cv_crypt_r_style" = "struct_crypt_data_gnu_source"; then
     AC_DEFINE(CRYPT_R_STRUCT_CRYPT_DATA, 1, [Define if crypt_r uses struct crypt_data])
@@ -530,64 +535,6 @@ if test "$ac_cv_crypt_r_style" = "struct_crypt_data_gnu_source"; then
 fi
 ])
 
-dnl
-dnl APR_CHECK_DIRENT_INODE
-dnl
-dnl  Decide if d_fileno or d_ino are available in the dirent
-dnl  structure on this platform.  Single UNIX Spec says d_ino,
-dnl  BSD uses d_fileno.  Undef to find the real beast.
-dnl
-AC_DEFUN(APR_CHECK_DIRENT_INODE, [
-AC_CACHE_CHECK([for inode member of struct dirent], apr_cv_dirent_inode, [
-apr_cv_dirent_inode=no
-AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <dirent.h>
-],[
-#ifdef d_ino
-#undef d_ino
-#endif
-struct dirent de; de.d_fileno;
-], apr_cv_dirent_inode=d_fileno)
-if test "$apr_cv_dirent_inode" = "no"; then
-AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <dirent.h>
-],[
-#ifdef d_fileno
-#undef d_fileno
-#endif
-struct dirent de; de.d_ino;
-], apr_cv_dirent_inode=d_ino)
-fi
-])
-if test "$apr_cv_dirent_inode" != "no"; then
-  AC_DEFINE_UNQUOTED(DIRENT_INODE, $apr_cv_dirent_inode)
-fi
-])
-
-dnl
-dnl APR_CHECK_DIRENT_TYPE
-dnl
-dnl  Decide if d_type is available in the dirent structure 
-dnl  on this platform.  Not part of the Single UNIX Spec.
-dnl  Note that this is worthless without DT_xxx macros, so
-dnl  look for one while we are at it.
-dnl
-AC_DEFUN(APR_CHECK_DIRENT_TYPE,[
-AC_CACHE_CHECK([for file type member of struct dirent], apr_cv_dirent_type,[
-apr_cv_dirent_type=no
-AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <dirent.h>
-],[
-struct dirent de; de.d_type = DT_REG;
-], apr_cv_dirent_type=d_type)
-])
-if test "$apr_cv_dirent_type" != "no"; then
-  AC_DEFINE_UNQUOTED(DIRENT_TYPE, $apr_cv_dirent_type) 
-fi
-])
 
 dnl the following is a newline, a space, a tab, and a backslash (the
 dnl backslash is used by the shell to skip newlines, but m4 sees it;
@@ -899,37 +846,3 @@ do
 done
 
 ])dnl
-
-dnl
-dnl APR_CHECK_DEPEND
-dnl
-dnl Determine what program we can use to generate .deps-style dependencies
-dnl
-AC_DEFUN(APR_CHECK_DEPEND,[
-dnl Try to determine what depend program we can use
-dnl All GCC-variants should have -MM.
-dnl If not, then we can check on those, too.
-if test "$GCC" = "yes"; then
-  MKDEP='$(CC) -MM'
-else
-  rm -f conftest.c
-dnl <sys/types.h> should be available everywhere!
-  cat > conftest.c <<EOF
-#include <sys/types.h>
-  int main() { return 0; }
-EOF
-  MKDEP="true"
-  for i in "$CC -MM" "$CC -M" "$CPP -MM" "$CPP -M" "cpp -M"; do
-    AC_MSG_CHECKING([if $i can create proper make dependencies])
-    if $i conftest.c 2>/dev/null | grep 'conftest.o: conftest.c' >/dev/null; then
-      MKDEP=$i
-      AC_MSG_RESULT(yes)
-      break;
-    fi
-    AC_MSG_RESULT(no)
-  done
-  rm -f conftest.c
-fi
-
-AC_SUBST(MKDEP)
-])

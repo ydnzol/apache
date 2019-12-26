@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -71,7 +71,7 @@ static apr_status_t socket_bucket_read(apr_bucket *a, const char **str,
     *len = APR_BUCKET_BUFF_SIZE;
     buf = apr_bucket_alloc(*len, a->list); /* XXX: check for failure? */
 
-    rv = apr_socket_recv(p, buf, len);
+    rv = apr_recv(p, buf, len);
 
     if (block == APR_NONBLOCK_READ) {
         apr_socket_timeout_set(p, timeout);

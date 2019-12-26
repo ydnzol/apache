@@ -61,7 +61,6 @@
 
 #include "apr.h"
 #include "apr_hash.h"
-#include "apr_optional.h"
 #include "util_filter.h"
 
 #if APR_HAVE_STRUCT_RLIMIT
@@ -343,16 +342,6 @@ typedef struct {
      * to add elements)
      */
     void **notes;
-
-    /* There is a script processor installed on the output filter chain,
-     * so it needs the default_handler to deliver a (script) file into
-     * the chain so it can process it. Normally, default_handler only
-     * serves files on a GET request (assuming the file is actual content),
-     * since other methods are not content-retrieval. This flag overrides
-     * that behavior, stating that the "content" is actually a script and
-     * won't actually be delivered as the response for the non-GET method.
-     */
-    int deliver_script;
 } core_request_config;
 
 /* Standard entries that are guaranteed to be accessible via
@@ -533,12 +522,7 @@ typedef struct {
 #define ENABLE_MMAP_OFF    (0)
 #define ENABLE_MMAP_ON     (1)
 #define ENABLE_MMAP_UNSET  (2)
-    unsigned int enable_mmap : 2;  /* whether files in this dir can be mmap'ed */
-
-#define ENABLE_SENDFILE_OFF    (0)
-#define ENABLE_SENDFILE_ON     (1)
-#define ENABLE_SENDFILE_UNSET  (2)
-    unsigned int enable_sendfile : 2;  /* files in this dir can be mmap'ed */
+    int enable_mmap;  /* whether files in this dir can be mmap'ed */
 
 } core_dir_config;
 
@@ -624,16 +608,6 @@ extern AP_DECLARE_DATA ap_filter_rec_t *ap_core_input_filter_handle;
  */
 AP_DECLARE_HOOK(int, get_mgmt_items,
                 (apr_pool_t *p, const char * val, apr_hash_t *ht))
-
-/* ---------------------------------------------------------------------- */
-
-/* ----------------------------------------------------------------------
- *
- * I/O logging with mod_logio
- */
-
-APR_DECLARE_OPTIONAL_FN(void, ap_logio_add_bytes_out,
-                        (conn_rec *c, apr_off_t bytes));
 
 /* ---------------------------------------------------------------------- */
 

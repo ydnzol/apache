@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,7 +63,6 @@
 extern "C" {
 #endif
 
-#include "apr.h"
 #include "apr_pools.h"
 
 /**
@@ -85,23 +84,23 @@ extern "C" {
 typedef apr_atomic_t;
 
 /**
+ * @param pool 
  * this function is required on some platforms to initialize the
  * atomic operation's internal structures
- * @param p pool
- * @return APR_SUCCESS on successful completion
+ * returns APR_SUCCESS on successfull completion
  */
 apr_status_t apr_atomic_init(apr_pool_t *p);
 /**
  * read the value stored in a atomic variable
- * @param mem the pointer
+ * @param the pointer
  * @warning on certain platforms this number is not stored
  * directly in the pointer. in others it is 
  */
 apr_uint32_t apr_atomic_read(volatile apr_atomic_t *mem);
 /**
  * set the value for atomic.
- * @param mem the pointer
- * @param val the value
+ * @param the pointer
+ * @param the value
  */
 void apr_atomic_set(volatile apr_atomic_t *mem, apr_uint32_t val);
 /**
@@ -120,7 +119,7 @@ void apr_atomic_inc(volatile apr_atomic_t *mem);
 /**
  * decrement the atomic variable by 1
  * @param mem pointer to the atomic value
- * @return zero if the value is zero, otherwise non-zero
+ * @returns zero if the value is zero, otherwise non-zero
  */
 int apr_atomic_dec(volatile apr_atomic_t *mem);
 
@@ -129,22 +128,12 @@ int apr_atomic_dec(volatile apr_atomic_t *mem);
  * If they are the same swap the value with 'with'
  * @param mem pointer to the atomic value
  * @param with what to swap it with
- * @param cmp the value to compare it to
+ * @param the value to compare it to
  * @return the old value of the atomic
  * @warning do not mix apr_atomic's with the CAS function.
  * on some platforms they may be implemented by different mechanisms
  */
-apr_uint32_t apr_atomic_cas(volatile apr_uint32_t *mem, long with, long cmp);
-
-/**
- * compare the pointer's value with cmp.
- * If they are the same swap the value with 'with'
- * @param mem pointer to the pointer
- * @param with what to swap it with
- * @param cmp the value to compare it to
- * @return the old value of the pointer
- */
-void *apr_atomic_casptr(volatile void **mem, void *with, const void *cmp);
+apr_uint32_t apr_atomic_cas(volatile apr_uint32_t *mem,long with,long cmp);
 #else /* !DOXYGEN */
 
 /* The following definitions provide optimized, OS-specific
@@ -165,7 +154,6 @@ typedef LONG apr_atomic_t;
 #define apr_atomic_read(mem)         (*mem)
 #define apr_atomic_cas(mem,with,cmp) InterlockedCompareExchange(mem,with,cmp)
 #define apr_atomic_init(pool)        APR_SUCCESS
-#define apr_atomic_casptr(mem,with,cmp) InterlockedCompareExchangePointer(mem,with,cmp)
 
 #elif defined(NETWARE)
 
@@ -173,27 +161,13 @@ typedef LONG apr_atomic_t;
 #define apr_atomic_t unsigned long
 
 #define apr_atomic_add(mem, val)     atomic_add(mem,val)
+APR_DECLARE(int) apr_atomic_dec(apr_atomic_t *mem);
+#define APR_OVERRIDE_ATOMIC_DEC 1
 #define apr_atomic_inc(mem)          atomic_inc(mem)
 #define apr_atomic_set(mem, val)     (*mem = val)
 #define apr_atomic_read(mem)         (*mem)
 #define apr_atomic_init(pool)        APR_SUCCESS
-#define apr_atomic_cas(mem,with,cmp) atomic_cmpxchg((unsigned long *)(mem),(unsigned long)(cmp),(unsigned long)(with))
-    
-int apr_atomic_dec(apr_atomic_t *mem);
-void *apr_atomic_casptr(void **mem, void *with, const void *cmp);
-#define APR_OVERRIDE_ATOMIC_DEC 1
-#define APR_OVERRIDE_ATOMIC_CASPTR 1
-
-inline int apr_atomic_dec(apr_atomic_t *mem) 
-{
-    atomic_dec(mem);
-    return *mem; 
-}
-
-inline void *apr_atomic_casptr(void **mem, void *with, const void *cmp)
-{
-    return (void*)atomic_cmpxchg((unsigned long *)mem,(unsigned long)cmp,(unsigned long)with);
-}
+#define apr_atomic_cas(mem,with,cmp) atomic_cmpxchg(mem,cmp,with)
 
 #elif defined(__FreeBSD__)
 
@@ -206,12 +180,12 @@ inline void *apr_atomic_casptr(void **mem, void *with, const void *cmp)
 #define apr_atomic_set(mem, val)     atomic_set_int(mem, val)
 #define apr_atomic_read(mem)         (*mem)
 
-#elif (defined(__linux__) || defined(__EMX__)) && defined(__i386__) && !APR_FORCE_ATOMIC_GENERIC
+#elif defined(__linux__) && defined(__i386__) && !APR_FORCE_ATOMIC_GENERIC
 
 #define apr_atomic_t apr_uint32_t
 #define apr_atomic_cas(mem,with,cmp) \
 ({ apr_atomic_t prev; \
-    asm volatile ("lock; cmpxchgl %1, %2"              \
+    asm ("lock; cmpxchgl %1, %2"              \
          : "=a" (prev)               \
          : "r" (with), "m" (*(mem)), "0"(cmp) \
          : "memory"); \
@@ -332,15 +306,6 @@ int apr_atomic_dec(volatile apr_atomic_t *mem);
 #if !defined(apr_atomic_cas) && !defined(APR_OVERRIDE_ATOMIC_CAS)
 apr_uint32_t apr_atomic_cas(volatile apr_uint32_t *mem,long with,long cmp);
 #define APR_ATOMIC_NEED_DEFAULT_INIT 1
-#endif
-
-#if !defined(apr_atomic_casptr) && !defined(APR_OVERRIDE_ATOMIC_CASPTR)
-#if APR_SIZEOF_VOIDP == 4
-#define apr_atomic_casptr(mem, with, cmp) (void *)apr_atomic_cas((apr_uint32_t *)(mem), (long)(with), (long)cmp)
-#else
-void *apr_atomic_casptr(volatile void **mem, void *with, const void *cmp);
-#define APR_ATOMIC_NEED_DEFAULT_INIT 1
-#endif
 #endif
 
 #ifndef APR_ATOMIC_NEED_DEFAULT_INIT

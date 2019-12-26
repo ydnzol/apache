@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,13 +81,13 @@
 extern "C" {
 #endif
 
-/** A bad date. */
+
 #define APR_DATE_BAD ((apr_time_t)0)
 
 /**
  * Compare a string to a mask
  * @param data The string to compare
- * @param mask Mask characters (arbitrary maximum is 256 characters):
+ * @mask Mask characters (arbitrary maximum is 256 characters, just in case):
  * <PRE>
  *   @ - uppercase letter
  *   $ - lowercase letter

@@ -124,8 +124,6 @@ CACHE_DECLARE(const char *)ap_cache_get_cachetype(request_rec *r,
     }
 
     /* then loop through all the cachedisable entries */
-    /* Looking for urls that contain the full cachedisable url and possibly more. */
-    /*   This means we are disabling cachedisable url and below... */
     for (i = 0; i < conf->cachedisable->nelts; i++) {
         struct cache_disable *ent = 
                                (struct cache_disable *)conf->cachedisable->elts;
@@ -140,8 +138,7 @@ CACHE_DECLARE(const char *)ap_cache_get_cachetype(request_rec *r,
 
 
 /* do a HTTP/1.1 age calculation */
-CACHE_DECLARE(apr_int64_t) ap_cache_current_age(cache_info *info, const apr_time_t age_value,
-                                                apr_time_t now)
+CACHE_DECLARE(apr_time_t) ap_cache_current_age(cache_info *info, const apr_time_t age_value)
 {
     apr_time_t apparent_age, corrected_received_age, response_delay, corrected_initial_age,
            resident_time, current_age;
@@ -152,16 +149,16 @@ CACHE_DECLARE(apr_int64_t) ap_cache_current_age(cache_info *info, const apr_time
     corrected_received_age = MAX(apparent_age, age_value);
     response_delay = info->response_time - info->request_time;
     corrected_initial_age = corrected_received_age + response_delay;
-    resident_time = now - info->response_time;
+    resident_time = apr_time_now() - info->response_time;
     current_age = corrected_initial_age + resident_time;
 
-    return apr_time_sec(current_age);
+    return (current_age);
 }
 
 CACHE_DECLARE(int) ap_cache_check_freshness(cache_request_rec *cache, 
                                             request_rec *r)
 {
-    apr_int64_t age, maxage_req, maxage_cresp, maxage, smaxage, maxstale, minfresh;
+    apr_time_t age, maxage_req, maxage_cresp, maxage, smaxage, maxstale, minfresh;
     const char *cc_cresp, *cc_req, *pragma_cresp;
     const char *agestr = NULL;
     char *val;
@@ -205,27 +202,27 @@ CACHE_DECLARE(int) ap_cache_check_freshness(cache_request_rec *cache,
     /* TODO: pragma_cresp not being used? */
     pragma_cresp = apr_table_get(r->headers_out, "Pragma");  
     if ((agestr = apr_table_get(r->headers_out, "Age"))) {
-        age_c = apr_atoi64(agestr);
+        age_c = atoi(agestr);
     }
 
     /* calculate age of object */
-    age = ap_cache_current_age(info, age_c, r->request_time);
+    age = ap_cache_current_age(info, age_c);
 
     /* extract s-maxage */
-    if (cc_cresp && ap_cache_liststr(r->pool, cc_cresp, "s-maxage", &val))
-        smaxage = apr_atoi64(val);
+    if (cc_cresp && ap_cache_liststr(cc_cresp, "s-maxage", &val))
+        smaxage = atoi(val);
     else
         smaxage = -1;
 
     /* extract max-age from request */
-    if (cc_req && ap_cache_liststr(r->pool, cc_req, "max-age", &val))
-        maxage_req = apr_atoi64(val);
+    if (cc_req && ap_cache_liststr(cc_req, "max-age", &val))
+        maxage_req = atoi(val);
     else
         maxage_req = -1;
 
     /* extract max-age from response */
-    if (cc_cresp && ap_cache_liststr(r->pool, cc_cresp, "max-age", &val))
-        maxage_cresp = apr_atoi64(val);
+    if (cc_cresp && ap_cache_liststr(cc_cresp, "max-age", &val))
+        maxage_cresp = atoi(val);
     else
         maxage_cresp = -1;
 
@@ -240,29 +237,27 @@ CACHE_DECLARE(int) ap_cache_check_freshness(cache_request_rec *cache,
         maxage = MIN(maxage_req, maxage_cresp);
 
     /* extract max-stale */
-    if (cc_req && ap_cache_liststr(r->pool, cc_req, "max-stale", &val))
-        maxstale = apr_atoi64(val);
+    if (cc_req && ap_cache_liststr(cc_req, "max-stale", &val))
+        maxstale = atoi(val);
     else
         maxstale = 0;
 
     /* extract min-fresh */
-    if (cc_req && ap_cache_liststr(r->pool, cc_req, "min-fresh", &val))
-        minfresh = apr_atoi64(val);
+    if (cc_req && ap_cache_liststr(cc_req, "min-fresh", &val))
+        minfresh = atoi(val);
     else
         minfresh = 0;
 
     /* override maxstale if must-revalidate or proxy-revalidate */
     if (maxstale && ((cc_cresp &&
-                      ap_cache_liststr(NULL,
-                                       cc_cresp, "must-revalidate", NULL))
-                     || (cc_cresp && ap_cache_liststr(NULL,
-                                                      cc_cresp,
+                      ap_cache_liststr(cc_cresp, "must-revalidate", NULL))
+                     || (cc_cresp && ap_cache_liststr(cc_cresp,
                                                       "proxy-revalidate", NULL))))
         maxstale = 0;
     /* handle expiration */
     if ((-1 < smaxage && age < (smaxage - minfresh)) ||
         (-1 < maxage && age < (maxage + maxstale - minfresh)) ||
-        (info->expire != APR_DATE_BAD && age < (apr_time_sec(info->expire - info->date) + maxstale - minfresh))) {
+        (info->expire != APR_DATE_BAD && age < (info->expire - info->date + maxstale - minfresh))) {
         /* it's fresh darlings... */
         /* set age header on response */
         apr_table_set(r->headers_out, "Age",
@@ -285,74 +280,47 @@ CACHE_DECLARE(int) ap_cache_check_freshness(cache_request_rec *cache,
  * The return returns 1 if the token val is found in the list, or 0
  * otherwise.
  */
-CACHE_DECLARE(int) ap_cache_liststr(apr_pool_t *p, const char *list,
-                                    const char *key, char **val)
+CACHE_DECLARE(int) ap_cache_liststr(const char *list, const char *key, char **val)
 {
-    apr_size_t key_len;
-    const char *next;
+    int len, i;
+    char *p;
+    char valbuf[HUGE_STRING_LEN];
+    valbuf[sizeof(valbuf)-1] = 0; /* safety terminating zero */
 
-    if (!list) {
-        return 0;
-    }
+    len = strlen(key);
 
-    key_len = strlen(key);
-    next = list;
-
-    for (;;) {
-
-        /* skip whitespace and commas to find the start of the next key */
-        while (*next && (apr_isspace(*next) || (*next == ','))) {
-            next++;
+    while (list != NULL) {
+        p = strchr((char *) list, ',');
+        if (p != NULL) {
+            i = p - list;
+            do
+            p++;
+            while (apr_isspace(*p));
         }
+        else
+            i = strlen(list);
 
-        if (!*next) {
-            return 0;
-        }
-
-        if (!strncasecmp(next, key, key_len)) {
-            /* this field matches the key (though it might just be
-             * a prefix match, so make sure the match is followed
-             * by either a space or an equals sign)
-             */
-            next += key_len;
-            if (!*next || (*next == '=') || apr_isspace(*next) ||
-                (*next == ',')) {
-                /* valid match */
-                if (val) {
-                    while (*next && (*next != '=') && (*next != ',')) {
-                        next++;
-                    }
-                    if (*next == '=') {
-                        next++;
-                        while (*next && apr_isspace(*next )) {
-                            next++;
-                        }
-                        if (!*next) {
-                            *val = NULL;
-                        }
-                        else {
-                            const char *val_start = next;
-                            while (*next && !apr_isspace(*next) &&
-                                   (*next != ',')) {
-                                next++;
-                            }
-                            *val = apr_pstrmemdup(p, val_start,
-                                                  next - val_start);
-                        }
-                    }
+        while (i > 0 && apr_isspace(list[i - 1]))
+            i--;
+        if (i == len && strncasecmp(list, key, len) == 0) {
+            if (val) {
+                p = strchr((char *) list, ',');
+                while (apr_isspace(*list)) {
+                    list++;
                 }
-                return 1;
+                if ('=' == list[0])
+                    list++;
+                while (apr_isspace(*list)) {
+                    list++;
+                }
+                strncpy(valbuf, list, MIN(p-list, sizeof(valbuf)-1));
+                *val = valbuf;
             }
+            return 1;
         }
-
-        /* skip to the next field */
-        do {
-            next++;
-            if (!*next) {
-                return 0;
-            }
-        } while (*next != ',');
+        list = p;
     }
+    return 0;
 }
 
 /* return each comma separated token, one at a time */
@@ -468,26 +436,4 @@ CACHE_DECLARE(char *)generate_name(apr_pool_t *p, int dirlevels, int dirlength, 
     char hashfile[66];
     cache_hash(name, hashfile, dirlevels, dirlength);
     return apr_pstrdup(p, hashfile);
-}
-
-/* Create a new table consisting of those elements from a request_rec's
- * headers_out that are allowed to be stored in a cache.
- */
-CACHE_DECLARE(apr_table_t *)ap_cache_cacheable_hdrs_out(request_rec *r)
-{
-    /* Make a copy of the response headers, and remove from
-     * the copy any hop-by-hop headers, as defined in Section
-     * 13.5.1 of RFC 2616
-     */
-    apr_table_t *headers_out;
-    headers_out = apr_table_copy(r->pool, r->headers_out);
-    apr_table_unset(headers_out, "Connection");
-    apr_table_unset(headers_out, "Keep-Alive");
-    apr_table_unset(headers_out, "Proxy-Authenticate");
-    apr_table_unset(headers_out, "Proxy-Authorization");
-    apr_table_unset(headers_out, "TE");
-    apr_table_unset(headers_out, "Trailers");
-    apr_table_unset(headers_out, "Transfer-Encoding");
-    apr_table_unset(headers_out, "Upgrade");
-    return headers_out;
 }
