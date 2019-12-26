@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="iso-2022-jp"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja"><head><!--
+        XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+              This file is generated from xml source: DO NOT EDIT
+        XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      --><title>ディレクティブ一覧 - Apache HTTP サーバ</title><link href="../style/css/manual.css" rel="stylesheet" media="all" type="text/css" title="Main stylesheet" /><link href="../style/css/manual-loose-100pc.css" rel="alternate stylesheet" media="all" type="text/css" title="No Sidebar - Default font size" /><link href="../style/css/manual-print.css" rel="stylesheet" media="print" type="text/css" /><link href="../images/favicon.ico" rel="shortcut icon" /></head><body id="directive-index"><div id="page-header"><p class="menu"><a href="../mod/">モジュール</a> | <a href="../mod/directives.html">ディレクティブ</a> | <a href="../faq/">FAQ</a> | <a href="../glossary.html">用語</a> | <a href="../sitemap.html">サイトマップ</a></p><p class="apache">Apache HTTP サーバ バージョン 2.0</p><img alt="" src="../images/feather.gif" /></div><div class="up"><a href="./"><img title="&lt;-" alt="&lt;-" src="../images/left.gif" /></a></div><div id="path"><a href="http://www.apache.org/">Apache</a> &gt; <a href="http://httpd.apache.org/">HTTP サーバ</a> &gt; <a href="http://httpd.apache.org/docs-project/">ドキュメンテーション</a> &gt; <a href="../">バージョン 2.0</a> &gt; <a href="./">モジュール</a></div><div id="preamble"><h1>ディレクティブ一覧</h1>
+    <p>
+      標準 Apache 配布にあるすべての Apache のディレクティブの一覧です。
+      これらは一貫した形式で書かれていて、使われている用語の
+      <a href="directive-dict.html" rel="Glossary">用語集</a> も用意されています。
+    </p>
+    <p>
+      各ディレクティブの概要を説明した <a href="quickreference.html">ディレクティブクイックリファレンス</a>も
+      あります。
+    </p>
+  <p class="letters"><a href="#A">?A?</a> | <a href="#C">?C?</a> | <a href="#D">?D?</a> | <a href="#E">?E?</a> | <a href="#F">?F?</a> | <a href="#H">?H?</a> | <a href="#I">?I?</a> | <a href="#K">?K?</a> | <a href="#L">?L?</a> | <a href="#M">?M?</a> | <a href="#N">?N?</a> | <a href="#O">?O?</a> | <a href="#R">?R?</a> | <a href="#S">?S?</a> | <a href="#T">?T?</a> | <a href="#U">?U?</a> | <a href="#V">?V?</a></p>
+</div><div id="directive-list"><ul><li><a href="core.html#acceptpathinfo" id="A" name="A">AcceptPathInfo</a></li>
+<li><a href="core.html#accessfilename">AccessFileName</a></li>
+<li><a href="mod_actions.html#action">Action</a></li>
+<li><a href="core.html#adddefaultcharset">AddDefaultCharset</a></li>
+<li><a href="core.html#addoutputfilterbytype">AddOutputFilterByType</a></li>
+<li><a href="mod_alias.html#alias">Alias</a></li>
+<li><a href="mod_alias.html#aliasmatch">AliasMatch</a></li>
+<li><a href="core.html#allowoverride">AllowOverride</a></li>
+<li><a href="core.html#authname">AuthName</a></li>
+<li><a href="core.html#authtype">AuthType</a></li>
+<li><a href="core.html#cgimapextension" id="C" name="C">CGIMapExtension</a></li>
+<li><a href="core.html#contentdigest">ContentDigest</a></li>
+<li><a href="core.html#defaulttype" id="D" name="D">DefaultType</a></li>
+<li><a href="core.html#directory">&lt;Directory&gt;</a></li>
+<li><a href="core.html#directorymatch">&lt;DirectoryMatch&gt;</a></li>
+<li><a href="core.html#documentroot">DocumentRoot</a></li>
+<li><a href="core.html#enablemmap" id="E" name="E">EnableMMAP</a></li>
+<li><a href="core.html#enablesendfile">EnableSendfile</a></li>
+<li><a href="core.html#errordocument">ErrorDocument</a></li>
+<li><a href="core.html#errorlog">ErrorLog</a></li>
+<li><a href="core.html#fileetag" id="F" name="F">FileETag</a></li>
+<li><a href="core.html#files">&lt;Files&gt;</a></li>
+<li><a href="core.html#filesmatch">&lt;FilesMatch&gt;</a></li>
+<li><a href="core.html#forcetype">ForceType</a></li>
+<li><a href="core.html#hostnamelookups" id="H" name="H">HostnameLookups</a></li>
+<li><a href="core.html#identitycheck" id="I" name="I">IdentityCheck</a></li>
+<li><a href="core.html#ifdefine">&lt;IfDefine&gt;</a></li>
+<li><a href="core.html#ifmodule">&lt;IfModule&gt;</a></li>
+<li><a href="core.html#include">Include</a></li>
+<li><a href="core.html#keepalive" id="K" name="K">KeepAlive</a></li>
+<li><a href="core.html#keepalivetimeout">KeepAliveTimeout</a></li>
+<li><a href="core.html#limit" id="L" name="L">&lt;Limit&gt;</a></li>
+<li><a href="core.html#limitexcept">&lt;LimitExcept&gt;</a></li>
+<li><a href="core.html#limitrequestbody">LimitRequestBody</a></li>
+<li><a href="core.html#limitrequestfields">LimitRequestFields</a></li>
+<li><a href="core.html#limitrequestfieldsize">LimitRequestFieldSize</a></li>
+<li><a href="core.html#limitrequestline">LimitRequestLine</a></li>
+<li><a href="core.html#limitxmlrequestbody">LimitXMLRequestBody</a></li>
+<li><a href="core.html#location">&lt;Location&gt;</a></li>
+<li><a href="core.html#locationmatch">&lt;LocationMatch&gt;</a></li>
+<li><a href="core.html#loglevel">LogLevel</a></li>
+<li><a href="core.html#maxkeepaliverequests" id="M" name="M">MaxKeepAliveRequests</a></li>
+<li><a href="core.html#namevirtualhost" id="N" name="N">NameVirtualHost</a></li>
+<li><a href="core.html#options" id="O" name="O">Options</a></li>
+<li><a href="mod_alias.html#redirect" id="R" name="R">Redirect</a></li>
+<li><a href="mod_alias.html#redirectmatch">RedirectMatch</a></li>
+<li><a href="mod_alias.html#redirectpermanent">RedirectPermanent</a></li>
+<li><a href="mod_alias.html#redirecttemp">RedirectTemp</a></li>
+<li><a href="core.html#require">Require</a></li>
+<li><a href="core.html#rlimitcpu">RLimitCPU</a></li>
+<li><a href="core.html#rlimitmem">RLimitMEM</a></li>
+<li><a href="core.html#rlimitnproc">RLimitNPROC</a></li>
+<li><a href="core.html#satisfy" id="S" name="S">Satisfy</a></li>
+<li><a href="mod_actions.html#script">Script</a></li>
+<li><a href="mod_alias.html#scriptalias">ScriptAlias</a></li>
+<li><a href="mod_alias.html#scriptaliasmatch">ScriptAliasMatch</a></li>
+<li><a href="core.html#scriptinterpretersource">ScriptInterpreterSource</a></li>
+<li><a href="core.html#serveradmin">ServerAdmin</a></li>
+<li><a href="core.html#serveralias">ServerAlias</a></li>
+<li><a href="core.html#servername">ServerName</a></li>
+<li><a href="core.html#serverpath">ServerPath</a></li>
+<li><a href="core.html#serverroot">ServerRoot</a></li>
+<li><a href="core.html#serversignature">ServerSignature</a></li>
+<li><a href="core.html#servertokens">ServerTokens</a></li>
+<li><a href="core.html#sethandler">SetHandler</a></li>
+<li><a href="core.html#setinputfilter">SetInputFilter</a></li>
+<li><a href="core.html#setoutputfilter">SetOutputFilter</a></li>
+<li><a href="core.html#timeout" id="T" name="T">TimeOut</a></li>
+<li><a href="core.html#usecanonicalname" id="U" name="U">UseCanonicalName</a></li>
+<li><a href="core.html#virtualhost" id="V" name="V">&lt;VirtualHost&gt;</a></li>
+</ul></div><div id="footer"><p class="apache">Maintained by the <a href="http://httpd.apache.org/docs-project/">Apache HTTP Server Documentation Project</a></p><p class="menu"><a href="../mod/">モジュール</a> | <a href="../mod/directives.html">ディレクティブ</a> | <a href="../faq/">FAQ</a> | <a href="../glossary.html">用語</a> | <a href="../sitemap.html">サイトマップ</a></p></div></body></html>

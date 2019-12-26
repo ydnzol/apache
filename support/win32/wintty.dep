@@ -1,0 +1,8 @@
+# Microsoft Developer Studio Generated Dependency File, included by wintty.mak
+
+!IF  "$(CFG)" == "wintty - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "wintty - Win32 Debug"
+
+!ENDIF 
+

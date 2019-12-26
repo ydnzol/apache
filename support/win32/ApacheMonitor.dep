@@ -1,0 +1,22 @@
+# Microsoft Developer Studio Generated Dependency File, included by ApacheMonitor.mak
+
+.\ApacheMonitor.c : \
+	".\ApacheMonitor.h"\
+	
+
+.\ApacheMonitorVer.rc : \
+	".\apache_header.bmp"\
+	".\ApacheMonitor.h"\
+	".\ApacheMonitor.ico"\
+	".\aprun.ico"\
+	".\apstop.ico"\
+	".\srun.bmp"\
+	".\sstop.bmp"\
+	
+
+!IF  "$(CFG)" == "ApacheMonitor - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "ApacheMonitor - Win32 Debug"
+
+!ENDIF 
+

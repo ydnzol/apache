@@ -1,0 +1,14 @@
+# Microsoft Developer Studio Generated Dependency File, included by logresolve.mak
+
+.\logresolve.c : \
+	"..\srclib\apr\include\apr.h"\
+	"..\srclib\apr\include\apr_errno.h"\
+	"..\srclib\apr\include\apr_lib.h"\
+	
+
+!IF  "$(CFG)" == "logresolve - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "logresolve - Win32 Debug"
+
+!ENDIF 
+

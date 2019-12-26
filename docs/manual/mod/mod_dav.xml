@@ -1,0 +1,167 @@
+<?xml version="1.0"?>
+<!DOCTYPE modulesynopsis SYSTEM "../style/modulesynopsis.dtd">
+<?xml-stylesheet type="text/xsl" href="../style/manual.en.xsl"?>
+<modulesynopsis>
+
+<name>mod_dav</name> 
+<description>Distributed Authoring and Versioning
+(<a href="http://www.webdav.org/">WebDAV</a>) functionality</description>
+<status>Extension</status>
+<sourcefile>mod_dav.c</sourcefile>
+<identifier>dav_module</identifier>
+
+<summary>
+    <p>This module provides class 1 and class 2 <a
+    href="http://www.webdav.org">WebDAV</a> ('Web-based Distributed
+    Authoring and Versioning') functionality for Apache. This
+    extension to the HTTP protocol allows creating, moving,
+    copying, and deleting resources and collections on a remote web
+    server.</p>
+</summary>
+<seealso><directive module="mod_dav_fs">DavLockDB</directive></seealso>
+<seealso><directive module="core">LimitXMLRequestBody</directive></seealso>
+<seealso><a href="http://www.webdav.org">WebDAV Resources</a></seealso>
+
+<section id="example"><title>Enabling WebDAV</title>
+    <p>To enable <module>mod_dav</module>, add the following to a
+    container in your <code>httpd.conf</code> file:</p>
+
+    <example>Dav On</example>
+
+    <p>This enables the DAV file system provider, which is implemented by
+    the <module>mod_dav_fs</module> module. Therefore that module has to
+    be compiled into the server or has to be loaded at runtime using the
+    <directive module="mod_so">LoadModule</directive> directive.</p>
+    
+    <p>In order to make it work you have to specify a web-server writable
+    filename for the DAV lock database by adding the following to the
+    global section in your <code>httpd.conf</code> file:</p>
+
+    <example>
+      DavLockDB /tmp/DavLock
+    </example>
+
+    <p>You may wish to add a <directive module="core" type="section"
+    >Limit</directive> clause inside the <directive module="core"
+    type="section">Location</directive> directive to limit access to
+    DAV-enabled locations. If you want to set the maximum amount of
+    bytes that a DAV client can send at one request, you have to use
+    the <directive module="core">LimitXMLRequestBody</directive>
+    directive. The "normal" <directive module="core"
+    >LimitRequestBody</directive> directive has no effect on DAV
+    requests.</p>
+
+    <example><title>Full Example</title>
+      DavLockDB /tmp/DavLock<br />
+      <br />
+       &lt;Location /foo&gt;<br />
+       <indent>
+         Dav On<br />
+         <br />
+         AuthType Basic<br />
+         AuthName DAV<br />
+         AuthUserFile user.passwd<br />
+         <br />
+         &lt;LimitExcept GET HEAD OPTIONS&gt;<br />
+         <indent>
+           require user admin<br />
+         </indent>
+         &lt;/LimitExcept&gt;<br />
+       </indent>
+       &lt;/Location&gt;<br />
+    </example>
+
+    <note type="warning"><title>Security</title>
+      <p>The use of HTTP Basic Authentication is not recommended. You
+      should use at least HTTP Digest Authentication, which is provided by
+      the <module>mod_auth_digest</module> module. Nearly all WebDAV clients
+      support this authentication method. Of course, Basic Authentication
+      over an <a href="../ssl/">SSL</a> enabled connection is secure,
+      too.</p>
+    </note>
+</section>
+
+<directivesynopsis>
+<name>Dav</name>
+<description>Enable WebDAV HTTP methods</description>
+<syntax>Dav On|Off|<var>provider-name</var></syntax>
+<default>Dav Off</default>
+<contextlist><context>directory</context></contextlist>
+
+<usage>
+    <p>Use the <directive>Dav</directive> directive to enable the
+    WebDAV HTTP methods for the given container:</p>
+
+    <example>
+      &lt;Location /foo&gt;<br />
+      <indent>
+        Dav On<br />
+      </indent>
+      &lt;/Location&gt;
+    </example>
+
+    <p>The value <code>On</code> is actually an alias for the default
+    provider <code>filesystem</code> which is served by the <module
+    >mod_dav_fs</module> module. Note, that once you have DAV enabled
+    for some location, it <em>cannot</em> be disabled for sublocations.
+    For a complete configuration example have a look at the <a
+    href="#example">section above</a>.</p>
+
+    <note type="warning">
+      Do not enable WebDAV until you have secured your server. Otherwise
+      everyone will be able to distribute files on your system.
+    </note>
+</usage>
+</directivesynopsis>
+
+<directivesynopsis>
+<name>DavMinTimeout</name>
+<description>Minimum amount of time the server holds a lock on
+a DAV resource</description>
+<syntax>DavMinTimeout <var>seconds</var></syntax>
+<default>DavMinTimeout 0</default>
+<contextlist><context>server config</context><context>virtual host</context>
+<context>directory</context></contextlist>
+
+<usage>
+    <p>When a client requests a DAV resource lock, it can also
+    specify a time when the lock will be automatically removed by
+    the server. This value is only a request, and the server can
+    ignore it or inform the client of an arbitrary value.</p>
+
+    <p>Use the <directive>DavMinTimeout</directive> directive to specify, in
+    seconds, the minimum lock timeout to return to a client.
+    Microsoft Web Folders defaults to a timeout of 120 seconds; the
+    <directive>DavMinTimeout</directive> can override this to a higher value
+    (like 600 seconds) to reduce the chance of the client losing
+    the lock due to network latency.</p>
+
+    <example><title>Example</title>
+      &lt;Location /MSWord&gt;<br />
+      <indent>
+        DavMinTimeout 600<br />
+      </indent>
+      &lt;/Location&gt;
+    </example>
+</usage>     
+</directivesynopsis>
+
+<directivesynopsis>
+<name>DavDepthInfinity</name>
+<description>Allow PROPFIND, Depth: Infinity requests</description>
+<syntax>DavDepthInfinity on|off</syntax>
+<default>DavDepthInfinity off</default>
+<contextlist><context>server config</context><context>virtual host</context>
+<context>directory</context></contextlist>
+
+<usage>
+    <p>Use the <directive>DavDepthInfinity</directive> directive to
+    allow the processing of <code>PROPFIND</code> requests containing the
+    header 'Depth: Infinity'. Because this type of request could constitute
+    a denial-of-service attack, by default it is not allowed.</p>
+</usage>
+</directivesynopsis>
+
+</modulesynopsis>
+
+
